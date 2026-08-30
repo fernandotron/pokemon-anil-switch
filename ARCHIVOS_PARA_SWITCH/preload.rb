@@ -1204,7 +1204,7 @@ module ::Audio
       cached = $RESOLVE_AUDIO_MEMO_CACHE[cache_key]
       return cached if cached
 
-      p = path.to_s.gsub("\\", "/")
+      p = path.to_s.gsub("\\", "/").gsub(/\.\.\//, "").sub(/^\/+/, "")
       p_down = p.downcase
       p_clean = p_down.sub(/\.[^.]+$/, "")
       base = File.basename(p)
@@ -1323,7 +1323,10 @@ def warmup_core_switch_audio!
     "GUI sel cursor", "GUI sel decision", "GUI sel cancel", "GUI sel buzzer",
     "GUI menu open", "GUI menu close", "GUI save choice", "GUI bag pocket", "GUI bag cursor",
     "Door enter", "Door exit", "Door slide", "pkmn_ball", "Recall",
-    "Battle ball throw", "Battle ball hit", "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee"
+    "Battle ball throw", "Battle throw", "Battle ball hit", "Battle ball drop", "Battle ball shake",
+    "Battle ball capture", "Battle critical catch throw", "Battle jump to ball",
+    "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee",
+    "Battle capture success", "Battle victory", "itemget", "Item get", "Voltorb Flip point"
   ]
   core_sounds.each do |s|
     resolved = ::Audio.resolve_audio_file(s, nil, "Audio/SE")
@@ -1332,7 +1335,7 @@ def warmup_core_switch_audio!
     end
   end
   ::Audio.se_stop rescue nil
-  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento en OpenAL RAM.") rescue nil
+  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento/captura en OpenAL RAM.") rescue nil
 rescue Exception => e
   log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
 end
@@ -1355,8 +1358,20 @@ def prewarm_pause_menu_graphics!
 rescue Exception
 end
 
+def verify_and_preload_battle_animations!
+  if File.exist?("Data/PkmnAnimations.rxdata")
+    begin
+      $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+      log_compat("[Switch Animations] Cargadas #{$PokemonBattleAnimations.length rescue 0} animaciones de combate desde PkmnAnimations.rxdata.") rescue nil
+    rescue Exception => e
+      log_compat("[Warning PkmnAnimations] #{e.message}") rescue nil
+    end
+  end
+end
+
 warmup_core_switch_audio!
 prewarm_pause_menu_graphics!
+verify_and_preload_battle_animations!
 
 class AnimFrame
   X          = 0

@@ -221,7 +221,7 @@ class DP_PauseMenu
       @sprites[@options[i][0].to_sym].center_origins
       @sprites[@options[i][0].to_sym].xyz = 39, 36 + 48 * i
     end
-    pbSEPlay("Voltorb Flip point")
+    pbSEPlay("GUI menu open")
     main
   end
   
