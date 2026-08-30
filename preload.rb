@@ -1283,8 +1283,17 @@ module ::Audio
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/ME")
       file = filename.to_s if file.nil? || file.empty?
-      __switch_native_me_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
+      # Reproducir MEs a traves del canal SE para evitar que el hilo C++ meWatch silencie permanentemente la BGM
+      __switch_native_se_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
+    end
+
+    def me_stop
+      # No-op en Switch para no cortar la música de fondo
+    end
+
+    def me_fade(time)
+      # No-op en Switch
     end
 
     def se_play(filename, volume = 100, pitch = 100)
@@ -1328,7 +1337,26 @@ rescue Exception => e
   log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
 end
 
+def prewarm_pause_menu_graphics!
+  return unless defined?(RPG::Cache)
+  dp_icons = [
+    "bgTop", "bgMid", "bgBtm", "selector",
+    "pokedexA", "pokedexB",
+    "pokemonA", "pokemonB",
+    "bagA", "bagBm", "bagBf",
+    "PlayercardA", "PlayercardB",
+    "saveA", "saveBm", "saveBf",
+    "optionsA", "optionsB",
+    "exitA", "exitB"
+  ]
+  dp_icons.each do |ic|
+    RPG::Cache.load_bitmap("Graphics/Pictures/DP Pause Menu/", ic) rescue nil
+  end
+rescue Exception
+end
+
 warmup_core_switch_audio!
+prewarm_pause_menu_graphics!
 
 module TrainerSensor
   BAR_OPACITY = 32 unless defined?(BAR_OPACITY)

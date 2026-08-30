@@ -1153,22 +1153,9 @@ end
 # adding new method pbPlayCryOnOverworld to load/play Pokémon cry files 
 # SPECIAL THANKS TO "Ambient Pokémon Cries" - by Vendily
 #===============================================================================
-def pbPlayCryOnOverworld(pokemon,form=0,volume=30,pitch=100) # default volume=90
-  return if !pokemon || pitch <= 0
-  $LAST_OW_CRY_TIME ||= 0.0
-  now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
-  return if (now - $LAST_OW_CRY_TIME) < 0.35 # Debounce de 350ms para evitar solapamiento sin bloquear la experiencia
-  $LAST_OW_CRY_TIME = now
-
-  form = 0 if form.nil?
-  if pokemon.is_a?(Pokemon)
-    return if pokemon.egg?
-    GameData::Species.play_cry_from_pokemon(pokemon, volume, pitch) rescue nil
-  else
-    GameData::Species.play_cry_from_species(pokemon, form, volume, pitch) rescue nil
-  end
-rescue Exception
-  nil
+def pbPlayCryOnOverworld(pokemon,form=0,volume=30,pitch=100)
+  # Desactivado en Switch para que la aparición de Pokémon en hierba alta sea 100% fluida a 60 FPS
+  return
 end
 
 #===============================================================================

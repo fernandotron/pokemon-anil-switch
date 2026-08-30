@@ -1987,6 +1987,25 @@ def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2); end
     );
     changed = true;
   }
+
+  if (s.name.includes('PreloadManager') || s.code.includes('module SwitchPreloadManager')) {
+    console.log('Patching PreloadManager in:', s.name);
+    s.code = `
+module SwitchPreloadManager
+  def self.preload_pause_menu; end
+  def self.preload_player_party; end
+  def self.preload_battle_participants(battle); end
+  def self.preload_map_trainers; end
+  def self.queue_bitmap(path); end
+  def self.queue_species(species); end
+  def self.queue_move(move_id); end
+  def self.update; end
+  def self.on_map_change(map_id); end
+  def self.preload_map_encounters(map_id); end
+end
+`;
+    changed = true;
+  }
   
   if (s.name.includes('DrawText') || s.code.includes('def pbDrawShadowText')) {
     console.log('Patching DrawText in:', s.name);
