@@ -1422,12 +1422,8 @@ def warmup_core_switch_audio!
     "Battle ball throw", "Battle throw", "Battle ball hit", "Battle ball drop", "Battle ball shake",
     "Battle ball capture", "Battle critical catch throw", "Battle jump to ball",
     "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee",
-    "Battle capture success", "Battle victory", "itemget", "Item get", "Voltorb Flip point",
-    "Audio/ME/Item get.wav", "Audio/ME/Key item get.ogg", "Audio/ME/Badge get.ogg",
-    "Audio/ME/Machine get.ogg", "Audio/ME/Battle capture success.ogg", "Audio/ME/Pkmn get.wav",
-    "Audio/ME/Pkmn healing.ogg", "Audio/ME/Pokemon Healing.ogg",
-    "Audio/ME/Evolution start.ogg", "Audio/ME/Evolution success.ogg",
-    "Audio/ME/VictoriaSalvaje.ogg", "Audio/ME/VictoriaEntrenador.ogg"
+    "Battle recall", "Battle exp", "Battle ball burst", "Battle faint",
+    "itemget", "Item get", "Voltorb Flip point", "Audio/ME/Item get.wav"
   ]
   core_sounds.each do |s|
     resolved = ::Audio.resolve_audio_file(s, nil, "Audio/SE")
@@ -1436,7 +1432,7 @@ def warmup_core_switch_audio!
     end
   end
   ::Audio.se_stop rescue nil
-  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento/captura/ME en OpenAL RAM.") rescue nil
+  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento/captura en OpenAL RAM.") rescue nil
 rescue Exception => e
   log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
 end
@@ -1462,10 +1458,12 @@ end
 def verify_and_preload_battle_animations!
   if File.exist?("Data/PkmnAnimations.rxdata")
     begin
-      $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+      File.open("Data/PkmnAnimations.rxdata", "rb") do |f|
+        $PokemonBattleAnimations = Marshal.load(f)
+      end
       log_compat("[Switch Animations] Cargadas #{$PokemonBattleAnimations.length rescue 0} animaciones de combate desde PkmnAnimations.rxdata.") rescue nil
     rescue Exception => e
-      log_compat("[Warning PkmnAnimations] #{e.message}") rescue nil
+      log_compat("[Warning PkmnAnimations] #{e.class}: #{e.message}") rescue nil
     end
   end
 end

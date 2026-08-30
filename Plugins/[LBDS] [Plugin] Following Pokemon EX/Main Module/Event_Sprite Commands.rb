@@ -132,6 +132,10 @@ module FollowingPkmn
     event = FollowingPkmn.get_event
     if ret
       FollowingPkmn.change_sprite(first_pkmn)
+      if event
+        event.transparent = false if event.respond_to?(:transparent=)
+        event.opacity = 255 if event.respond_to?(:opacity=)
+      end
       if anim
         pbSEPlay("pkmn_ball") rescue nil
         if event
