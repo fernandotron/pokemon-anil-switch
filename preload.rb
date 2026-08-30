@@ -1196,22 +1196,7 @@ module ::Audio
       alias __switch_native_se_play se_play rescue nil
     end
 
-    $AUDIO_SE_QUEUE ||= Queue.new
     $LAST_SE_TIME ||= {}
-
-    $AUDIO_WORKER_THREAD ||= Thread.new do
-      Thread.current.priority = -2 rescue nil
-      loop do
-        begin
-          item = $AUDIO_SE_QUEUE.pop
-          if item && item.is_a?(Array)
-            file, vol, pit = item
-            __switch_native_se_play(file, vol, pit) rescue nil
-          end
-        rescue Exception
-        end
-      end
-    end
 
     def resolve_audio_file(path, exts = nil, default_dir = "Audio/SE")
       return "" if path.nil? || path.to_s.empty?
@@ -1254,9 +1239,9 @@ module ::Audio
         end
       end
 
-      # No retornar rutas inválidas sin extensión para evitar bloqueos en el disco
-      $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = ""
-      return ""
+      res = p.start_with?("Audio/") ? p : "#{default_dir}/#{p}"
+      $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res
+      return res
     end
 
     def bgm_play(filename, volume = 100, pitch = 100, pos = 0.0, track = nil)
@@ -1297,20 +1282,35 @@ module ::Audio
 
       now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
 
-      # 1. Debounce idéntico: no reproducir el mismo SE más de una vez cada 40ms
+      # Debounce de 25ms para evitar saturación de llamadas idénticas en el mismo cuadro
       last = $LAST_SE_TIME[file]
-      if last && (now - last) < 0.040
+      if last && (now - last) < 0.025
         return
       end
       $LAST_SE_TIME[file] = now
       $LAST_SE_TIME.clear if $LAST_SE_TIME.length > 200
 
-      # 2. Enviar a la cola asíncrona (0ms de bloqueo en el hilo de renderizado)
-      if $AUDIO_SE_QUEUE.size < 6
-        $AUDIO_SE_QUEUE.push([file, (volume || 100).to_i, (pitch || 100).to_i])
-      end
+      __switch_native_se_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
     end
+  end
+end
+
+class PokemonSystem
+  def battlescene
+    0 # 0 = Siempre activar animaciones de combate
+  end
+  def battlescene=(val)
+    @battlescene = 0
+  end
+end
+
+class Battle
+  def showAnims
+    true
+  end
+  def showAnims=(val)
+    @showAnims = true
   end
 end
 
