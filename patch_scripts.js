@@ -1885,6 +1885,17 @@ end`
     changed = true;
   }
 
+  if (s.name.includes('Interpreter') || (s.code.includes('class Interpreter') && s.code.includes('def execute_script'))) {
+    console.log('Patching Interpreter in:', s.name);
+    s.code = s.code.replace(
+      /def execute_script\(script\)[\s\S]*?result\s*=\s*eval\(script\)/m,
+      `def execute_script(script)
+    begin
+      result = eval(script, binding)`
+    );
+    changed = true;
+  }
+
   if (s.name.includes('Audio_Play') || s.code.includes('def pbResolveAudioFile')) {
     console.log('Patching Audio_Play in:', s.name);
     s.code = s.code.replace(

@@ -1196,6 +1196,8 @@ module ::Audio
       alias __switch_native_se_play se_play rescue nil
     end
 
+    $LAST_SE_TIME ||= {}
+
     def resolve_audio_file(path, exts = nil, default_dir = "Audio/SE")
       return "" if path.nil? || path.to_s.empty?
       cache_key = "#{path}_#{default_dir}"
@@ -1208,13 +1210,17 @@ module ::Audio
       base = File.basename(p)
       base_down = base.downcase
       base_clean = base_down.sub(/\.[^.]+$/, "")
+      def_down = default_dir.to_s.downcase
 
       if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
         found = $AUDIO_LOOKUP_TABLE[p_down] ||
                 $AUDIO_LOOKUP_TABLE[p_clean] ||
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_down}"] ||
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean}"] ||
                 $AUDIO_LOOKUP_TABLE["audio/" + p_down] ||
                 $AUDIO_LOOKUP_TABLE["audio/" + p_clean] ||
                 $AUDIO_LOOKUP_TABLE["audio/se/" + base_clean] ||
+                $AUDIO_LOOKUP_TABLE["audio/se/" + base_down] ||
                 $AUDIO_LOOKUP_TABLE["audio/bgm/" + base_clean] ||
                 $AUDIO_LOOKUP_TABLE["audio/bgs/" + base_clean] ||
                 $AUDIO_LOOKUP_TABLE["audio/me/" + base_clean] ||
@@ -1233,31 +1239,8 @@ module ::Audio
         end
       end
 
-      # Fallback resolution
-      candidates = [
-        p,
-        "#{p}.ogg",
-        "#{default_dir}/#{base}",
-        "#{default_dir}/#{base_clean}.ogg",
-        "#{default_dir}/#{base_clean}.wav",
-        "#{default_dir}/#{base_clean}.mp3",
-        "Audio/SE/#{base_clean}.ogg",
-        "Audio/SE/Anim/#{base_clean}.ogg",
-        "Audio/SE/Cries/#{base_clean}.ogg",
-        "Audio/BGM/#{base_clean}.ogg",
-        "Audio/ME/#{base_clean}.ogg",
-        "Audio/BGS/#{base_clean}.ogg"
-      ]
-
-      found = nil
-      candidates.each do |cand|
-        if File.exist?(cand)
-          found = cand
-          break
-        end
-      end
-
-      res = found || p
+      # No hacer llamadas de disco síncronas para evitar micro-stuttering
+      res = p
       $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res
       return res
     end
@@ -1265,7 +1248,7 @@ module ::Audio
     def bgm_play(filename, volume = 100, pitch = 100, pos = 0.0, track = nil)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/BGM")
-      file = filename.to_s if file.empty?
+      file = filename.to_s if file.nil? || file.empty?
       if file.empty?
         file = ["Audio/BGM/Title.ogg", "Audio/BGM/title_frlg.ogg", "Audio/BGM/title_origin.ogg", "Audio/BGM/title_bw.ogg"].find { |f| File.exist?(f) } || "Audio/BGM/Title.ogg"
       end
@@ -1274,14 +1257,13 @@ module ::Audio
       else
         __switch_native_bgm_play(file, (volume || 100).to_i, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil
       end
-    rescue Exception => e
-      nil
+    rescue Exception
     end
 
     def bgs_play(filename, volume = 100, pitch = 100, pos = 0.0)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/BGS")
-      file = filename.to_s if file.empty?
+      file = filename.to_s if file.nil? || file.empty?
       __switch_native_bgs_play(file, (volume || 100).to_i, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil
     rescue Exception
     end
@@ -1289,7 +1271,7 @@ module ::Audio
     def me_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/ME")
-      file = filename.to_s if file.empty?
+      file = filename.to_s if file.nil? || file.empty?
       __switch_native_me_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
     end
@@ -1297,7 +1279,17 @@ module ::Audio
     def se_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/SE")
-      file = filename.to_s if file.empty?
+      return if file.nil? || file.empty?
+
+      # Debouncing: Evita reproducir el mismo efecto de sonido más de una vez cada 35ms (saltos/carreras)
+      now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
+      last = $LAST_SE_TIME[file]
+      if last && (now - last) < 0.035
+        return
+      end
+      $LAST_SE_TIME[file] = now
+      $LAST_SE_TIME.clear if $LAST_SE_TIME.length > 300
+
       __switch_native_se_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
     end
@@ -1960,7 +1952,20 @@ module Kernel
 
   def isTempSwitchOff?(c); tsOff?(c); end
   def isTempSwitchOn?(c); tsOn?(c); end
-  module_function :tsOff?, :tsOn?, :isTempSwitchOff?, :isTempSwitchOn? rescue nil
+  
+  def get_self
+    if defined?($game_map) && $game_map
+      if defined?(@event_id) && @event_id && @event_id > 0
+        return $game_map.events[@event_id]
+      elsif defined?(@event) && @event
+        return @event
+      elsif defined?($game_player)
+        return $game_map.events.values.find { |e| e.onEvent? rescue false } || $game_player
+      end
+    end
+    $game_player if defined?($game_player)
+  end
+  module_function :tsOff?, :tsOn?, :isTempSwitchOff?, :isTempSwitchOn?, :get_self rescue nil
 
   def eval(src, *args, &block)
     # Si se evalúa una simple expresión/código sin parámetros de archivo/binding, usar el eval nativo en C
@@ -2045,6 +2050,14 @@ class ::Object
   def tsOn?(c); Kernel.tsOn?(c); end unless method_defined?(:tsOn?)
   def isTempSwitchOff?(c); Kernel.tsOff?(c); end unless method_defined?(:isTempSwitchOff?)
   def isTempSwitchOn?(c); Kernel.tsOn?(c); end unless method_defined?(:isTempSwitchOn?)
+  def get_self; Kernel.get_self; end unless method_defined?(:get_self)
+end
+
+class ::Game_Player
+  def onEvent?; true; end unless method_defined?(:onEvent?)
+end
+class ::Game_Character
+  def onEvent?; true; end unless method_defined?(:onEvent?)
 end
 
 

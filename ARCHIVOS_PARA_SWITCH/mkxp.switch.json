@@ -54,7 +54,7 @@
     // Audio MIDI
     "midiSoundFont": "soundfont.sf2",
     "BGMTrackCount": 2,
-    "SESourceCount": 16,
+    "SESourceCount": 8,
 
     // Mapeo de botones para Joy-Con / Nintendo Switch Pro Controller (SDL2 GameController API)
     "bindingNames": {
