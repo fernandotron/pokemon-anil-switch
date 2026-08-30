@@ -500,22 +500,11 @@ module Graphics
   end
 
   # duration is in 1/20ths of a second
-  def self.transition(duration = 8, filename = "", vague = 20)
-    duration = duration.floor
-    if judge_special_transition(duration, filename)
-      duration = 0
-      filename = ""
-    end
-    duration *= Graphics.frame_rate / 20   # For default fade-in animation, must be in frames
+  def self.transition(duration = 6, filename = "", vague = 20)
+    duration = 6
     begin
-      transition_KGC_SpecialTransition(duration, filename, vague)
+      transition_KGC_SpecialTransition(duration, "", vague)
     rescue Exception
-      transition_KGC_SpecialTransition(duration, "", vague) if filename != ""
-    end
-    if STOP_WHILE_TRANSITION && !@_interrupt_transition
-      while @@transition && !@@transition.disposed?
-        update
-      end
     end
   end
 

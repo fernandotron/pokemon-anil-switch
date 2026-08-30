@@ -1939,19 +1939,42 @@ def pbWarmupCoreAssets!; end
   if (s.name.includes('BattleIntroAnim') || (s.code.includes('def pbBattleAnimationCore') && s.code.includes('SpecialBattleIntroAnimations'))) {
     console.log('Patching Overworld_BattleIntroAnim in:', s.name);
     s.code = s.code.replace(
-      /def pbBattleAnimationCore\(anim, viewport, location, num_flashes = 2\)[\s\S]*?end\s*\n\s*#={10,}/m,
-`def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2)
-  # Flash rápido y sin bloqueos de GPU en Switch
-  c = (location == 2 || PBDayNight.isNight?) ? 0 : 255
-  viewport.color = Color.new(c, c, c, 255)
-  6.times do |i|
-    viewport.color.alpha = ((6 - i) * 42).clamp(0, 255)
+      /def pbBattleAnimation\(bgm = nil, battletype = 0, foe = nil\)[\s\S]*?def pbBattleAnimationCore[\s\S]*?end\s*\n\s*#={10,}/m,
+`def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
+  $game_temp.in_battle = true
+  viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
+  viewport.z = 99999
+  playingBGS = $game_system&.getPlayingBGS
+  playingBGM = $game_system&.getPlayingBGM
+  bgm = pbGetWildBattleBGM([]) if !bgm
+  pbBGMPlay(bgm)
+  
+  # Flash rápido y transición fluida en Switch (0.12s)
+  viewport.color = Color.new(255, 255, 255, 255)
+  5.times do |i|
+    viewport.color.alpha = ((5 - i) * 50).clamp(0, 255)
     Graphics.update
   end
   Graphics.freeze
   viewport.color = Color.black
-  Graphics.transition(10)
+  Graphics.transition(6)
+  
+  pbPushFade
+  yield if block_given?
+  pbPopFade
+  if $game_system.is_a?(Game_System)
+    $game_system.bgm_resume(playingBGM)
+    $game_system.bgs_resume(playingBGS)
+  end
+  $game_temp.memorized_bgm          = nil
+  $game_temp.memorized_bgm_position = 0
+  $PokemonGlobal.nextBattleBGM      = nil
+  $PokemonEncounters.reset_step_count
+  viewport.dispose
+  $game_temp.in_battle = false
 end
+
+def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2); end
 
 #===============================================================================`
     );

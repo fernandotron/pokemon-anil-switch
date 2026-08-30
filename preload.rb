@@ -1196,7 +1196,22 @@ module ::Audio
       alias __switch_native_se_play se_play rescue nil
     end
 
+    $AUDIO_SE_QUEUE ||= Queue.new
     $LAST_SE_TIME ||= {}
+
+    $AUDIO_WORKER_THREAD ||= Thread.new do
+      Thread.current.priority = -2 rescue nil
+      loop do
+        begin
+          item = $AUDIO_SE_QUEUE.pop
+          if item && item.is_a?(Array)
+            file, vol, pit = item
+            __switch_native_se_play(file, vol, pit) rescue nil
+          end
+        rescue Exception
+        end
+      end
+    end
 
     def resolve_audio_file(path, exts = nil, default_dir = "Audio/SE")
       return "" if path.nil? || path.to_s.empty?
@@ -1275,9 +1290,6 @@ module ::Audio
     rescue Exception
     end
 
-    $LAST_SE_TIME ||= {}
-    $LAST_GLOBAL_SE_TIME ||= 0.0
-
     def se_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/SE")
@@ -1285,21 +1297,18 @@ module ::Audio
 
       now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
 
-      # 1. Debounce idéntico: no reproducir el mismo SE más de una vez cada 45ms
+      # 1. Debounce idéntico: no reproducir el mismo SE más de una vez cada 40ms
       last = $LAST_SE_TIME[file]
-      if last && (now - last) < 0.045
+      if last && (now - last) < 0.040
         return
       end
       $LAST_SE_TIME[file] = now
       $LAST_SE_TIME.clear if $LAST_SE_TIME.length > 200
 
-      # 2. Limitador global: no saturar más de 1 SE cada 10ms
-      if (now - $LAST_GLOBAL_SE_TIME) < 0.010
-        return
+      # 2. Enviar a la cola asíncrona (0ms de bloqueo en el hilo de renderizado)
+      if $AUDIO_SE_QUEUE.size < 6
+        $AUDIO_SE_QUEUE.push([file, (volume || 100).to_i, (pitch || 100).to_i])
       end
-      $LAST_GLOBAL_SE_TIME = now
-
-      __switch_native_se_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
     end
   end
