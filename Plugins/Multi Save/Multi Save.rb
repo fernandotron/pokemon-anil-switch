@@ -814,7 +814,8 @@ end
 
 # When I needed extra data fields in the save file I put them in Player because it seemed easier than figuring out
 # how to make a save file conversion, and I prefer to maintain backwards compatibility.
-class Player
+class Trainer; end unless defined?(Trainer)
+class Player < Trainer
   attr_accessor :last_time_saved
   attr_accessor :save_slot
   attr_accessor :last_save_slot

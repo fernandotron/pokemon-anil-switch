@@ -27,8 +27,11 @@ $RESOLVED_BITMAP_CACHE ||= {}
 
 if File.exist?("Data/switch_assets_index.rb")
   begin
-    load "Data/switch_assets_index.rb"
-    log_compat("[Switch Assets] Cargados #{$GRAPHICS_LOOKUP_TABLE.length rescue 0} graficos y #{$AUDIO_LOOKUP_TABLE.length rescue 0} audios pre-indexados en RAM con exito.") rescue nil
+    code = File.open("Data/switch_assets_index.rb", "rb") { |f| f.read }
+    if code && !code.empty?
+      TOPLEVEL_BINDING.eval(code, "Data/switch_assets_index.rb")
+      log_compat("[Switch Assets] Cargados #{$GRAPHICS_LOOKUP_TABLE.length rescue 0} graficos y #{$AUDIO_LOOKUP_TABLE.length rescue 0} audios pre-indexados en RAM con exito.") rescue nil
+    end
   rescue Exception => e
     log_compat("[Warning Switch Assets Index] #{e.message}") rescue nil
   end
@@ -311,7 +314,8 @@ module ::SaveData
   end
 end
 
-class ::Player
+class ::Trainer; end unless defined?(::Trainer)
+class ::Player < ::Trainer
   attr_accessor :last_time_saved, :save_slot, :last_save_slot, :autosave_steps unless method_defined?(:save_slot)
 end
 
@@ -1999,6 +2003,7 @@ module Kernel
       src = src.gsub(/class\s+(Rect|Color|Tone)\s*<\s*Object/m, 'class \1')
       src = src.gsub(/class\s+(GameStats|Game_Temp|PokemonSystem)\s*<\s*\1/m, 'class \1')
       src = src.gsub(/class\s+(ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/m, 'class \1')
+      src = src.gsub(/class\s+Player\b(?!\s*<\s*Trainer)/, 'class Trainer; end unless defined?(Trainer); class Player < Trainer')
       src = src.gsub(/(?<!::)\bSaveData\.initialize_bootup_values\b/, '(SaveData.respond_to?(:initialize_bootup_values) ? SaveData.initialize_bootup_values : nil)')
       src = src.gsub(/(?<!::)\bSaveData\.load_bootup_values\((.*?)\)/, '(SaveData.respond_to?(:load_bootup_values) ? SaveData.load_bootup_values(\1) : nil)')
       src = src.gsub(/def\s+pbSetResizeFactor\b.*?\nend\b/m, "def pbSetResizeFactor(factor = 0); Graphics.fixed_aspect_ratio = (factor == 1) rescue nil; Graphics.integer_scaling = false rescue nil; Graphics.smooth_scaling = 3 rescue nil; Graphics.fullscreen = true rescue nil; end")
