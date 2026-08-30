@@ -1239,10 +1239,9 @@ module ::Audio
         end
       end
 
-      # No hacer llamadas de disco síncronas para evitar micro-stuttering
-      res = p
-      $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res
-      return res
+      # No retornar rutas inválidas sin extensión para evitar bloqueos en el disco
+      $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = ""
+      return ""
     end
 
     def bgm_play(filename, volume = 100, pitch = 100, pos = 0.0, track = nil)
@@ -1276,19 +1275,29 @@ module ::Audio
     rescue Exception
     end
 
+    $LAST_SE_TIME ||= {}
+    $LAST_GLOBAL_SE_TIME ||= 0.0
+
     def se_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/SE")
       return if file.nil? || file.empty?
 
-      # Debouncing: Evita reproducir el mismo efecto de sonido más de una vez cada 35ms (saltos/carreras)
       now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
+
+      # 1. Debounce idéntico: no reproducir el mismo SE más de una vez cada 45ms
       last = $LAST_SE_TIME[file]
-      if last && (now - last) < 0.035
+      if last && (now - last) < 0.045
         return
       end
       $LAST_SE_TIME[file] = now
-      $LAST_SE_TIME.clear if $LAST_SE_TIME.length > 300
+      $LAST_SE_TIME.clear if $LAST_SE_TIME.length > 200
+
+      # 2. Limitador global: no saturar más de 1 SE cada 10ms
+      if (now - $LAST_GLOBAL_SE_TIME) < 0.010
+        return
+      end
+      $LAST_GLOBAL_SE_TIME = now
 
       __switch_native_se_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
@@ -1296,78 +1305,12 @@ module ::Audio
   end
 end
 
-def warmup_audio_buffers!
-  return unless defined?(::Audio) && ::Audio.respond_to?(:se_play)
-  
-  common_ses = [
-    # UI & Menus (Including DP Pause Menu)
-    "Audio/SE/Voltorb Flip point",
-    "Audio/SE/Voltorb Flip mark",
-    "Audio/SE/GUI sel cursor",
-    "Audio/SE/GUI sel decision",
-    "Audio/SE/GUI sel cancel",
-    "Audio/SE/GUI sel buzzer",
-    "Audio/SE/GUI menu open",
-    "Audio/SE/GUI menu close",
-    "Audio/SE/GUI save choice",
-    "Audio/SE/GUI bag cursor",
-    "Audio/SE/GUI bag pocket",
-    "Audio/SE/GUI pokedex open",
-    "Audio/SE/GUI party switch",
-    "Audio/SE/GUI summary change page",
-    "Audio/SE/GUI storage pick up",
-    "Audio/SE/GUI storage put down",
-    "Audio/SE/GUI storage show party panel",
-    "Audio/SE/GUI storage hide party panel",
-    "Audio/SE/GUI naming confirm",
-    "Audio/SE/GUI trainer card open",
-    
-    # Overworld & Movement
-    "Audio/SE/Player jump",
-    "Audio/SE/jump",
-    "Audio/SE/Player bump",
-    "Audio/SE/Door enter",
-    "Audio/SE/Entering Door",
-    "Audio/SE/Door exit",
-    "Audio/SE/Exit Door",
-    "Audio/SE/Door slide",
-    "Audio/SE/pkmn_ball",
-    "Audio/SE/Recall",
-    "Audio/SE/Bicycle",
-    "Audio/SE/Exclaim",
-    "Audio/SE/Itemfinder",
-    
-    # Battle Basics & SFX
-    "Audio/SE/Battle ball drop",
-    "Audio/SE/Battle ball hit",
-    "Audio/SE/Battle ball shake",
-    "Audio/SE/Battle catch click",
-    "Audio/SE/Battle throw",
-    "Audio/SE/Battle recall",
-    "Audio/SE/Battle jump to ball",
-    "Audio/SE/Battle flee",
-    "Audio/SE/Battle damage normal",
-    "Audio/SE/Battle damage super",
-    "Audio/SE/Battle damage weak"
-  ]
-
-  common_ses.each do |se_path|
-    begin
-      if ::Audio.respond_to?(:__switch_native_se_play)
-        ::Audio.__switch_native_se_play(se_path, 0, 100) rescue nil
-      else
-        ::Audio.se_play(se_path, 0, 100) rescue nil
-      end
-    rescue Exception => e
-    end
+module FileTest
+  def self.audio_exist?(filename)
+    return true if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
+    exist?(filename)
   end
-  ::Audio.se_stop rescue nil
-  log_compat("[Switch Audio] Precalentados #{common_ses.length} efectos de sonido comunes en buffers de OpenAL.") rescue nil
-rescue Exception => e
-  log_compat("[Warning warmup_audio_buffers] #{e.message}") rescue nil
 end
-
-warmup_audio_buffers!
 
 def getPlayTime(filename)
   120.0

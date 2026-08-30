@@ -1155,6 +1155,11 @@ end
 #===============================================================================
 def pbPlayCryOnOverworld(pokemon,form=0,volume=30,pitch=100) # default volume=90
   return if !pokemon || pitch <= 0
+  $LAST_OW_CRY_TIME ||= 0.0
+  now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
+  return if (now - $LAST_OW_CRY_TIME) < 3.0 # Limitar a 1 grito cada 3s para máxima fluidez en hierba alta
+  $LAST_OW_CRY_TIME = now
+
   form = 0 if form.nil?
   if pokemon.is_a?(Pokemon)
     return if pokemon.egg?

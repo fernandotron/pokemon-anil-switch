@@ -1927,7 +1927,33 @@ end
     Audio.se_play(file, vol, pit)
   end
 end
+
+def pbPreloadAudioSE(name); end
+def pbPreloadMapEncountersAudio(map_id = nil); end
+def pbWarmupCoreAssets!; end
 `
+    );
+    changed = true;
+  }
+
+  if (s.name.includes('BattleIntroAnim') || (s.code.includes('def pbBattleAnimationCore') && s.code.includes('SpecialBattleIntroAnimations'))) {
+    console.log('Patching Overworld_BattleIntroAnim in:', s.name);
+    s.code = s.code.replace(
+      /def pbBattleAnimationCore\(anim, viewport, location, num_flashes = 2\)[\s\S]*?end\s*\n\s*#={10,}/m,
+`def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2)
+  # Flash rápido y sin bloqueos de GPU en Switch
+  c = (location == 2 || PBDayNight.isNight?) ? 0 : 255
+  viewport.color = Color.new(c, c, c, 255)
+  6.times do |i|
+    viewport.color.alpha = ((6 - i) * 42).clamp(0, 255)
+    Graphics.update
+  end
+  Graphics.freeze
+  viewport.color = Color.black
+  Graphics.transition(10)
+end
+
+#===============================================================================`
     );
     changed = true;
   }
