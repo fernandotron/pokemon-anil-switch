@@ -1358,6 +1358,101 @@ end
 warmup_core_switch_audio!
 prewarm_pause_menu_graphics!
 
+class AnimFrame
+  X          = 0
+  Y          = 1
+  ZOOMX      = 2
+  ANGLE      = 3
+  MIRROR     = 4
+  BLENDTYPE  = 5
+  VISIBLE    = 6
+  PATTERN    = 7
+  OPACITY    = 8
+  ZOOMY      = 11
+  COLORRED   = 12
+  COLORGREEN = 13
+  COLORBLUE  = 14
+  COLORALPHA = 15
+  TONERED    = 16
+  TONEGREEN  = 17
+  TONEBLUE   = 18
+  TONEGRAY   = 19
+  LOCKED     = 20
+  FLASHRED   = 21
+  FLASHGREEN = 22
+  FLASHBLUE  = 23
+  FLASHALPHA = 24
+  PRIORITY   = 25
+  FOCUS      = 26
+end unless defined?(AnimFrame)
+
+class PBAnimTiming
+  attr_accessor :frame
+  attr_writer   :timingType
+  attr_accessor :name
+  attr_accessor :volume
+  attr_accessor :pitch
+  attr_accessor :bgX
+  attr_accessor :bgY
+  attr_accessor :opacity
+  attr_accessor :colorRed
+  attr_accessor :colorGreen
+  attr_accessor :colorBlue
+  attr_accessor :colorAlpha
+  attr_writer   :duration
+  attr_accessor :flashScope
+  attr_accessor :flashColor
+  attr_accessor :flashDuration
+
+  def initialize(type = 0)
+    @frame         = 0
+    @timingType    = type
+    @name          = ""
+    @volume        = 80
+    @pitch         = 100
+    @duration      = 5
+    @flashScope    = 0
+    @flashColor    = (Color.white rescue nil)
+    @flashDuration = 5
+  end
+
+  def timingType; @timingType || 0; end
+  def duration; @duration || 5; end
+end unless defined?(PBAnimTiming)
+
+class PBAnimation < Array
+  include Enumerable
+  attr_accessor :id, :name, :graphic, :hue, :position, :speed, :array, :timing
+  MAX_SPRITES = 60
+
+  def speed; @speed || 20; end
+  def initialize(size = 1)
+    @id = -1; @name = ""; @graphic = ""; @hue = 0; @position = 4; @array = []; @timing = []; @scope = 0
+  end
+  def length; @array.length; end
+  def each; @array.each { |i| yield i }; end
+  def [](i); @array[i]; end
+  def []=(i, value); @array[i] = value; end
+end unless defined?(PBAnimation)
+
+class PBAnimations < Array
+  include Enumerable
+  attr_reader   :array
+  attr_accessor :selected
+
+  def initialize(size = 1)
+    @array = []; @selected = 0
+  end
+  def length; @array.length; end
+  def each; @array.each { |i| yield i }; end
+  def [](i); @array[i]; end
+  def []=(i, value); @array[i] = value; end
+  def get_from_name(name)
+    @array.each { |i| return i if i&.name == name }
+    nil
+  end
+end unless defined?(PBAnimations)
+
 module TrainerSensor
   BAR_OPACITY = 32 unless defined?(BAR_OPACITY)
   SELF_SWITCH = "A" unless defined?(SELF_SWITCH)
