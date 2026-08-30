@@ -2053,9 +2053,10 @@ class ::Object
   def get_self; Kernel.get_self; end unless method_defined?(:get_self)
 end
 
-class ::Game_Player
-  def onEvent?; true; end unless method_defined?(:onEvent?)
-end
+class ::Game_Character; end unless defined?(::Game_Character)
+class ::Game_Player < ::Game_Character; end unless defined?(::Game_Player)
+class ::Game_Event < ::Game_Character; end unless defined?(::Game_Event)
+
 class ::Game_Character
   def onEvent?; true; end unless method_defined?(:onEvent?)
 end
