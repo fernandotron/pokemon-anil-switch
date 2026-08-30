@@ -1239,7 +1239,19 @@ module ::Audio
         end
       end
 
-      res = p.start_with?("Audio/") ? p : "#{default_dir}/#{p}"
+      # Fallback: buscar con .ogg / .wav
+      clean_p = p.sub(/\.[^.]+$/, "")
+      cand = p.start_with?("Audio/") ? clean_p : "#{default_dir}/#{clean_p}"
+      [cand + ".ogg", cand + ".wav", cand + ".mp3", p].each do |test_f|
+        if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && $AUDIO_LOOKUP_TABLE[test_f.downcase]
+          found = $AUDIO_LOOKUP_TABLE[test_f.downcase]
+          $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
+          return found
+        end
+      end
+
+      # Si tiene extensión válida (.ogg/.wav), permitir intentar; si no, devolver vacío para evitar bloqueos de disco
+      res = (p.end_with?(".ogg") || p.end_with?(".wav") || p.end_with?(".mp3")) ? (p.start_with?("Audio/") ? p : "#{default_dir}/#{p}") : ""
       $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res
       return res
     end
@@ -1294,6 +1306,35 @@ module ::Audio
     rescue Exception
     end
   end
+end
+
+def warmup_core_switch_audio!
+  core_sounds = [
+    "Player jump", "jump", "Player bump",
+    "GUI sel cursor", "GUI sel decision", "GUI sel cancel", "GUI sel buzzer",
+    "GUI menu open", "GUI menu close", "GUI save choice", "GUI bag pocket", "GUI bag cursor",
+    "Door enter", "Door exit", "Door slide", "pkmn_ball", "Recall",
+    "Battle ball throw", "Battle ball hit", "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee"
+  ]
+  core_sounds.each do |s|
+    resolved = ::Audio.resolve_audio_file(s, nil, "Audio/SE")
+    if resolved && !resolved.empty?
+      ::Audio.__switch_native_se_play(resolved, 0, 100) rescue nil
+    end
+  end
+  ::Audio.se_stop rescue nil
+  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento en OpenAL RAM.") rescue nil
+rescue Exception => e
+  log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
+end
+
+warmup_core_switch_audio!
+
+module TrainerSensor
+  BAR_OPACITY = 32 unless defined?(BAR_OPACITY)
+  SELF_SWITCH = "A" unless defined?(SELF_SWITCH)
+  BAR_HEIGHT  = 64 unless defined?(BAR_HEIGHT)
+  BAR_GRAPHIC = "" unless defined?(BAR_GRAPHIC)
 end
 
 class PokemonSystem

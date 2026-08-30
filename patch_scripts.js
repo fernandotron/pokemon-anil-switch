@@ -1071,19 +1071,26 @@ end`);
 
   if (s.name.includes('Barras entrenadores') || s.code.includes('module TrainerSensor')) {
     console.log('Patching Barras entrenadores in:', s.name);
-    s.code = s.code.replace(/module\s+TrainerSensor[\s\S]*?@created\s*=\s*false/m,
-`module TrainerSensor
+    s.code = `
+module TrainerSensor
+  BAR_OPACITY = 32
+  SELF_SWITCH = "A"
+  BAR_HEIGHT  = 64
+  BAR_GRAPHIC = ""
   @top = nil
   @bottom = nil
   @triggered = false
-  @created = false`);
-    s.code = s.code.replace(/def\s+self\.create\(distance\)\s*\n\s*(?:@top\s*=\s*Sprite\.new[\s\S]*?)?if\s+!@created/m,
-`def self.create(distance)
-    @top = Sprite.new if !@top || @top.disposed?
-    @top.z = 1 if @top.respond_to?(:z=)
-    @bottom = Sprite.new if !@bottom || @bottom.disposed?
-    @bottom.z = 1 if @bottom.respond_to?(:z=)
-    if !@created`);
+  @created = false
+  
+  def self.triggered?; return @triggered; end
+  def self.hide; @triggered = false; end
+  def self.hide_immediate; @triggered = false; end
+  def self.show(entrenador); @triggered = true; end
+  def self.update; end
+  def self.create(distance); end
+  def self.dispose; end
+end
+`;
     changed = true;
   }
 
