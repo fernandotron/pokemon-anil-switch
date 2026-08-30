@@ -1317,62 +1317,6 @@ module ::Audio
   end
 end
 
-def warmup_core_switch_audio!
-  core_sounds = [
-    "Player jump", "jump", "Player bump",
-    "GUI sel cursor", "GUI sel decision", "GUI sel cancel", "GUI sel buzzer",
-    "GUI menu open", "GUI menu close", "GUI save choice", "GUI bag pocket", "GUI bag cursor",
-    "Door enter", "Door exit", "Door slide", "pkmn_ball", "Recall",
-    "Battle ball throw", "Battle throw", "Battle ball hit", "Battle ball drop", "Battle ball shake",
-    "Battle ball capture", "Battle critical catch throw", "Battle jump to ball",
-    "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee",
-    "Battle capture success", "Battle victory", "itemget", "Item get", "Voltorb Flip point"
-  ]
-  core_sounds.each do |s|
-    resolved = ::Audio.resolve_audio_file(s, nil, "Audio/SE")
-    if resolved && !resolved.empty?
-      ::Audio.__switch_native_se_play(resolved, 0, 100) rescue nil
-    end
-  end
-  ::Audio.se_stop rescue nil
-  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento/captura en OpenAL RAM.") rescue nil
-rescue Exception => e
-  log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
-end
-
-def prewarm_pause_menu_graphics!
-  return unless defined?(RPG::Cache)
-  dp_icons = [
-    "bgTop", "bgMid", "bgBtm", "selector",
-    "pokedexA", "pokedexB",
-    "pokemonA", "pokemonB",
-    "bagA", "bagBm", "bagBf",
-    "PlayercardA", "PlayercardB",
-    "saveA", "saveBm", "saveBf",
-    "optionsA", "optionsB",
-    "exitA", "exitB"
-  ]
-  dp_icons.each do |ic|
-    RPG::Cache.load_bitmap("Graphics/Pictures/DP Pause Menu/", ic) rescue nil
-  end
-rescue Exception
-end
-
-def verify_and_preload_battle_animations!
-  if File.exist?("Data/PkmnAnimations.rxdata")
-    begin
-      $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
-      log_compat("[Switch Animations] Cargadas #{$PokemonBattleAnimations.length rescue 0} animaciones de combate desde PkmnAnimations.rxdata.") rescue nil
-    rescue Exception => e
-      log_compat("[Warning PkmnAnimations] #{e.message}") rescue nil
-    end
-  end
-end
-
-warmup_core_switch_audio!
-prewarm_pause_menu_graphics!
-verify_and_preload_battle_animations!
-
 class AnimFrame
   X          = 0
   Y          = 1
@@ -1444,10 +1388,10 @@ class PBAnimation < Array
   def initialize(size = 1)
     @id = -1; @name = ""; @graphic = ""; @hue = 0; @position = 4; @array = []; @timing = []; @scope = 0
   end
-  def length; @array.length; end
-  def each; @array.each { |i| yield i }; end
-  def [](i); @array[i]; end
-  def []=(i, value); @array[i] = value; end
+  def length; (@array ? @array.length : super); end
+  def each; if @array then @array.each { |i| yield i } else super { |i| yield i } end; end
+  def [](i); (@array ? @array[i] : super(i)); end
+  def []=(i, value); if @array then @array[i] = value else super(i, value) end; end
 end unless defined?(PBAnimation)
 
 class PBAnimations < Array
@@ -1458,15 +1402,77 @@ class PBAnimations < Array
   def initialize(size = 1)
     @array = []; @selected = 0
   end
-  def length; @array.length; end
-  def each; @array.each { |i| yield i }; end
-  def [](i); @array[i]; end
-  def []=(i, value); @array[i] = value; end
+  def length; (@array ? @array.length : super); end
+  def each; if @array then @array.each { |i| yield i } else super { |i| yield i } end; end
+  def [](i); (@array ? @array[i] : super(i)); end
+  def []=(i, value); if @array then @array[i] = value else super(i, value) end; end
   def get_from_name(name)
-    @array.each { |i| return i if i&.name == name }
+    list = @array || self
+    list.each { |i| return i if i&.name == name }
     nil
   end
 end unless defined?(PBAnimations)
+
+def warmup_core_switch_audio!
+  core_sounds = [
+    "Player jump", "jump", "Player bump",
+    "GUI sel cursor", "GUI sel decision", "GUI sel cancel", "GUI sel buzzer",
+    "GUI menu open", "GUI menu close", "GUI save choice", "GUI bag pocket", "GUI bag cursor",
+    "Door enter", "Door exit", "Door slide", "pkmn_ball", "Recall",
+    "Battle ball throw", "Battle throw", "Battle ball hit", "Battle ball drop", "Battle ball shake",
+    "Battle ball capture", "Battle critical catch throw", "Battle jump to ball",
+    "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee",
+    "Battle capture success", "Battle victory", "itemget", "Item get", "Voltorb Flip point",
+    "Audio/ME/Item get.wav", "Audio/ME/Key item get.ogg", "Audio/ME/Badge get.ogg",
+    "Audio/ME/Machine get.ogg", "Audio/ME/Battle capture success.ogg", "Audio/ME/Pkmn get.wav",
+    "Audio/ME/Pkmn healing.ogg", "Audio/ME/Pokemon Healing.ogg",
+    "Audio/ME/Evolution start.ogg", "Audio/ME/Evolution success.ogg",
+    "Audio/ME/VictoriaSalvaje.ogg", "Audio/ME/VictoriaEntrenador.ogg"
+  ]
+  core_sounds.each do |s|
+    resolved = ::Audio.resolve_audio_file(s, nil, "Audio/SE")
+    if resolved && !resolved.empty?
+      ::Audio.__switch_native_se_play(resolved, 0, 100) rescue nil
+    end
+  end
+  ::Audio.se_stop rescue nil
+  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento/captura/ME en OpenAL RAM.") rescue nil
+rescue Exception => e
+  log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
+end
+
+def prewarm_pause_menu_graphics!
+  return unless defined?(RPG::Cache)
+  dp_icons = [
+    "bgTop", "bgMid", "bgBtm", "selector",
+    "pokedexA", "pokedexB",
+    "pokemonA", "pokemonB",
+    "bagA", "bagBm", "bagBf",
+    "PlayercardA", "PlayercardB",
+    "saveA", "saveBm", "saveBf",
+    "optionsA", "optionsB",
+    "exitA", "exitB"
+  ]
+  dp_icons.each do |ic|
+    RPG::Cache.load_bitmap("Graphics/Pictures/DP Pause Menu/", ic) rescue nil
+  end
+rescue Exception
+end
+
+def verify_and_preload_battle_animations!
+  if File.exist?("Data/PkmnAnimations.rxdata")
+    begin
+      $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+      log_compat("[Switch Animations] Cargadas #{$PokemonBattleAnimations.length rescue 0} animaciones de combate desde PkmnAnimations.rxdata.") rescue nil
+    rescue Exception => e
+      log_compat("[Warning PkmnAnimations] #{e.message}") rescue nil
+    end
+  end
+end
+
+warmup_core_switch_audio!
+prewarm_pause_menu_graphics!
+verify_and_preload_battle_animations!
 
 module TrainerSensor
   BAR_OPACITY = 32 unless defined?(BAR_OPACITY)

@@ -105,11 +105,7 @@ if Settings::SHOW_ITEM_DESCRIPTIONS_ON_RECEIVE
         Graphics.update
         Input.update
         pbUpdateSceneMap
-        if Input.trigger?(Input::BACK) || Input.trigger?(Input::USE)
-          while Input.trigger?(Input::BACK) || Input.trigger?(Input::USE)
-            Graphics.update
-            Input.update
-          end
+        if Input.trigger?(Input::BACK) || Input.trigger?(Input::USE) || Input.trigger?(Input::ACTION)
           pbEndScene
           break
         end
