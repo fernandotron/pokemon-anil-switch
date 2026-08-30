@@ -1,0 +1,6 @@
+Name       = Stream Overlay Updater
+Version    = 1.0.3
+Essentials = 21.1
+Optional   = Multi Save,1.4 
+Credits    = DPertierra
+Disabled   = 

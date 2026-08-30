@@ -1,0 +1,26 @@
+# Interruptores
+MODO_CLASICO  = 64 unless defined?(MODO_CLASICO)
+NO_EXP_SWITCH = 661 unless defined?(NO_EXP_SWITCH)
+SWITCH_ONLINE_COMBATE = 133 unless defined?(SWITCH_ONLINE_COMBATE)
+SWITCH_ONLINE_INTERCAMBIO = 134 unless defined?(SWITCH_ONLINE_INTERCAMBIO)
+ENCENDER_PC_ONLINE = 136 unless defined?(ENCENDER_PC_ONLINE)
+OW_ENCOUNTER_SWITCH = 141 unless defined?(OW_ENCOUNTER_SWITCH)
+MODO_VGC = 147 unless defined?(MODO_VGC)
+MODO_INVERSO = 148 unless defined?(MODO_INVERSO)
+MODO_SIN_GRINDEO = 149 unless defined?(MODO_SIN_GRINDEO)
+COMBATE_MEWTWO = 155 unless defined?(COMBATE_MEWTWO)
+MODO_RADICAL = 666 unless defined?(MODO_RADICAL)
+
+module Kernel
+  MODO_CLASICO = 64 unless const_defined?(:MODO_CLASICO)
+  NO_EXP_SWITCH = 661 unless const_defined?(:NO_EXP_SWITCH)
+  SWITCH_ONLINE_COMBATE = 133 unless const_defined?(:SWITCH_ONLINE_COMBATE)
+  SWITCH_ONLINE_INTERCAMBIO = 134 unless const_defined?(:SWITCH_ONLINE_INTERCAMBIO)
+  ENCENDER_PC_ONLINE = 136 unless const_defined?(:ENCENDER_PC_ONLINE)
+  OW_ENCOUNTER_SWITCH = 141 unless const_defined?(:OW_ENCOUNTER_SWITCH)
+  MODO_VGC = 147 unless const_defined?(:MODO_VGC)
+  MODO_INVERSO = 148 unless const_defined?(:MODO_INVERSO)
+  MODO_SIN_GRINDEO = 149 unless const_defined?(:MODO_SIN_GRINDEO)
+  COMBATE_MEWTWO = 155 unless const_defined?(:COMBATE_MEWTWO)
+  MODO_RADICAL = 666 unless const_defined?(:MODO_RADICAL)
+end

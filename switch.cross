@@ -1,0 +1,72 @@
+[binaries]
+c = 'aarch64-none-elf-gcc'
+cpp = 'aarch64-none-elf-g++'
+ar = 'aarch64-none-elf-gcc-ar'
+strip = 'aarch64-none-elf-strip'
+pkgconfig = '/opt/devkitpro/portlibs/switch/bin/aarch64-none-elf-pkg-config'
+
+[built-in options]
+c_args = [
+  '-march=armv8-a',
+  '-mtune=cortex-a57',
+  '-mtp=soft',
+  '-fPIE',
+  '-O3',
+  '-ffunction-sections',
+  '-fdata-sections',
+  '-I/opt/devkitpro/libnx/include',
+  '-I/opt/devkitpro/portlibs/switch/include',
+  '-D__SWITCH__',
+  '-D__NX__'
+  ]
+
+cpp_args = [
+  '-march=armv8-a',
+  '-mtune=cortex-a57',
+  '-mtp=soft',
+  '-fPIE',
+  '-O3',
+  '-ffunction-sections',
+  '-fdata-sections',
+  '-I/opt/devkitpro/libnx/include',
+  '-I/opt/devkitpro/portlibs/switch/include',
+  '-D__SWITCH__',
+  '-D__NX__'
+  ]
+
+c_link_args = [
+  '-specs=/opt/devkitpro/libnx/switch.specs',
+  '-march=armv8-a',
+  '-mtune=cortex-a57',
+  '-mtp=soft',
+  '-fPIE',
+  '-L/opt/devkitpro/libnx/lib',
+  '-L/opt/devkitpro/portlibs/switch/lib',
+  '-Wl,-Map,port.map',
+  '-Wl,--gc-sections',
+  '-lnx'
+  ]
+
+cpp_link_args = [
+  '-specs=/opt/devkitpro/libnx/switch.specs',
+  '-march=armv8-a',
+  '-mtune=cortex-a57',
+  '-mtp=soft',
+  '-fPIE',
+  '-L/opt/devkitpro/libnx/lib',
+  '-L/opt/devkitpro/portlibs/switch/lib',
+  '-Wl,-Map,port.map',
+  '-Wl,--gc-sections',
+  '-lnx'
+  ]
+
+
+[host_machine]
+system = 'horizon'
+cpu_family = 'aarch64'
+cpu = 'cortex-a57'
+endian = 'little'
+
+[properties]
+needs_exe_wrapper = true
+pkg_config_libdir = '/opt/devkitpro/portlibs/switch/lib/pkgconfig'

@@ -1,0 +1,5 @@
+Name         = PauseMenuDP
+Version      = 1.5
+Website      = https://reliccastle.com/resources/164/
+Credits      = Marin, Maryn (Adaptarlo a v21.1)
+Essentials   = 21.1

@@ -1,0 +1,5 @@
+﻿Name       = Marin's Footprints
+Version    = 1.2
+Essentials = 21.1
+Website    = https://reliccastle.com/resources/406/
+Credits    = Marin, Skyflyer

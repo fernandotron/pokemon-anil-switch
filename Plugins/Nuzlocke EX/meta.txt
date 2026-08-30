@@ -1,0 +1,9 @@
+Name       = Challenge Modes
+Version    = 1.0.2
+Essentials = 21.1
+Requires   = v21.1 Hotfixes, 1.0.7
+Optional   = Multi Save,1.4,
+Optional   = Monotype Challenge,1.0.6
+Website    = https://www.youtube.com/watch?v=dQw4w9WgXcQ
+Credits    = Golisopod User, Nononever, Luka S.J., DPertierra, DanzanteSinMega (traducción al español)
+Disabled   = 

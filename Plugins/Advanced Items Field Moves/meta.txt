@@ -1,0 +1,7 @@
+Name	     = Advanced Items - Field Moves
+Version    = 2.0.0b [25w25b]
+Essentials = 21.1
+Website    = https://eeveeexpo.com/resources/981/
+Credits    = Bergium, NoNoNever, TechSkylander1518, Moyo, Marin, Yankas, Cony, Drimer
+Optional   = Secret Bases Remade, 3.0.0  #https://eeveeexpo.com/resources/1135/
+Disabled   = 

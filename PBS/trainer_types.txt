@@ -1,0 +1,1218 @@
+﻿# See the documentation on the wiki to learn how to edit this file.
+#-------------------------------
+[POKEMONTRAINER_RojoNeutro]
+Name = Entrenador
+Gender = Male
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[POKEMONTRAINER_HojaNeutra]
+Name = Entrenadora
+Gender = Female
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[POKEMONTRAINER_RojoArio]
+Name = Entrenador
+Gender = Male
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[POKEMONTRAINER_HojaAria]
+Name = Entrenadora
+Gender = Female
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[POKEMONTRAINER_RojoNegro]
+Name = Entrenador
+Gender = Male
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[POKEMONTRAINER_HojaNegra]
+Name = Entrenadora
+Gender = Female
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[POKEMONTRAINER_Yellow]
+Name = Entrenador
+Gender = Female
+BaseMoney = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[AZUL1]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[ROJO1]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[HOJA1]
+Name = Rival
+Gender = Female
+BaseMoney = 100
+SkillLevel = 40
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[AZUL2]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[CAZABICHOS]
+Name = Cazabichos
+Gender = Male
+BaseMoney = 50
+SkillLevel = 30
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[CAZABICHAS]
+Name = Cazabichos
+Gender = Female
+BaseMoney = 50
+SkillLevel = 30
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[CAMPISTO]
+Name = Campista
+Gender = Male
+BaseMoney = 50
+SkillLevel = 30
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[CAMPISTA]
+Name = Campista
+Gender = Female
+BaseMoney = 50
+SkillLevel = 30
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[LIDER1]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 60
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[CHICO]
+Name = Chico
+Gender = Male
+BaseMoney = 70
+SkillLevel = 30
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[CHICA]
+Name = Chica
+Gender = Female
+BaseMoney = 70
+SkillLevel = 30
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[CEREBRITO]
+Name = Cerebrito
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[MONTANERO]
+Name = Montañero
+Gender = Male
+BaseMoney = 120
+SkillLevel = 30
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[ROJO2]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[HOJA2]
+Name = Rival
+Gender = Female
+BaseMoney = 100
+SkillLevel = 50
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[ROCKETO]
+Name = Recluta Rocket
+Gender = Male
+BaseMoney = 70
+SkillLevel = 40
+VictoryBGM = VictoriaEntrenador.ogg
+IntroBGM = EncuentroRocket.ogg
+BattleBGM = CombateComandante.ogg
+#-------------------------------
+[ROCKETA]
+Name = Recluta Rocket
+Gender = Female
+BaseMoney = 70
+SkillLevel = 40
+VictoryBGM = VictoriaEntrenador.ogg
+IntroBGM = EncuentroRocket.ogg
+BattleBGM = CombateComandante.ogg
+#-------------------------------
+[ATLAS1]
+Name = Comandante Rocket
+Gender = Male
+BaseMoney = 170
+SkillLevel = 60
+BattleBGM = CombateComandante.ogg
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[AZUL3]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 60
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[NADADOR]
+Name = Nadador
+Gender = Male
+BaseMoney = 100
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[NADADORA]
+Name = Nadadora
+Gender = Female
+BaseMoney = 100
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[LIDER2]
+Name = Líder
+Gender = Female
+BaseMoney = 150
+SkillLevel = 65
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[FOTOGRAFA]
+Name = Fotógrafa
+Gender = Female
+BaseMoney = 120
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[DUOCAMPISTA]
+Name = Campistas
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[BRUJITA]
+Name = Brujita
+Gender = Female
+BaseMoney = 120
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[CABALLERO]
+Name = Caballero
+Gender = Male
+BaseMoney = 200
+SkillLevel = 40
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[CABALLERA]
+Name = Dama
+Gender = Female
+BaseMoney = 200
+SkillLevel = 40
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[MARINERO]
+Name = Marinero
+Gender = Male
+BaseMoney = 70
+SkillLevel = 40
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[AZUL4]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[MECANICO]
+Name = Mecánico
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[MECANICA]
+Name = Mecánica
+Gender = Female
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[LIDER3]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 65
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ATENEA1]
+Name = Comandante Rocket
+Gender = Female
+BaseMoney = 170
+SkillLevel = 65
+BattleBGM = CombateComandante.ogg
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ROJO3]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 60
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[HOJA3]
+Name = Rival
+Gender = Female
+BaseMoney = 100
+SkillLevel = 60
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[PESCADORA]
+Name = Pescadora
+Gender = Female
+BaseMoney = 90
+SkillLevel = 30
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[EXORCISTA]
+Name = Exorcista
+Gender = Female
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[AZUL5]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 65
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[LIDER4]
+Name = Líder
+Gender = Female
+BaseMoney = 150
+SkillLevel = 70
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[URANO1]
+Name = Comandante Rocket
+Gender = Male
+BaseMoney = 150
+SkillLevel = 70
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateUrano.ogg
+#-------------------------------
+[DAMISELA]
+Name = Damisela
+Gender = Female
+BaseMoney = 150
+SkillLevel = 30
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[GIOVANNI1]
+Name = Jefe Rocket
+Gender = Male
+BaseMoney = 150
+SkillLevel = 70
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateGiovanni.ogg
+#-------------------------------
+[MOTORISTA]
+Name = Motorista
+Gender = Male
+BaseMoney = 150
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[DUOLUCHA]
+Name = Cuerpo y Mente
+Gender = Female
+BaseMoney = 100
+SkillLevel = 30
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[DUOMOTORISTA]
+Name = Motoristas
+Gender = Male
+BaseMoney = 150
+SkillLevel = 60
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[AGATHA1]
+Name = Maestra
+Gender = Male
+BaseMoney = 150
+SkillLevel = 70
+IntroBGM = EncuentroDuro.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ORNITOLOGO]
+Name = Ornitólogo
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[ROJO4]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 70
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[HOJA4]
+Name = Rival
+Gender = Female
+BaseMoney = 100
+SkillLevel = 70
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[NINJA]
+Name = Ninja
+Gender = Male
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[NINJAA]
+Name = Ninja
+Gender = Female
+BaseMoney = 100
+SkillLevel = 40
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[LIDER5]
+Name = Líderes
+Gender = Female
+BaseMoney = 150
+SkillLevel = 75
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[KARATEKA]
+Name = Karateka
+Gender = Male
+BaseMoney = 150
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[KARATEKAA]
+Name = Karateka
+Gender = Female
+BaseMoney = 150
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[MEDIUM]
+Name = Medium
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[CIENTIFICO]
+Name = Científico
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[ATENEA2]
+Name = Comandante Rocket
+Gender = Female
+BaseMoney = 170
+SkillLevel = 75
+BattleBGM = CombateComandante.ogg
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ATLAS2]
+Name = Comandante Rocket
+Gender = Male
+BaseMoney = 170
+SkillLevel = 75
+BattleBGM = CombateComandante.ogg
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[AZUL6]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 75
+Flags = ReserveLastPokemon
+BattleBGM = CombateRival.ogg
+#-------------------------------
+[GIOVANNI2]
+Name = Jefe Rocket
+Gender = Male
+BaseMoney = 150
+SkillLevel = 75
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateGiovanni.ogg
+#-------------------------------
+[LIDER6]
+Name = Líder
+Gender = Female
+BaseMoney = 150
+SkillLevel = 75
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[PESCADOR]
+Name = Pescador
+Gender = Male
+BaseMoney = 90
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[LADRON]
+Name = Ladrón
+Gender = Male
+BaseMoney = 90
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[CIENTIFICA]
+Name = Científica
+Gender = Female
+BaseMoney = 90
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[SURYA]
+Name = Comandante Rocket
+Gender = Female
+BaseMoney = 170
+SkillLevel = 75
+BattleBGM = CombateSurya.ogg
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER7]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 75
+BattleBGM = CombateLider.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ELITEROCKET]
+Name = Élite Rocket
+Gender = Male
+BaseMoney = 70
+SkillLevel = 50
+VictoryBGM = VictoriaEntrenador.ogg
+IntroBGM = EncuentroRocket.ogg
+BattleBGM = CombateComandante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[SURYA2]
+Name = Comandante Rocket
+Gender = Female
+BaseMoney = 170
+SkillLevel = 75
+BattleBGM = CombateSurya.ogg
+VictoryBGM = VictoriaEntrenador.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[GIOVANNI3]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+BattleBGM = CombateGiovanniFinal.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[AZULALIADO0]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[VETERANO]
+Name = Veterano
+Gender = Male
+BaseMoney = 100
+SkillLevel = 55
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[VETERANA]
+Name = Veterana
+Gender = Female
+BaseMoney = 90
+SkillLevel = 45
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[LIDER8]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateUrano.ogg
+#-------------------------------
+[ROJO5]
+Name = Rival
+Gender = Male
+BaseMoney = 100
+SkillLevel = 80
+Flags = ReserveLastPokemon
+BattleBGM = CombateContraFinal.ogg
+#-------------------------------
+[HOJA5]
+Name = Rival
+Gender = Female
+BaseMoney = 100
+SkillLevel = 80
+Flags = ReserveLastPokemon
+BattleBGM = CombateContraFinal.ogg
+#-------------------------------
+[ALTOMANDO1]
+Name = Alto Mando
+Gender = Male
+BaseMoney = 150
+SkillLevel = 90
+BattleBGM = Elite Four.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ALTOMANDO2]
+Name = Alto Mando
+Gender = Male
+BaseMoney = 150
+SkillLevel = 90
+BattleBGM = Elite Four.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ALTOMANDO3]
+Name = Alto Mando
+Gender = Male
+BaseMoney = 150
+SkillLevel = 90
+BattleBGM = Elite Four.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ALTOMANDO4]
+Name = Alto Mando
+Gender = Male
+BaseMoney = 150
+SkillLevel = 90
+BattleBGM = Elite Four.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[CAMPEON]
+Name = Campeón
+Gender = Male
+BaseMoney = 150
+SkillLevel = 100
+BattleBGM = Campeon Azul.ogg
+VictoryBGM = VictoriaLiga.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[ASH]
+Name = Maestro Pokémon
+Gender = Male
+BaseMoney = 150
+SkillLevel = 100
+BattleBGM = CombateContraFinal.ogg
+VictoryBGM = VictoriaLiga.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[OAK]
+Name = Profesor
+Gender = Male
+BaseMoney = 150
+SkillLevel = 100
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateContraFinal.ogg
+#-------------------------------
+[GUAY]
+Name = Aspirante
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[GUAYA]
+Name = Aspirante
+Gender = Female
+BaseMoney = 90
+SkillLevel = 50
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[AZULALIADO1]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[AZULALIADO2]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER1HOENN]
+Name = Líder Exótico
+Gender = Male
+BaseMoney = 150
+SkillLevel = 55
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER2HOENN]
+Name = Líder Exótica
+Gender = Female
+BaseMoney = 150
+SkillLevel = 55
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER3HOENN]
+Name = Líder Exótica
+Gender = Female
+BaseMoney = 150
+SkillLevel = 60
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER4HOENN]
+Name = Líder Exótico
+Gender = Male
+BaseMoney = 150
+SkillLevel = 60
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER5HOENN]
+Name = Líder Exótica
+Gender = Female
+BaseMoney = 150
+SkillLevel = 65
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER6HOENN]
+Name = Líder Exótico
+Gender = Male
+BaseMoney = 150
+SkillLevel = 65
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER7HOENN]
+Name = Líder Exótico
+Gender = Male
+BaseMoney = 150
+SkillLevel = 70
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[LIDER8HOENN]
+Name = Líderes Exóticos
+Gender = Male
+BaseMoney = 150
+SkillLevel = 70
+BattleBGM = CombateHoenn.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[PRISMM]
+Name = Guardián Prisma
+Gender = Male
+BaseMoney = 100
+SkillLevel = 55
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[PRISMF]
+Name = Guardiana Prisma
+Gender = Female
+BaseMoney = 90
+SkillLevel = 55
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[MAXIMO]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+BattleBGM = CombateMaximo.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[CINTIA]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+BattleBGM = CombateCintia.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[MIRTO]
+Name = Entrenador
+Gender = Male
+BaseMoney = 150
+SkillLevel = 80
+BattleBGM = CombateMirto.ogg
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[DUOPRISMA]
+Name = Guardianes Prisma
+Gender = Female
+BaseMoney = 90
+SkillLevel = 60
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[BILL]
+Name = Pokémaniaco
+Gender = Male
+BaseMoney = 90
+SkillLevel = 60
+IntroBGM = EncuentroDuro.ogg
+Flags = ReserveLastPokemon
+#-------------------------------
+[PRISMA]
+Name = Cazalegendarios
+Gender = Female
+BaseMoney = 150
+SkillLevel = 80
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = PrismaBossFinal.ogg
+#-------------------------------
+[LIDER1REVANCHA]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER2REVANCHA]
+Name = Líder
+Gender = Female
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER3REVANCHA]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER4REVANCHA]
+Name = Líder
+Gender = Female
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER5REVANCHA]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER6REVANCHA]
+Name = Líder
+Gender = Female
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER7REVANCHA]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateLider.ogg
+#-------------------------------
+[LIDER8REVANCHA]
+Name = Líder
+Gender = Male
+BaseMoney = 150
+SkillLevel = 250
+VictoryBGM = Victoria Importante.ogg
+Flags = ReserveLastPokemon
+BattleBGM = CombateUrano.ogg
+#-------------------------------
+[TB1]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB2]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB3]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB4]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB5]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB6]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB7]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB8]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB9]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB10]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB11]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB12]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB13]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB14]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB15]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB16]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB17]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB18]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB19]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB20]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB21]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB22]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB23]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB24]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB25]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB26]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB27]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB28]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[TB29]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB30]
+Name = Contendiente
+Gender = Female
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB31]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB32]
+Name = Contendiente
+Gender = Female
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB33]
+Name = Contendiente
+Gender = Female
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB34]
+Name = Contendiente
+Gender = Female
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB35]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[TB36]
+Name = Contendiente
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+BattleBGM = 
+#-------------------------------
+[DONPRODIGIO]
+Name = Don Prodigio
+Gender = Male
+BaseMoney = 100
+SkillLevel = 50
+#-------------------------------
+[MODELO]
+Name = Modelo
+Gender = Female
+BaseMoney = 150
+SkillLevel = 35
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[JUGON]
+Name = Jugón
+Gender = Male
+BaseMoney = 150
+SkillLevel = 35
+#-------------------------------
+[MALABARISTA]
+Name = Jugón
+Gender = Male
+BaseMoney = 150
+SkillLevel = 35
+#-------------------------------
+[JOVENRICA]
+Name = Modelo
+Gender = Female
+BaseMoney = 150
+SkillLevel = 35
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[ESTUDIANTA]
+Name = Modelo
+Gender = Female
+BaseMoney = 70
+SkillLevel = 30
+IntroBGM = EncuentroFemenino.ogg
+#-------------------------------
+[MACARRA]
+Name = Chico Malo
+Gender = Male
+BaseMoney = 150
+SkillLevel = 45
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[MATON]
+Name = Calvo
+Gender = Male
+BaseMoney = 150
+SkillLevel = 45
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------
+[TECNICO]
+Name = Técnico
+Gender = Male
+BaseMoney = 100
+SkillLevel = 35
+IntroBGM = EncuentroJoven.ogg
+#-------------------------------
+[POKEMANIACO]
+Name = Pokémaníaco
+Gender = Male
+BaseMoney = 100
+SkillLevel = 45
+IntroBGM = EncuentroDuro.ogg
+#-------------------------------

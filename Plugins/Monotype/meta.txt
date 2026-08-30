@@ -1,0 +1,6 @@
+Name       = Monotype Challenge
+Version    = 1.1.0
+Essentials = 21.1
+Optional   = Random Pokemon & Moves + Randomizer EX (Abilities),2.0.0
+Credits    = DPertierra, Skyflyer
+Disabled   =

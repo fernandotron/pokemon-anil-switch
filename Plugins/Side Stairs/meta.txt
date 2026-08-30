@@ -1,0 +1,7 @@
+Name         = Marin Side Stairs
+Version      = 1.0
+Essentials   = 21.1
+Credits      = Marin, Aioros, DPertierra, Skyflyer
+Optional     = Following Pokemon EX, 2.4
+Link         = https://eeveeexpo.com/resources/1712/
+Disabled     = False #True

@@ -1,0 +1,4 @@
+CURRENT_GAME_VERSION=4.1.1
+PASTEBIN_URL=https://pastebin.com/raw/utcX3CyV
+UPDATER_FILENAME=./poke_updater/poke_updater.exe
+FORCE_VERSION_CHECK=true

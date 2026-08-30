@@ -1,0 +1,58 @@
+name: Build Nintendo Switch NRO
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Switch dependencies
+        run: |
+          dkp-pacman -Syu --noconfirm \
+            switch-sdl2 \
+            switch-sdl2_image \
+            switch-sdl2_ttf \
+            switch-sdl2_mixer \
+            switch-mesa \
+            switch-libvorbis \
+            switch-flac \
+            switch-libtheora \
+            switch-freetype \
+            switch-pixman \
+            switch-libphysfs \
+            switch-mbedtls \
+            switch-zlib \
+            switch-bzip2 \
+            switch-pkg-config \
+            switch-tools \
+            devkit-env \
+            meson \
+            ninja \
+            imagemagick \
+            git \
+            build-essential \
+            ruby
+
+      - name: Make build script executable and run
+        run: |
+          chmod +x build_switch.sh
+          ./build_switch.sh
+
+      - name: Upload NRO Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokemonAnil-Switch-NRO
+          path: port.nro

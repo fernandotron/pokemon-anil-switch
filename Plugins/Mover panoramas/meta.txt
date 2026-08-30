@@ -1,0 +1,4 @@
+﻿Name       = Mover panorama
+Version    = 1.0 
+Essentials = 21.1
+Credits    = The Sleeping Leonhart

@@ -1,0 +1,20 @@
+# Build directories and temporary artifacts
+build-switch/
+release_ready/
+switch_release/
+mkxp_ruby.log
+*.bak
+*.tmp
+*.log
+
+# Large zip releases (exceeds GitHub file limits)
+*.zip
+*.7z
+*.rar
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/

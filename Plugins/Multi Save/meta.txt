@@ -1,0 +1,5 @@
+Name         = Multi Save
+Version      = 1.4
+Credits      = http404error,Maryn @cosmic_pipo/@PkmnRadiante(en TW/X)
+Essentials   = 21.1
+Requires     = v21.1 Hotfixes,1.0.9

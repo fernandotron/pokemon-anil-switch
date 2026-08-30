@@ -1,0 +1,5 @@
+Name = Discord Rich Presence API
+Version = 2.2
+Credits = rainefall
+Essentials = 21.1
+Link = https://reliccastle.com/resources/316/

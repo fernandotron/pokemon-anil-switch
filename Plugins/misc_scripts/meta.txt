@@ -1,0 +1,5 @@
+Name       = Misc Scripts Añil
+Version    = 1.0.0
+Essentials = 21.1
+Credits    = DPertierra, Skyflyer, Toskan4134 (Damage Numbers)
+Disabled   = 

@@ -1,0 +1,5 @@
+﻿Name       = Map Zoom
+Version    = 1.0 
+Essentials = 21.1
+Link       = https://eeveeexpo.com/resources/810/
+Credits    = Golisopod User, Marin, Luka SJ, TechSkylander1518

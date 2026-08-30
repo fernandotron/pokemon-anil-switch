@@ -1,0 +1,13 @@
+Audio
+Data
+Fonts
+Graphics
+PBS
+Ruby Library 3.3.0
+poke_updater
+pokes_layout
+*.exe
+*.dll
+*.rxdata
+*.lnk
+*.pdf

@@ -1,0 +1,4 @@
+Name       = Letreros en Mapas
+Version    = 1.0.2
+Essentials = 21.1
+Credits    = JESS WISHES, DPertierra

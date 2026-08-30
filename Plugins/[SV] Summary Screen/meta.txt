@@ -1,0 +1,12 @@
+Name       = [SV] Summary Screen
+Version    = 1.3
+Essentials = 21.1
+Requires   = Modular UI Scenes, 2.0.8
+Optional   = Generation 9 Pack, 3.2.7
+Optional   = [MUI] Enhanced Pokemon UI, 1.0.6
+Optional   = [MUI] Improved Mementos, 1.0.4
+Optional   = [DBK] Animated Pokémon System, 1.0.9
+Optional   = [DBK] Dynamax, 1.1.2
+Optional   = [DBK] Z-Power, 1.1.1
+Optional   = Challenge Modes,1.0.2
+Credits    = Shashu-Greninja, GameUIDatabase, Lucidious89

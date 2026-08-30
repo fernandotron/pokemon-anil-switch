@@ -1,0 +1,1564 @@
+﻿# Consulta la documentación en la wiki para aprender cómo editar este archivo.
+#-------------------------------
+[001]   # Intro Oak
+Name = Intro
+#-------------------------------
+[002]   # Pueblo Paleta
+Name = Pueblo Paleta
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,14
+SnapEdges = true
+BattleBack = Pueblo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[003]   # Ruta 1
+Name = Ruta 1
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,11
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,111
+#-------------------------------
+[004]   # Ciudad Verde
+Name = Ciudad Verde
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,10
+SnapEdges = true
+BattleBack = Pueblo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[005]   # Ruta 22
+Name = Ruta 20
+Outdoor = true
+ShowArea = true
+MapPosition = 0,4,10
+SnapEdges = true
+BattleBack = PraderaMontania
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 3,111
+#-------------------------------
+[006]   # Ruta 2 Sur
+Name = Ruta 2 Sur
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,8
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[007]   # Ruta 2 Norte
+Name = Ruta 2 Norte
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,5
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[008]   # Bosque Verde
+Name = Bosque Verde
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,7
+SnapEdges = true
+BattleBack = Bosque
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[009]   # Ciudad Plateada
+Name = Ciudad Plateada
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,4
+SnapEdges = true
+BattleBack = Pueblo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[010]   # Ruta 3
+Name = Ruta 3
+Outdoor = true
+ShowArea = true
+MapPosition = 0,8,4
+SnapEdges = true
+BattleBack = PraderaMontania
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 5,11111
+#-------------------------------
+[011]   # Monte Moon
+Name = Monte Moon
+MapPosition = 0,13,2
+BattleBack = Cueva
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[012]   # Monte Moon Exterior
+Name = Monte Moon Exterior
+Outdoor = true
+ShowArea = true
+MapPosition = 0,13,2
+SnapEdges = true
+BattleBack = PraderaMontaniaNoche
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[013]   # Monte Moon
+Name = Monte Moon
+MapPosition = 0,13,2
+BattleBack = Cueva
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[014]   # Ruta 4
+Name = Ruta 4
+Outdoor = true
+ShowArea = true
+MapPosition = 0,14,2
+SnapEdges = true
+BattleBack = PraderaMontania
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 3,111
+#-------------------------------
+[015]   # Ciudad Celeste
+Name = Ciudad Celeste
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,2
+SnapEdges = true
+BattleBack = Ciudad
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[016]   # Ruta 20
+Name = Ruta 20
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,0
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[017]   # Ruta 5
+Name = Ruta 5
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,3
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 3,111
+#-------------------------------
+[018]   # Ruta 6
+Name = Ruta 6
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,7
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11111
+#-------------------------------
+[019]   # Ciudad Carmín
+Name = Ciudad Carmín
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,12
+SnapEdges = true
+BattleBack = Ciudad
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[020]   # Ruta 15
+Name = Ruta 15
+Outdoor = true
+ShowArea = true
+MapPosition = 0,18,12
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 5,11111
+#-------------------------------
+[021]   # Túnel Diglett
+Name = Túnel Diglett
+MapPosition = 0,16,15
+BattleBack = Cueva
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[022]   # Ruta 9
+Name = Ruta 9
+Outdoor = true
+ShowArea = true
+MapPosition = 0,18,2
+SnapEdges = true
+BattleBack = Monte
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 5,11111
+#-------------------------------
+[023]   # Ruta 10 Norte
+Name = Ruta 10 Norte
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,2
+SnapEdges = true
+BattleBack = Monte
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[024]   # Ruta 10 Sur
+Name = Ruta 10 Sur
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,4
+SnapEdges = true
+BattleBack = Monte
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[025]   # Túnel Roca
+Name = Túnel Roca
+MapPosition = 0,23,3
+DarkMap = true
+BattleBack = Cueva
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[026]   # Túnel Roca
+Name = Túnel Roca
+MapPosition = 0,23,3
+DarkMap = true
+BattleBack = Cueva
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[027]   # Pueblo Lavanda
+Name = Pueblo Lavanda
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,6
+SnapEdges = true
+BattleBack = Pueblo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[028]   # Casa
+Name = Casa
+MapPosition = 0,7,14
+#-------------------------------
+[029]   # Laboratorio
+Name = Laboratorio
+MapPosition = 0,7,14
+BattleBack = Laboratorio
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[030]   # Casa
+Name = Casa
+MapPosition = 0,7,10
+#-------------------------------
+[031]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,7,10
+#-------------------------------
+[032]   # Escuela
+Name = Escuela
+MapPosition = 0,7,10
+#-------------------------------
+[033]   # Transición
+Name = Transición
+MapPosition = 0,7,7
+#-------------------------------
+[034]   # Casa
+Name = Casa
+MapPosition = 0,7,6
+#-------------------------------
+[035]   # Transición
+Name = Transición
+MapPosition = 0,3,10
+#-------------------------------
+[036]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,7,4
+#-------------------------------
+[037]   # Casa
+Name = Casa
+MapPosition = 0,7,4
+#-------------------------------
+[038]   # Casa
+Name = Casa
+MapPosition = 0,13,6
+#-------------------------------
+[039]   # Casino Azulona
+Name = Casino Azulona
+MapPosition = 0,13,6
+BattleBack = Interior
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[040]   # Museo Pokémon
+Name = Museo Pokémon
+MapPosition = 0,7,4
+BattleBack = InteriorRojo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[041]   # Casa
+Name = Casa
+MapPosition = 0,13,2
+#-------------------------------
+[042]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,7,4
+BattleBack = Gimnasio1
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[043]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,17,2
+#-------------------------------
+[044]   # Caravana
+Name = Caravana
+MapPosition = 0,17,0
+#-------------------------------
+[045]   # Casa
+Name = Casa
+MapPosition = 0,17,2
+#-------------------------------
+[046]   # Transición
+Name = Transición
+MapPosition = 0,17,5
+#-------------------------------
+[047]   # Transición
+Name = Transición
+MapPosition = 0,17,7
+#-------------------------------
+[048]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,17,12
+#-------------------------------
+[049]   # Guardería
+Name = Guardería
+MapPosition = 0,17,5
+MapSize = 0,
+#-------------------------------
+[050]   # Casa
+Name = Casa
+MapPosition = 0,17,12
+#-------------------------------
+[051]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,23,2
+#-------------------------------
+[052]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,23,6
+#-------------------------------
+[053]   # Casa
+Name = Casa
+MapPosition = 0,23,3
+#-------------------------------
+[054]   # Casa
+Name = Casa
+MapPosition = 0,23,6
+#-------------------------------
+[055]   # Subterráneo
+Name = Subterráneo
+Bicycle = true
+MapPosition = 0,17,5
+#-------------------------------
+[056]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,17,12
+BattleBack = Gimnasio3
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[057]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,17,2
+BattleBack = Gimnasio2
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[058]   # S.S Anne
+Name = S.S Anne
+MapPosition = 0,17,12
+BattleBack = Barco
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[059]   # S.S Anne
+Name = S.S Anne
+MapPosition = 0,17,12
+BattleBack = Barco
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[060]   # Tienda de Bicis
+Name = Tienda de Bicis
+MapPosition = 0,17,2
+#-------------------------------
+[061]   # Cafetería
+Name = Cafetería
+MapPosition = 0,17,2
+#-------------------------------
+[062]   # Casa de Bill
+Name = Casa de Bill
+MapPosition = 0,21,0
+#-------------------------------
+[063]   # Club de Fans Pokémon
+Name = Club de Fans Pokémon
+MapPosition = 0,17,12
+#-------------------------------
+[064]   # Torre Pokémon
+Name = Torre Pokémon
+MapPosition = 0,23,6
+BattleBack = TorrePokemon
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[065]   # Torre Pokémon
+Name = Torre Pokémon
+MapPosition = 0,23,6
+SnapEdges = true
+BattleBack = AzoteaTorre
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[066]   # Transición
+Name = Transición
+MapPosition = 0,7,7
+#-------------------------------
+[067]   # Refugio Fuji
+Name = Refugio Fuji
+MapPosition = 0,23,6
+#-------------------------------
+[068]   # Transición
+Name = Transición
+MapPosition = 0,22,12
+#-------------------------------
+[069]   # Ciudad Carmín
+Name = Ciudad Carmín
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,12
+SnapEdges = true
+BattleBack = Ciudad
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[070]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,13,3
+#-------------------------------
+[071]   # Ruta 8
+Name = Ruta 8
+Outdoor = true
+ShowArea = true
+MapPosition = 0,18,6
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 5,11111
+#-------------------------------
+[072]   # Ruta 7
+Name = Ruta 7
+Outdoor = true
+ShowArea = true
+MapPosition = 0,14,6
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 3,111
+#-------------------------------
+[073]   # Transición
+Name = Transición
+MapPosition = 0,18,6
+#-------------------------------
+[074]   # Transición
+Name = Transición
+MapPosition = 0,16,6
+#-------------------------------
+[075]   # Subterráneo
+Name = Subterráneo
+Bicycle = true
+MapPosition = 0,17,6
+#-------------------------------
+[076]   # Ciudad Azulona
+Name = Ciudad Azulona
+Outdoor = true
+ShowArea = true
+MapPosition = 0,13,6
+SnapEdges = true
+BattleBack = Ciudad
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[077]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,13,6
+#-------------------------------
+[078]   # Centro Comercial
+Name = Centro Comercial
+MapPosition = 0,13,6
+#-------------------------------
+[079]   # Restaurante de Ramen
+Name = Restaurante de Ramen
+MapPosition = 0,13,6
+#-------------------------------
+[080]   # Edificio Azulona
+Name = Edificio Azulona
+MapPosition = 0,13,6
+#-------------------------------
+[081]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,13,6
+BattleBack = Gimnasio4
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[082]   # Guarida Rocket
+Name = Guarida Rocket
+MapPosition = 0,13,6
+BattleBack = InteriorOscuro
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[083]   # Guarida Rocket
+Name = Guarida Rocket
+MapPosition = 0,13,6
+BattleBack = InteriorOscuro
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[084]   # Guarida Rocket
+Name = Guarida Rocket
+MapPosition = 0,13,6
+BattleBack = InteriorOscuro
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[085]   # Guarida Rocket
+Name = Guarida Rocket
+MapPosition = 0,13,6
+BattleBack = InteriorOscuro
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[086]   # Ruta 12
+Name = Ruta 12
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,7
+SnapEdges = true
+BattleBack = PuenteMadera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,111111
+#-------------------------------
+[087]   # Ruta 11
+Name = Ruta 11
+Outdoor = true
+ShowArea = true
+MapPosition = 0,11,6
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[088]   # Transición
+Name = Transición
+MapPosition = 0,12,6
+#-------------------------------
+[089]   # Casa
+Name = Casa
+MapPosition = 0,23,13
+#-------------------------------
+[090]   # Casa
+Name = Casa
+MapPosition = 0,11,6
+#-------------------------------
+[091]   # Pueblo Marengo
+Name = Pueblo Marengo
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,14
+SnapEdges = true
+BattleBack = Pueblo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[092]   # Ruta 13
+Name = Ruta 13
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,15
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[093]   # Ruta 14
+Name = Ruta 14
+Outdoor = true
+ShowArea = true
+MapPosition = 0,16,16
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 7,1111111
+#-------------------------------
+[094]   # Ciudad Fucsia
+Name = Ciudad Fucsia
+Outdoor = true
+ShowArea = true
+MapPosition = 0,15,16
+SnapEdges = true
+BattleBack = Pueblo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[095]   # Ruta 16
+Name = Ruta 16
+Outdoor = true
+ShowArea = true
+MapPosition = 0,12,16
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 3,111
+#-------------------------------
+[096]   # Transición
+Name = Transición
+MapPosition = 0,12,16
+#-------------------------------
+[097]   # Ruta 17
+Name = Ruta 17
+Outdoor = true
+ShowArea = true
+MapPosition = 0,15,17
+SnapEdges = true
+BattleBack = Playa
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[098]   # Transición
+Name = Transición
+MapPosition = 0,15,17
+#-------------------------------
+[099]   # Ciudad Azafrán
+Name = Ciudad Azafrán
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,6
+SnapEdges = true
+BattleBack = Ciudad
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[100]   # Silph S.A
+Name = Silph S.A
+ShowArea = true
+MapPosition = 0,17,6
+BattleBack = SilphSA
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[101]   # Silph S.A
+Name = Silph S.A
+MapPosition = 0,17,6
+BattleBack = SilphSA
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[102]   # Silph S.A
+Name = Silph S.A
+MapPosition = 0,17,6
+BattleBack = SilphSA
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[103]   # Menu Nuzlocke Old
+Name = Intro de verdad
+#-------------------------------
+[104]   # Modo Juego
+Name = Intro de verdad de la buena
+#-------------------------------
+[105]   # Ruta 18
+Name = Ruta 18
+Outdoor = true
+ShowArea = true
+MapPosition = 0,8,18
+SnapEdges = true
+BattleBack = Agua
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 7,1111111
+#-------------------------------
+[106]   # Ruta 19
+Name = Ruta 19
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,15
+SnapEdges = true
+BattleBack = Playa
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,111
+#-------------------------------
+[107]   # Ruta 3
+Name = Ruta 3
+Outdoor = true
+ShowArea = true
+MapPosition = 0,13,3
+SnapEdges = true
+BattleBack = PraderaMontania
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[108]   # Ruta 12
+Name = Ruta 12
+Outdoor = true
+ShowArea = true
+MapPosition = 0,23,13
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[109]   # Ruta 21
+Name = Ruta 21
+Outdoor = true
+ShowArea = true
+MapPosition = 0,18,0
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 3,111
+#-------------------------------
+[110]   # Camino de Bicis
+Name = Camino de Bicis
+Outdoor = true
+ShowArea = true
+BicycleAlways = true
+MapPosition = 0,11,7
+SnapEdges = true
+BattleBack = CaminoBici
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11111
+#-------------------------------
+[111]   # Camino de Bicis
+Name = Camino de Bicis
+Outdoor = true
+ShowArea = true
+BicycleAlways = true
+MapPosition = 0,11,12
+SnapEdges = true
+BattleBack = CaminoBici
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,11111
+#-------------------------------
+[112]   # Zona Safari
+Name = Zona Safari
+ShowArea = true
+MapPosition = 0,16,15
+SnapEdges = true
+BattleBack = Pradera3
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[113]   # Zona Safari
+Name = Zona Safari
+ShowArea = true
+MapPosition = 0,16,15
+SnapEdges = true
+BattleBack = Pradera3
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[114]   # Zona Safari
+Name = Zona Safari
+ShowArea = true
+MapPosition = 0,16,15
+SnapEdges = true
+BattleBack = Pradera3
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[115]   # Zona Safari
+Name = Zona Safari
+ShowArea = true
+MapPosition = 0,16,15
+SnapEdges = true
+BattleBack = Pradera3
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[116]   # Isla Canela
+Name = Isla Canela
+Outdoor = true
+ShowArea = true
+MapPosition = 0,6,18
+SnapEdges = true
+BattleBack = Playa
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[117]   # Dojo Azafrán
+Name = Dojo Azafrán
+MapPosition = 0,17,6
+BattleBack = InteriorMarron
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[118]   # Laboratorio Canela
+Name = Laboratorio Canela
+MapPosition = 0,7,18
+#-------------------------------
+[119]   # Mansión Quemada
+Name = Mansión Quemada
+ShowArea = true
+MapPosition = 0,7,18
+BattleBack = MansionQuemada
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[120]   # Mansión Quemada
+Name = Mansión Quemada
+MapPosition = 0,7,18
+BattleBack = MansionQuemada
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[121]   # Mansión Quemada
+Name = Mansión Quemada
+MapPosition = 0,7,18
+BattleBack = MansionQuemada
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[122]   # Mansión Quemada
+Name = Mansión Quemada
+MapPosition = 0,7,18
+BattleBack = MansionQuemada
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[123]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,23,14
+#-------------------------------
+[124]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,15,16
+#-------------------------------
+[125]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,15,16
+BattleBack = Gimnasio5
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[126]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,17,6
+#-------------------------------
+[127]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,17,6
+BattleBack = GimnasioSabrina
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[128]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,17,6
+#-------------------------------
+[129]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,7,18
+#-------------------------------
+[130]   # Islas Espuma
+Name = Islas Espuma
+MapPosition = 0,12,18
+#-------------------------------
+[131]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,7,18
+BattleBack = Interior
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[132]   # Liga Pokémon
+Name = Liga Pokémon
+MapPosition = 0,3,2
+BattleBack = G7
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[133]   # Islas Espuma
+Name = Islas Espuma
+ShowArea = true
+MapPosition = 0,12,18
+BattleBack = CuevaHielo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[134]   # Islas Espuma
+Name = Islas Espuma
+MapPosition = 0,12,18
+BattleBack = CuevaHielo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[135]   # Islas Espuma
+Name = Islas Espuma
+MapPosition = 0,12,18
+BattleBack = CuevaHielo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[136]   # Islas Espuma
+Name = Islas Espuma
+MapPosition = 0,12,18
+BattleBack = CuevaHielo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[137]   # Transición
+Name = Transición
+MapPosition = 0,16,16
+BattleBack = Interior
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[138]   # Casa
+Name = Casa
+MapPosition = 0,23,14
+#-------------------------------
+[139]   # Casa
+Name = Casa
+MapPosition = 0,15,16
+#-------------------------------
+[140]   # Casa
+Name = Casa
+MapPosition = 0,7,18
+#-------------------------------
+[141]   # Casa
+Name = Casa
+MapPosition = 0,17,6
+#-------------------------------
+[142]   # Tienda Exótica
+Name = Tienda Exótica
+MapPosition = 0,15,16
+#-------------------------------
+[143]   # Casa del Guarda
+Name = Casa del Guarda
+MapPosition = 0,15,16
+#-------------------------------
+[144]   # Casa del Sr. Psíquico
+Name = Casa del Sr. Psíquico
+MapPosition = 0,17,6
+#-------------------------------
+[145]   # Estación del Magnetotrén
+Name = Estación del Magnetotrén
+MapPosition = 0,17,6
+#-------------------------------
+[146]   # Granja Marengo
+Name = Granja Marengo
+MapPosition = 0,23,14
+#-------------------------------
+[147]   # Zona Safari
+Name = Zona Safari
+MapPosition = 0,16,15
+#-------------------------------
+[148]   # Zona Safari
+Name = Zona Safari
+MapPosition = 0,16,15
+#-------------------------------
+[149]   # Zona Safari
+Name = Zona Safari
+MapPosition = 0,16,15
+#-------------------------------
+[150]   # Central Energía
+Name = Central Energía
+ShowArea = true
+MapPosition = 0,24,4
+BattleBack = Central
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[151]   # Volcán Canela
+Name = Volcán Canela
+ShowArea = true
+MapPosition = 0,6,18
+BattleBack = Volcan
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[152]   # Volcán Canela
+Name = Volcán Canela
+MapPosition = 0,6,18
+BattleBack = Volcan
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[153]   # Volcán Canela
+Name = Volcán Canela
+MapPosition = 0,6,18
+BattleBack = Volcan
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[154]   # Ruta 23
+Name = Ruta 21
+Outdoor = true
+ShowArea = true
+MapPosition = 0,3,9
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,111111
+#-------------------------------
+[155]   # Ruta 24
+Name = Ruta 22
+Outdoor = true
+ShowArea = true
+MapPosition = 0,0,14
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[156]   # Ruta 24
+Name = Ruta 22
+Outdoor = true
+ShowArea = true
+MapPosition = 0,2,14
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[157]   # Cataratas Tohjo
+Name = Cataratas Tohjo
+ShowArea = true
+MapPosition = 0,0,13
+BattleBack = Cueva
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[158]   # Ruta 25 Sur
+Name = Ruta 23
+Outdoor = true
+ShowArea = true
+MapPosition = 0,1,9
+SnapEdges = true
+BattleBack = Monte
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[159]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,1,9
+#-------------------------------
+[160]   # Monte Plateado
+Name = Monte Plateado
+ShowArea = true
+MapPosition = 0,6,11
+SnapEdges = true
+BattleBack = CuevaAzul
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[161]   # Monte Plateado
+Name = Monte Plateado
+Outdoor = true
+ShowArea = true
+MapPosition = 0,6,11
+SnapEdges = true
+BattleBack = Monte
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[162]   # Monte Plateado
+Name = Monte Plateado
+MapPosition = 0,6,11
+SnapEdges = true
+BattleBack = CuevaAzul
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[163]   # Monte Plateado
+Name = Monte Plateado
+Outdoor = true
+ShowArea = true
+MapPosition = 0,1,8
+SnapEdges = true
+BattleBack = Snow
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[164]   # Monte Plateado
+Name = Monte Plateado
+MapPosition = 0,6,11
+SnapEdges = true
+BattleBack = CuevaAzul
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[165]   # Monte Plateado
+Name = Monte Plateado
+Outdoor = true
+ShowArea = true
+MapPosition = 0,1,7
+SnapEdges = true
+BattleBack = CimaNevada
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[166]   # Ruta 25 Norte
+Name = Ruta 25
+Outdoor = true
+ShowArea = true
+MapPosition = 0,3,3
+SnapEdges = true
+BattleBack = Snow
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+MapSize = 1,111
+#-------------------------------
+[167]   # Ciudad Añil
+Name = Ciudad Añil
+Outdoor = true
+ShowArea = true
+MapPosition = 0,3,2
+SnapEdges = true
+BattleBack = Snow
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[168]   # Cueva Celeste
+Name = Cueva Celeste
+ShowArea = true
+MapPosition = 0,16,1
+BattleBack = CuevaLila
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[169]   # Cueva Celeste
+Name = Cueva Celeste
+MapPosition = 0,16,1
+BattleBack = CuevaLila
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[170]   # Cueva Celeste
+Name = Cueva Celeste
+MapPosition = 0,16,1
+BattleBack = CuevaLila
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[171]   # Casa
+Name = Casa
+MapPosition = 0,3,10
+#-------------------------------
+[172]   # Liga Pokémon
+Name = Liga Pokémon
+MapPosition = 0,2,2
+Flags = DisableBoxLink
+#-------------------------------
+[173]   # Liga Pokémon
+Name = Liga Pokémon
+MapPosition = 0,3,2
+SnapEdges = true
+BattleBack = Campeon
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+Flags = DisableBoxLink
+#-------------------------------
+[174]   # Bosque Celeste
+Name = Bosque Celeste
+Outdoor = true
+ShowArea = true
+MapPosition = 0,16,1
+SnapEdges = true
+BattleBack = BosqueLila
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[175]   # Casa
+Name = Casa
+MapPosition = 0,0,14
+#-------------------------------
+[176]   # Casa
+Name = Casa
+MapPosition = 0,2,9
+#-------------------------------
+[177]   # Casa
+Name = Casa
+MapPosition = 0,2,2
+#-------------------------------
+[178]   # Claro Secreto
+Name = Claro Secreto
+Outdoor = true
+ShowArea = true
+MapPosition = 0,7,7
+SnapEdges = true
+BattleBack = Bosque
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[179]   # Guarida Rocket
+Name = Guarida Rocket
+MapPosition = 0,13,6
+#-------------------------------
+[180]   # Hostal Añil
+Name = Hostal Añil
+MapPosition = 0,3,2
+#-------------------------------
+[181]   # Cataratas Tohjo
+Name = Cataratas Tohjo
+Outdoor = true
+MapPosition = 0,0,13
+SnapEdges = true
+BattleBack = Cielo
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[182]   # Gimnasio Pokémon
+Name = Gimnasio Pokémon
+MapPosition = 0,7,10
+BattleBack = Gimnasio5
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[183]   # Villa Ámbar
+Name = Villa Ámbar
+Outdoor = true
+ShowArea = true
+MapPosition = 0,25,12
+SnapEdges = true
+BattleBack = Playa
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[184]   # Ruta 26
+Name = Ruta 26
+Outdoor = true
+ShowArea = true
+MapPosition = 0,26,12
+SnapEdges = true
+BattleBack = PraderaMontania3
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[185]   # Villa Azabache
+Name = Villa Azabache
+Outdoor = true
+ShowArea = true
+MapPosition = 0,28,12
+SnapEdges = true
+BattleBack = PraderaMontania2
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[186]   # Cabo Azabache
+Name = Cabo Azabache
+Outdoor = true
+ShowArea = true
+MapPosition = 0,29,11
+SnapEdges = true
+BattleBack = Acantilado
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[187]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,25,12
+#-------------------------------
+[188]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,28,12
+#-------------------------------
+[189]   # Ruta 27
+Name = Ruta 27
+Outdoor = true
+ShowArea = true
+MapPosition = 0,28,13
+SnapEdges = true
+BattleBack = PraderaMontania2
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+MapSize = 1,111
+#-------------------------------
+[190]   # Islote Recuerdo
+Name = Islote Recuerdo
+Outdoor = true
+ShowArea = true
+MapPosition = 0,26,15
+SnapEdges = true
+BattleBack = Playa
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[191]   # Ruta 28
+Name = Ruta 28
+Outdoor = true
+ShowArea = true
+MapPosition = 0,27,10
+SnapEdges = true
+BattleBack = PraderaMontania3
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+MapSize = 1,11
+#-------------------------------
+[192]   # Villa Magenta
+Name = Villa Magenta
+Outdoor = true
+ShowArea = true
+MapPosition = 0,27,9
+SnapEdges = true
+BattleBack = Pradera
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[193]   # Centro Pokémon
+Name = Centro Pokémon
+MapPosition = 0,27,9
+#-------------------------------
+[194]   # Ruta 29
+Name = Ruta 29
+Outdoor = true
+ShowArea = true
+MapPosition = 0,26,9
+SnapEdges = true
+BattleBack = PraderaMontania3
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[195]   # Ruta 29
+Name = Ruta 29
+Outdoor = true
+ShowArea = true
+MapPosition = 0,25,9
+SnapEdges = true
+BattleBack = PraderaMontania3
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[196]   # Ruta 30
+Name = Ruta 30
+Outdoor = true
+ShowArea = true
+MapPosition = 0,25,8
+SnapEdges = true
+BattleBack = Playa
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[197]   # Cabo Magenta
+Name = Cabo Magenta
+Outdoor = true
+ShowArea = true
+MapPosition = 0,28,9
+SnapEdges = true
+BattleBack = PraderaMontania3
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+MapSize = 2,11
+#-------------------------------
+[198]   # Cueva Glaciada
+Name = Cueva Glaciada
+ShowArea = true
+MapPosition = 0,26,9
+BattleBack = CuevaNieve
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[199]   # Bosque Arcoiris
+Name = Bosque Arcoiris
+Outdoor = true
+ShowArea = true
+MapPosition = 0,25,7
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[200]   # Cueva Perdida
+Name = Cueva Perdida
+ShowArea = true
+MapPosition = 0,28,14
+BattleBack = CuevaOscura
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[201]   # Bosque Arcoiris
+Name = Bosque Arcoiris
+Outdoor = true
+ShowArea = true
+MapPosition = 0,25,7
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[202]   # Casa
+Name = Casa
+MapPosition = 0,25,12
+BattleBack = Interior
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[203]   # Casa
+Name = Casa
+MapPosition = 0,28,12
+#-------------------------------
+[204]   # Casa
+Name = Casa
+MapPosition = 0,27,9
+#-------------------------------
+[205]   # Casa
+Name = Casa
+MapPosition = 0,25,9
+BattleBack = Interior
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[206]   # Casa
+Name = Casa
+MapPosition = 0,29,9
+BattleBack = Interior
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[207]   # Dojo Magenta
+Name = Dojo Magenta
+ShowArea = true
+MapPosition = 0,27,9
+BattleBack = Interior
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[208]   # Créditos
+Name = Créditos
+MapPosition = 0,7,12
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[209]   # Créditos 2
+Name = Créditos 2
+MapPosition = 0,7,12
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[210]   # Créditos 3
+Name = Créditos 3
+MapPosition = 0,7,12
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[211]   # Créditos 4
+Name = Créditos 4
+MapPosition = 0,7,12
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[212]   # Escena
+Name = Escena
+MapPosition = 0,25,12
+SnapEdges = true
+BattleBack = BosqueArcoiris
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[213]   # Almacén Secreto
+Name = Almacén Secreto
+Outdoor = true
+ShowArea = true
+MapPosition = 0,29,14
+SnapEdges = true
+BattleBack = PraderaMontania2
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[214]   # Almacén Rocket
+Name = Almacén Rocket
+MapPosition = 0,29,14
+BattleBack = InteriorOscuro
+WildBattleBGM = PrismaSalvaje.ogg
+TrainerBattleBGM = PrismaEntrenador.ogg
+#-------------------------------
+[215]   # Torre Batalla
+Name = Torre Batalla
+MapPosition = 0,17,12
+BattleBack = Online
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[216]   # Ciudad Carmín
+Name = Ciudad Carmín
+Outdoor = true
+ShowArea = true
+MapPosition = 0,17,12
+SnapEdges = true
+BattleBack = Ciudad
+WildBattleBGM = Salvaje.ogg
+TrainerBattleBGM = Entrenador.ogg
+#-------------------------------
+[217]   # Laboratorio
+Name = Laboratorio
+#-------------------------------
+[219]   # Torre Pokémon
+Name = Torre Pokémon
+ShowArea = true
+MapPosition = 0,23,6

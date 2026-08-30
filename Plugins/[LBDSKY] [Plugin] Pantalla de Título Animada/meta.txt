@@ -1,0 +1,6 @@
+Name         = Pantalla de Título Animada
+Version      = 1.2
+Essentials   = 21.1
+Optional     = [DBK] Animated Pokémon System,1.1
+Website      = https://luka-sj.com/res/modts
+Credits      = Luka S.J., Fnc-Jinta, Skyflyer

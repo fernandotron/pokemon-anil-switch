@@ -1,0 +1,5 @@
+Name       = Hall de la Fama BW
+Version    = 1.0
+Essentials = 21.1
+Credits    = JessWishes
+Disabled   = #True

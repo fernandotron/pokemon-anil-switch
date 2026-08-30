@@ -1,0 +1,5 @@
+Name         = Advanced AI System
+Version      = 2.6.2
+Essentials   = 21.1
+Website      = https://github.com/99Problemsx/Pokemon-Shattered-Crowns
+Credits      = Nononever

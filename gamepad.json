@@ -1,0 +1,72 @@
+{
+    "diagonalMovement": false,
+    "hideGamepad": false,
+    "btnOpacity": 50,
+    "btnScale": 100,
+    "aKeyCode": 52,
+    "bKeyCode": 47,
+    "cKeyCode": 31,
+    "xKeyCode": 32,
+    "yKeyCode": 29,
+    "zKeyCode": 54,
+    "lKeyCode": 111,
+    "rKeyCode": 66,
+    "clKeyCode": 138,
+    "crKeyCode": 57,
+    "aKeyCode1": 52,
+    "bKeyCode1": 29,
+    "cKeyCode1": 47,
+    "xKeyCode1": 32,
+    "yKeyCode1": 31,
+    "zKeyCode1": 54,
+    "lKeyCode1": 66,
+    "rKeyCode1": 93,
+    "clKeyCode1": 132,
+    "crKeyCode1": 138,
+    "controllerKeyMap": [
+        {
+            "key": 99,
+            "value": 52
+        },
+        {
+            "key": 100,
+            "value": 32
+        },
+        {
+            "key": 102,
+            "value": 45
+        },
+        {
+            "key": 96,
+            "value": 31
+        },
+        {
+            "key": 97,
+            "value": 54
+        },
+        {
+            "key": 103,
+            "value": 46
+        },
+        {
+            "key": 108,
+            "value": 111
+        },
+        {
+            "key": 109,
+            "value": 66
+        },
+        {
+            "key": 104,
+            "value": 7
+        },
+        {
+            "key": 105,
+            "value": 57
+        },
+        {
+            "key": 4,
+            "value": 7
+        }
+    ]
+}

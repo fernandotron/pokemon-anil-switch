@@ -1,0 +1,9 @@
+Name      = Cable Club
+Version   = 3.7
+Essentials = 20.1, 21.1
+Optional  = v20.1 Hotfixes
+Optional  = v21.1 Hotfixes
+Optional  = Level Caps EX,2.1
+Optional  = Deluxe Battle Kit,1.2.7
+Website   = https://reliccastle.com/resources/640/
+Credits   = mGriffin,Khaikaa,Vendily

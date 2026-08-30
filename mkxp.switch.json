@@ -1,0 +1,70 @@
+{
+    // =========================================================================
+    // Configuración optimizada de mkxp-z para Nintendo Switch (Horizon OS)
+    // =========================================================================
+
+    "windowTitle": "Pokémon Añil 4.0",
+
+    // Resolución del framebuffer en Switch (512x384)
+    "defScreenW": 512,
+    "defScreenH": 384,
+
+    // Pantalla completa por defecto en Switch (Handheld 720p / Docked 1080p)
+    // fixedAspectRatio = true -> Escala 4:3 ocupando el 100% del alto (960x720) centrado
+    // fixedAspectRatio = false -> Escala 16:9 ocupando el 100% de la pantalla (1280x720 estirado)
+    "fullscreen": true,
+    "winResizable": false,
+    "fixedAspectRatio": false,
+    "integerScalingActive": false,
+    "integerScalingLastMile": false,
+    "smoothScaling": 3,
+    "lanczos3Scaling": true,
+    "enableBlitting": false,
+
+    // Sincronización y velocidad fluida sin bloqueo de VSync a 15fps
+    "vsync": false,
+    "syncToRefreshrate": false,
+    "fixedFramerate": 0,
+    "subImageFix": true,
+    "preloadScript": ["preload.rb"],
+
+    // Fuentes y sustituciones para evitar textos deformados o borrosos
+    "defaultFontFamily": "Power Green",
+    "fontScale": 1.0,
+    "fontSub": [
+      "Arial>Power Green",
+      "MS Gothic>Power Green",
+      "SimSun>Power Green",
+      "Tahoma>Power Green",
+      "Segoe UI>Power Green",
+      "Calibri>Power Green",
+      "Power Green Narrow>Power Green",
+      "Power Green Small>Power Green",
+      "Annon>Power Green",
+      "Sword>Power Green"
+    ],
+
+    // Cache de rutas para sistemas de archivos FAT32/exFAT (insensible a mayúsculas/minúsculas)
+    "pathCache": true,
+
+    // Directorio de datos de guardado (en Switch se guarda en sdmc:/switch/port/save o directorio local)
+    "dataPathApp": "PokemonAnil",
+    "dataPathOrg": "EricLostie",
+
+    // Audio MIDI
+    "midiSoundFont": "soundfont.sf2",
+    "BGMTrackCount": 2,
+    "SESourceCount": 16,
+
+    // Mapeo de botones para Joy-Con / Nintendo Switch Pro Controller (SDL2 GameController API)
+    "bindingNames": {
+      "c": "Aceptar / Interactuar (A)",
+      "b": "Cancelar / Correr (B)",
+      "a": "Menú / Acción (X)",
+      "x": "Atajo / Registrar (Y)",
+      "y": "Página Anterior (L)",
+      "z": "Página Siguiente (R)",
+      "l": "Guardar / Rápido (ZL)",
+      "r": "Modo Turbo / Lento (ZR)"
+    }
+}

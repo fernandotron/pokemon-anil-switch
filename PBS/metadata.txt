@@ -1,0 +1,84 @@
+﻿# Consulta la documentación en la wiki para aprender cómo editar este archivo.
+#-------------------------------
+[0]
+StartMoney = 3000
+StartItemStorage = POTION
+Home = 28,29,10,8
+StorageCreator = Bill
+WildBattleBGM = Salvaje
+TrainerBattleBGM = Entrenador
+WildVictoryBGM = VictoriaSalvaje
+TrainerVictoryBGM = VictoriaEntrenador
+SurfBGM = Surfing
+BicycleBGM = Bicycle
+#-------------------------------
+[1]
+TrainerType     = POKEMONTRAINER_RojoNeutro
+WalkCharset     = POKEMONTRAINER_RojoNeutro
+RunCharset      = POKEMONTRAINER_RojoNeutro_run
+CycleCharset    = POKEMONTRAINER_RojoNeutro_bike
+SurfCharset     = POKEMONTRAINER_RojoNeutro_surf
+DiveCharset     = POKEMONTRAINER_RojoNeutro_surf
+FishCharset     = POKEMONTRAINER_RojoNeutro_fish_offset
+SurfFishCharset = POKEMONTRAINER_RojoNeutro_surf
+#-------------------------------
+[2]
+TrainerType     = POKEMONTRAINER_HojaNeutra
+WalkCharset     = POKEMONTRAINER_HojaNeutra
+RunCharset      = POKEMONTRAINER_HojaNeutra_run
+CycleCharset    = POKEMONTRAINER_HojaNeutra_bike
+SurfCharset     = POKEMONTRAINER_HojaNeutra_surf
+DiveCharset     = POKEMONTRAINER_HojaNeutra_surf
+FishCharset     = POKEMONTRAINER_HojaNeutra_fish_offset
+SurfFishCharset = POKEMONTRAINER_HojaNeutra_surf
+#-------------------------------
+[3]
+TrainerType     = POKEMONTRAINER_RojoArio
+WalkCharset     = POKEMONTRAINER_RojoArio
+RunCharset      = POKEMONTRAINER_RojoArio_run
+CycleCharset    = POKEMONTRAINER_RojoArio_bike
+SurfCharset     = POKEMONTRAINER_RojoArio_surf
+DiveCharset     = POKEMONTRAINER_RojoArio_surf
+FishCharset     = POKEMONTRAINER_RojoArio_fish_offset
+SurfFishCharset = POKEMONTRAINER_RojoArio_surf
+#-------------------------------
+[4]
+TrainerType     = POKEMONTRAINER_HojaAria
+WalkCharset     = POKEMONTRAINER_HojaAria
+RunCharset      = POKEMONTRAINER_HojaAria_run
+CycleCharset    = POKEMONTRAINER_HojaAria_bike
+SurfCharset     = POKEMONTRAINER_HojaAria_surf
+DiveCharset     = POKEMONTRAINER_HojaAria_surf
+FishCharset     = POKEMONTRAINER_HojaAria_fish_offset
+SurfFishCharset = POKEMONTRAINER_HojaAria_surf
+#-------------------------------
+[5]
+TrainerType     = POKEMONTRAINER_RojoNegro
+WalkCharset     = POKEMONTRAINER_RojoNegro
+RunCharset      = POKEMONTRAINER_RojoNegro_run
+CycleCharset    = POKEMONTRAINER_RojoNegro_bike
+SurfCharset     = POKEMONTRAINER_RojoNegro_surf
+DiveCharset     = POKEMONTRAINER_RojoNegro_surf
+FishCharset     = POKEMONTRAINER_RojoNegro_fish_offset
+SurfFishCharset = POKEMONTRAINER_RojoNegro_surf
+#-------------------------------
+[6]
+TrainerType     = POKEMONTRAINER_HojaNegra
+WalkCharset     = POKEMONTRAINER_HojaNegra
+RunCharset      = POKEMONTRAINER_HojaNegra_run
+CycleCharset    = POKEMONTRAINER_HojaNegra_bike
+SurfCharset     = POKEMONTRAINER_HojaNegra_surf
+DiveCharset     = POKEMONTRAINER_HojaNegra_surf
+FishCharset     = POKEMONTRAINER_HojaNegra_fish_offset
+SurfFishCharset = POKEMONTRAINER_HojaNegra_surf
+#-------------------------------
+[7]
+TrainerType     = POKEMONTRAINER_Yellow
+WalkCharset     = POKEMONTRAINER_Yellow
+RunCharset      = POKEMONTRAINER_Yellow_run
+CycleCharset    = POKEMONTRAINER_Yellow_bike
+SurfCharset     = POKEMONTRAINER_Yellow_surf
+DiveCharset     = POKEMONTRAINER_Yellow_surf
+FishCharset     = POKEMONTRAINER_Yellow_fish_offset
+SurfFishCharset = POKEMONTRAINER_Yellow_surf
+#-------------------------------

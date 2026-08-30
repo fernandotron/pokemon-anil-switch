@@ -1,0 +1,5 @@
+HAZ ESTO SI LOS DIÁLOGOS DEL JUEGO TE VAN LENTO
+
+Métete dentro de la carpeta Audio, copia el archivo Game.exe y 
+pégalo en la carpeta del juego reemplazando el Game.exe que ya 
+había. Usa ese nuevo Game.exe para jugar.

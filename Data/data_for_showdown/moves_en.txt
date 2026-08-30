@@ -1,0 +1,940 @@
+MEGAHORN,Megahorn
+ATTACKORDER,Attack Order
+BUGBUZZ,Bug Buzz
+FIRSTIMPRESSION,First Impression
+POLLENPUFF,Pollen Puff
+LEECHLIFE,Leech Life
+LUNGE,Lunge
+XSCISSOR,X-Scissor
+SIGNALBEAM,Signal Beam
+SKITTERSMACK,Skitter Smack
+UTURN,U-turn
+STEAMROLLER,Steamroller
+BUGBITE,Bug Bite
+SILVERWIND,Silver Wind
+FELLSTINGER,Fell Stinger
+STRUGGLEBUG,Struggle Bug
+FURYCUTTER,Fury Cutter
+PINMISSILE,Pin Missile
+TWINEEDLE,Twineedle
+INFESTATION,Infestation
+DEFENDORDER,Defend Order
+HEALORDER,Heal Order
+POWDER,Powder
+QUIVERDANCE,Quiver Dance
+RAGEPOWDER,Rage Powder
+SPIDERWEB,Spider Web
+STICKYWEB,Sticky Web
+STRINGSHOT,String Shot
+TAILGLOW,Tail Glow
+HYPERSPACEFURY,Hyperspace Fury
+FOULPLAY,Foul Play
+FIERYWRATH,Fiery Wrath
+DARKESTLARIAT,Darkest Lariat
+NIGHTDAZE,Night Daze
+CRUNCH,Crunch
+DARKPULSE,Dark Pulse
+FALSESURRENDER,False Surrender
+JAWLOCK,Jaw Lock
+THROATCHOP,Throat Chop
+WICKEDBLOW,Wicked Blow
+LASHOUT,Lash Out
+NIGHTSLASH,Night Slash
+SUCKERPUNCH,Sucker Punch
+KNOCKOFF,Knock Off
+ASSURANCE,Assurance
+BITE,Bite
+BRUTALSWING,Brutal Swing
+FEINTATTACK,Feint Attack
+THIEF,Thief
+SNARL,Snarl
+PAYBACK,Payback
+PURSUIT,Pursuit
+BEATUP,Beat Up
+FLING,Fling
+POWERTRIP,Power Trip
+PUNISHMENT,Punishment
+DARKVOID,Dark Void
+EMBARGO,Embargo
+FAKETEARS,Fake Tears
+FLATTER,Flatter
+HONECLAWS,Hone Claws
+MEMENTO,Memento
+NASTYPLOT,Nasty Plot
+OBSTRUCT,Obstruct
+PARTINGSHOT,Parting Shot
+QUASH,Quash
+SNATCH,Snatch
+SWITCHEROO,Switcheroo
+TAUNT,Taunt
+TOPSYTURVY,Topsy-Turvy
+TORMENT,Torment
+ETERNABEAM,Eternabeam
+DRAGONENERGY,Dragon Energy
+ROAROFTIME,Roar of Time
+DRACOMETEOR,Draco Meteor
+OUTRAGE,Outrage
+CLANGINGSCALES,Clanging Scales
+COREENFORCER,Core Enforcer
+DRAGONRUSH,Dragon Rush
+DYNAMAXCANNON,Dynamax Cannon
+SPACIALREND,Spacial Rend
+DRAGONHAMMER,Dragon Hammer
+DRAGONPULSE,Dragon Pulse
+DRAGONCLAW,Dragon Claw
+BREAKINGSWIPE,Breaking Swipe
+DRAGONBREATH,Dragon Breath
+DRAGONTAIL,Dragon Tail
+DRAGONDARTS,Dragon Darts
+DUALCHOP,Dual Chop
+TWISTER,Twister
+SCALESHOT,Scale Shot
+DRAGONRAGE,Dragon Rage
+CLANGOROUSSOUL,Clangorous Soul
+DRAGONDANCE,Dragon Dance
+BOLTSTRIKE,Bolt Strike
+VOLTTACKLE,Volt Tackle
+ZAPCANNON,Zap Cannon
+AURAWHEEL,Aura Wheel
+THUNDER,Thunder
+FUSIONBOLT,Fusion Bolt
+PLASMAFISTS,Plasma Fists
+THUNDERBOLT,Thunderbolt
+WILDCHARGE,Wild Charge
+BOLTBEAK,Bolt Beak
+DISCHARGE,Discharge
+OVERDRIVE,Overdrive
+THUNDERCAGE,Thunder Cage
+ZINGZAP,Zing Zap
+THUNDERPUNCH,Thunder Punch
+RISINGVOLTAGE,Rising Voltage
+VOLTSWITCH,Volt Switch
+PARABOLICCHARGE,Parabolic Charge
+SPARK,Spark
+THUNDERFANG,Thunder Fang
+SHOCKWAVE,Shock Wave
+ELECTROWEB,Electroweb
+CHARGEBEAM,Charge Beam
+THUNDERSHOCK,Thunder Shock
+NUZZLE,Nuzzle
+ELECTROBALL,Electro Ball
+CHARGE,Charge
+EERIEIMPULSE,Eerie Impulse
+ELECTRICTERRAIN,Electric Terrain
+ELECTRIFY,Electrify
+IONDELUGE,Ion Deluge
+MAGNETRISE,Magnet Rise
+MAGNETICFLUX,Magnetic Flux
+THUNDERWAVE,Thunder Wave
+LIGHTOFRUIN,Light of Ruin
+FLEURCANNON,Fleur Cannon
+MISTYEXPLOSION,Misty Explosion
+MOONBLAST,Moonblast
+PLAYROUGH,Play Rough
+STRANGESTEAM,Strange Steam
+DAZZLINGGLEAM,Dazzling Gleam
+SPIRITBREAK,Spirit Break
+DRAININGKISS,Draining Kiss
+DISARMINGVOICE,Disarming Voice
+FAIRYWIND,Fairy Wind
+NATURESMADNESS,Nature's Madness
+AROMATICMIST,Aromatic Mist
+BABYDOLLEYES,Baby-Doll Eyes
+CHARM,Charm
+CRAFTYSHIELD,Crafty Shield
+DECORATE,Decorate
+FAIRYLOCK,Fairy Lock
+FLORALHEALING,Floral Healing
+FLOWERSHIELD,Flower Shield
+GEOMANCY,Geomancy
+MISTYTERRAIN,Misty Terrain
+MOONLIGHT,Moonlight
+SWEETKISS,Sweet Kiss
+FOCUSPUNCH,Focus Punch
+METEORASSAULT,Meteor Assault
+HIGHJUMPKICK,High Jump Kick
+CLOSECOMBAT,Close Combat
+FOCUSBLAST,Focus Blast
+SUPERPOWER,Superpower
+CROSSCHOP,Cross Chop
+DYNAMICPUNCH,Dynamic Punch
+FLYINGPRESS,Flying Press
+HAMMERARM,Hammer Arm
+JUMPKICK,Jump Kick
+SACREDSWORD,Sacred Sword
+THUNDEROUSKICK,Thunderous Kick
+SECRETSWORD,Secret Sword
+SKYUPPERCUT,Sky Uppercut
+AURASPHERE,Aura Sphere
+BODYPRESS,Body Press
+SUBMISSION,Submission
+BRICKBREAK,Brick Break
+DRAINPUNCH,Drain Punch
+VITALTHROW,Vital Throw
+WAKEUPSLAP,Wake-Up Slap
+LOWSWEEP,Low Sweep
+CIRCLETHROW,Circle Throw
+FORCEPALM,Force Palm
+REVENGE,Revenge
+ROLLINGKICK,Rolling Kick
+STORMTHROW,Storm Throw
+KARATECHOP,Karate Chop
+MACHPUNCH,Mach Punch
+POWERUPPUNCH,Power-Up Punch
+ROCKSMASH,Rock Smash
+VACUUMWAVE,Vacuum Wave
+DOUBLEKICK,Double Kick
+ARMTHRUST,Arm Thrust
+TRIPLEKICK,Triple Kick
+COUNTER,Counter
+FINALGAMBIT,Final Gambit
+LOWKICK,Low Kick
+REVERSAL,Reversal
+SEISMICTOSS,Seismic Toss
+BULKUP,Bulk Up
+COACHING,Coaching
+DETECT,Detect
+MATBLOCK,Mat Block
+NORETREAT,No Retreat
+OCTOLOCK,Octolock
+QUICKGUARD,Quick Guard
+VCREATE,V-create
+BLASTBURN,Blast Burn
+ERUPTION,Eruption
+MINDBLOWN,Mind Blown
+SHELLTRAP,Shell Trap
+BLUEFLARE,Blue Flare
+BURNUP,Burn Up
+OVERHEAT,Overheat
+FLAREBLITZ,Flare Blitz
+PYROBALL,Pyro Ball
+FIREBLAST,Fire Blast
+FUSIONFLARE,Fusion Flare
+INFERNO,Inferno
+MAGMASTORM,Magma Storm
+SACREDFIRE,Sacred Fire
+SEARINGSHOT,Searing Shot
+HEATWAVE,Heat Wave
+FLAMETHROWER,Flamethrower
+BLAZEKICK,Blaze Kick
+FIERYDANCE,Fiery Dance
+FIRELASH,Fire Lash
+FIREPLEDGE,Fire Pledge
+LAVAPLUME,Lava Plume
+FIREPUNCH,Fire Punch
+MYSTICALFIRE,Mystical Fire
+BURNINGJEALOUSY,Burning Jealousy
+FLAMEBURST,Flame Burst
+FIREFANG,Fire Fang
+FLAMEWHEEL,Flame Wheel
+INCINERATE,Incinerate
+FLAMECHARGE,Flame Charge
+EMBER,Ember
+FIRESPIN,Fire Spin
+HEATCRASH,Heat Crash
+SUNNYDAY,Sunny Day
+WILLOWISP,Will-O-Wisp
+SKYATTACK,Sky Attack
+BRAVEBIRD,Brave Bird
+DRAGONASCENT,Dragon Ascent
+HURRICANE,Hurricane
+AEROBLAST,Aeroblast
+BEAKBLAST,Beak Blast
+FLY,Fly
+BOUNCE,Bounce
+DRILLPECK,Drill Peck
+OBLIVIONWING,Oblivion Wing
+AIRSLASH,Air Slash
+CHATTER,Chatter
+AERIALACE,Aerial Ace
+AIRCUTTER,Air Cutter
+PLUCK,Pluck
+SKYDROP,Sky Drop
+WINGATTACK,Wing Attack
+ACROBATICS,Acrobatics
+DUALWINGBEAT,Dual Wingbeat
+GUST,Gust
+PECK,Peck
+DEFOG,Defog
+FEATHERDANCE,Feather Dance
+MIRRORMOVE,Mirror Move
+ROOST,Roost
+TAILWIND,Tailwind
+ASTRALBARRAGE,Astral Barrage
+SHADOWFORCE,Shadow Force
+POLTERGEIST,Poltergeist
+MOONGEISTBEAM,Moongeist Beam
+PHANTOMFORCE,Phantom Force
+SPECTRALTHIEF,Spectral Thief
+SHADOWBONE,Shadow Bone
+SHADOWBALL,Shadow Ball
+SPIRITSHACKLE,Spirit Shackle
+SHADOWCLAW,Shadow Claw
+HEX,Hex
+OMINOUSWIND,Ominous Wind
+SHADOWPUNCH,Shadow Punch
+SHADOWSNEAK,Shadow Sneak
+ASTONISH,Astonish
+LICK,Lick
+NIGHTSHADE,Night Shade
+CONFUSERAY,Confuse Ray
+CURSE,Curse
+DESTINYBOND,Destiny Bond
+GRUDGE,Grudge
+NIGHTMARE,Nightmare
+SPITE,Spite
+TRICKORTREAT,Trick-or-Treat
+FRENZYPLANT,Frenzy Plant
+LEAFSTORM,Leaf Storm
+SOLARBLADE,Solar Blade
+PETALDANCE,Petal Dance
+POWERWHIP,Power Whip
+SEEDFLARE,Seed Flare
+SOLARBEAM,Solar Beam
+WOODHAMMER,Wood Hammer
+ENERGYBALL,Energy Ball
+LEAFBLADE,Leaf Blade
+PETALBLIZZARD,Petal Blizzard
+APPLEACID,Apple Acid
+DRUMBEATING,Drum Beating
+GRASSPLEDGE,Grass Pledge
+GRAVAPPLE,Grav Apple
+SEEDBOMB,Seed Bomb
+GIGADRAIN,Giga Drain
+HORNLEECH,Horn Leech
+GRASSYGLIDE,Grassy Glide
+TROPKICK,Trop Kick
+LEAFTORNADO,Leaf Tornado
+MAGICALLEAF,Magical Leaf
+NEEDLEARM,Needle Arm
+RAZORLEAF,Razor Leaf
+VINEWHIP,Vine Whip
+BRANCHPOKE,Branch Poke
+LEAFAGE,Leafage
+MEGADRAIN,Mega Drain
+SNAPTRAP,Snap Trap
+BULLETSEED,Bullet Seed
+ABSORB,Absorb
+GRASSKNOT,Grass Knot
+AROMATHERAPY,Aromatherapy
+COTTONGUARD,Cotton Guard
+COTTONSPORE,Cotton Spore
+FORESTSCURSE,Forest's Curse
+GRASSWHISTLE,Grass Whistle
+GRASSYTERRAIN,Grassy Terrain
+INGRAIN,Ingrain
+JUNGLEHEALING,Jungle Healing
+LEECHSEED,Leech Seed
+SLEEPPOWDER,Sleep Powder
+SPIKYSHIELD,Spiky Shield
+SPORE,Spore
+STRENGTHSAP,Strength Sap
+STUNSPORE,Stun Spore
+SYNTHESIS,Synthesis
+WORRYSEED,Worry Seed
+PRECIPICEBLADES,Precipice Blades
+EARTHQUAKE,Earthquake
+HIGHHORSEPOWER,High Horsepower
+EARTHPOWER,Earth Power
+LANDSWRATH,Land's Wrath
+THOUSANDARROWS,Thousand Arrows
+THOUSANDWAVES,Thousand Waves
+DIG,Dig
+DRILLRUN,Drill Run
+STOMPINGTANTRUM,Stomping Tantrum
+SCORCHINGSANDS,Scorching Sands
+BONECLUB,Bone Club
+MUDBOMB,Mud Bomb
+BULLDOZE,Bulldoze
+MUDSHOT,Mud Shot
+BONEMERANG,Bonemerang
+SANDTOMB,Sand Tomb
+BONERUSH,Bone Rush
+MUDSLAP,Mud-Slap
+FISSURE,Fissure
+MAGNITUDE,Magnitude
+MUDSPORT,Mud Sport
+ROTOTILLER,Rototiller
+SANDATTACK,Sand Attack
+SHOREUP,Shore Up
+SPIKES,Spikes
+FREEZESHOCK,Freeze Shock
+ICEBURN,Ice Burn
+GLACIALLANCE,Glacial Lance
+BLIZZARD,Blizzard
+ICEHAMMER,Ice Hammer
+ICEBEAM,Ice Beam
+ICICLECRASH,Icicle Crash
+ICEPUNCH,Ice Punch
+FREEZEDRY,Freeze-Dry
+AURORABEAM,Aurora Beam
+GLACIATE,Glaciate
+ICEFANG,Ice Fang
+AVALANCHE,Avalanche
+FROSTBREATH,Frost Breath
+ICYWIND,Icy Wind
+ICESHARD,Ice Shard
+POWDERSNOW,Powder Snow
+ICEBALL,Ice Ball
+ICICLESPEAR,Icicle Spear
+TRIPLEAXEL,Triple Axel
+SHEERCOLD,Sheer Cold
+AURORAVEIL,Aurora Veil
+HAIL,Hail
+HAZE,Haze
+MIST,Mist
+EXPLOSION,Explosion
+SELFDESTRUCT,Self-Destruct
+GIGAIMPACT,Giga Impact
+HYPERBEAM,Hyper Beam
+BOOMBURST,Boomburst
+LASTRESORT,Last Resort
+SKULLBASH,Skull Bash
+DOUBLEEDGE,Double-Edge
+HEADCHARGE,Head Charge
+MEGAKICK,Mega Kick
+MULTIATTACK,Multi-Attack
+TECHNOBLAST,Techno Blast
+THRASH,Thrash
+EGGBOMB,Egg Bomb
+JUDGMENT,Judgment
+HYPERVOICE,Hyper Voice
+REVELATIONDANCE,Revelation Dance
+ROCKCLIMB,Rock Climb
+TAKEDOWN,Take Down
+UPROAR,Uproar
+BODYSLAM,Body Slam
+EXTREMESPEED,Extreme Speed
+HYPERFANG,Hyper Fang
+MEGAPUNCH,Mega Punch
+RAZORWIND,Razor Wind
+SLAM,Slam
+STRENGTH,Strength
+TRIATTACK,Tri Attack
+CRUSHCLAW,Crush Claw
+RELICSONG,Relic Song
+CHIPAWAY,Chip Away
+DIZZYPUNCH,Dizzy Punch
+FACADE,Facade
+HEADBUTT,Headbutt
+RETALIATE,Retaliate
+SECRETPOWER,Secret Power
+SLASH,Slash
+SMELLINGSALTS,Smelling Salts
+HORNATTACK,Horn Attack
+STOMP,Stomp
+COVET,Covet
+HIDDENPOWER,Hidden Power
+ROUND,Round
+SWIFT,Swift
+VISEGRIP,Vise Grip
+CUT,Cut
+RAPIDSPIN,Rapid Spin
+SNORE,Snore
+TERRAINPULSE,Terrain Pulse
+WEATHERBALL,Weather Ball
+ECHOEDVOICE,Echoed Voice
+FAKEOUT,Fake Out
+FALSESWIPE,False Swipe
+HOLDBACK,Hold Back
+PAYDAY,Pay Day
+POUND,Pound
+QUICKATTACK,Quick Attack
+SCRATCH,Scratch
+TACKLE,Tackle
+DOUBLEHIT,Double Hit
+FEINT,Feint
+TAILSLAP,Tail Slap
+RAGE,Rage
+SPIKECANNON,Spike Cannon
+COMETPUNCH,Comet Punch
+FURYSWIPES,Fury Swipes
+BARRAGE,Barrage
+BIND,Bind
+DOUBLESLAP,Double Slap
+FURYATTACK,Fury Attack
+WRAP,Wrap
+CONSTRICT,Constrict
+BIDE,Bide
+CRUSHGRIP,Crush Grip
+ENDEAVOR,Endeavor
+FLAIL,Flail
+FRUSTRATION,Frustration
+GUILLOTINE,Guillotine
+HORNDRILL,Horn Drill
+NATURALGIFT,Natural Gift
+PRESENT,Present
+RETURN,Return
+SONICBOOM,Sonic Boom
+SPITUP,Spit Up
+SUPERFANG,Super Fang
+TRUMPCARD,Trump Card
+WRINGOUT,Wring Out
+ACUPRESSURE,Acupressure
+AFTERYOU,After You
+ASSIST,Assist
+ATTRACT,Attract
+BATONPASS,Baton Pass
+BELLYDRUM,Belly Drum
+BESTOW,Bestow
+BLOCK,Block
+CAMOUFLAGE,Camouflage
+CAPTIVATE,Captivate
+CELEBRATE,Celebrate
+CONFIDE,Confide
+CONVERSION,Conversion
+CONVERSION2,Conversion 2
+COPYCAT,Copycat
+COURTCHANGE,Court Change
+DEFENSECURL,Defense Curl
+DISABLE,Disable
+DOUBLETEAM,Double Team
+ENCORE,Encore
+ENDURE,Endure
+ENTRAINMENT,Entrainment
+FLASH,Flash
+FOCUSENERGY,Focus Energy
+FOLLOWME,Follow Me
+FORESIGHT,Foresight
+GLARE,Glare
+GROWL,Growl
+GROWTH,Growth
+HAPPYHOUR,Happy Hour
+HARDEN,Harden
+HEALBELL,Heal Bell
+HELPINGHAND,Helping Hand
+HOLDHANDS,Hold Hands
+HOWL,Howl
+LASERFOCUS,Laser Focus
+LEER,Leer
+LOCKON,Lock-On
+LOVELYKISS,Lovely Kiss
+LUCKYCHANT,Lucky Chant
+MEFIRST,Me First
+MEANLOOK,Mean Look
+METRONOME,Metronome
+MILKDRINK,Milk Drink
+MIMIC,Mimic
+MINDREADER,Mind Reader
+MINIMIZE,Minimize
+MORNINGSUN,Morning Sun
+NATUREPOWER,Nature Power
+NOBLEROAR,Noble Roar
+ODORSLEUTH,Odor Sleuth
+PAINSPLIT,Pain Split
+PERISHSONG,Perish Song
+PLAYNICE,Play Nice
+PROTECT,Protect
+PSYCHUP,Psych Up
+RECOVER,Recover
+RECYCLE,Recycle
+REFLECTTYPE,Reflect Type
+REFRESH,Refresh
+ROAR,Roar
+SAFEGUARD,Safeguard
+SCARYFACE,Scary Face
+SCREECH,Screech
+SHARPEN,Sharpen
+SHELLSMASH,Shell Smash
+SIMPLEBEAM,Simple Beam
+SING,Sing
+SKETCH,Sketch
+SLACKOFF,Slack Off
+SLEEPTALK,Sleep Talk
+SMOKESCREEN,Smokescreen
+SOFTBOILED,Soft-Boiled
+SPLASH,Splash
+SPOTLIGHT,Spotlight
+STOCKPILE,Stockpile
+STUFFCHEEKS,Stuff Cheeks
+SUBSTITUTE,Substitute
+SUPERSONIC,Supersonic
+SWAGGER,Swagger
+SWALLOW,Swallow
+SWEETSCENT,Sweet Scent
+SWORDSDANCE,Swords Dance
+TAILWHIP,Tail Whip
+TEARFULLOOK,Tearful Look
+TEATIME,Teatime
+TEETERDANCE,Teeter Dance
+TICKLE,Tickle
+TRANSFORM,Transform
+WHIRLWIND,Whirlwind
+WISH,Wish
+WORKUP,Work Up
+YAWN,Yawn
+BELCH,Belch
+GUNKSHOT,Gunk Shot
+SLUDGEWAVE,Sludge Wave
+SHELLSIDEARM,Shell Side Arm
+SLUDGEBOMB,Sludge Bomb
+POISONJAB,Poison Jab
+CROSSPOISON,Cross Poison
+SLUDGE,Sludge
+VENOSHOCK,Venoshock
+CLEARSMOG,Clear Smog
+POISONFANG,Poison Fang
+POISONTAIL,Poison Tail
+ACID,Acid
+ACIDSPRAY,Acid Spray
+SMOG,Smog
+POISONSTING,Poison Sting
+ACIDARMOR,Acid Armor
+BANEFULBUNKER,Baneful Bunker
+COIL,Coil
+CORROSIVEGAS,Corrosive Gas
+GASTROACID,Gastro Acid
+POISONGAS,Poison Gas
+POISONPOWDER,Poison Powder
+PURIFY,Purify
+TOXIC,Toxic
+TOXICSPIKES,Toxic Spikes
+TOXICTHREAD,Toxic Thread
+VENOMDRENCH,Venom Drench
+PRISMATICLASER,Prismatic Laser
+PSYCHOBOOST,Psycho Boost
+FUTURESIGHT,Future Sight
+SYNCHRONOISE,Synchronoise
+DREAMEATER,Dream Eater
+PHOTONGEYSER,Photon Geyser
+PSYSTRIKE,Psystrike
+FREEZINGGLARE,Freezing Glare
+PSYCHIC,Psychic
+PSYCHICFANGS,Psychic Fangs
+EERIESPELL,Eerie Spell
+EXPANDINGFORCE,Expanding Force
+EXTRASENSORY,Extrasensory
+HYPERSPACEHOLE,Hyperspace Hole
+PSYSHOCK,Psyshock
+ZENHEADBUTT,Zen Headbutt
+LUSTERPURGE,Luster Purge
+MISTBALL,Mist Ball
+PSYCHOCUT,Psycho Cut
+PSYBEAM,Psybeam
+HEARTSTAMP,Heart Stamp
+CONFUSION,Confusion
+STOREDPOWER,Stored Power
+MIRRORCOAT,Mirror Coat
+PSYWAVE,Psywave
+AGILITY,Agility
+ALLYSWITCH,Ally Switch
+AMNESIA,Amnesia
+BARRIER,Barrier
+CALMMIND,Calm Mind
+COSMICPOWER,Cosmic Power
+GRAVITY,Gravity
+GUARDSPLIT,Guard Split
+GUARDSWAP,Guard Swap
+HEALBLOCK,Heal Block
+HEALPULSE,Heal Pulse
+HEALINGWISH,Healing Wish
+HEARTSWAP,Heart Swap
+HYPNOSIS,Hypnosis
+IMPRISON,Imprison
+INSTRUCT,Instruct
+KINESIS,Kinesis
+LIGHTSCREEN,Light Screen
+LUNARDANCE,Lunar Dance
+MAGICCOAT,Magic Coat
+MAGICPOWDER,Magic Powder
+MAGICROOM,Magic Room
+MEDITATE,Meditate
+MIRACLEEYE,Miracle Eye
+POWERSPLIT,Power Split
+POWERSWAP,Power Swap
+POWERTRICK,Power Trick
+PSYCHICTERRAIN,Psychic Terrain
+PSYCHOSHIFT,Psycho Shift
+REFLECT,Reflect
+REST,Rest
+ROLEPLAY,Role Play
+SKILLSWAP,Skill Swap
+SPEEDSWAP,Speed Swap
+TELEKINESIS,Telekinesis
+TELEPORT,Teleport
+TRICK,Trick
+TRICKROOM,Trick Room
+WONDERROOM,Wonder Room
+HEADSMASH,Head Smash
+ROCKWRECKER,Rock Wrecker
+METEORBEAM,Meteor Beam
+DIAMONDSTORM,Diamond Storm
+STONEEDGE,Stone Edge
+POWERGEM,Power Gem
+ROCKSLIDE,Rock Slide
+ANCIENTPOWER,Ancient Power
+ROCKTOMB,Rock Tomb
+ROCKTHROW,Rock Throw
+SMACKDOWN,Smack Down
+ACCELEROCK,Accelerock
+ROLLOUT,Rollout
+ROCKBLAST,Rock Blast
+ROCKPOLISH,Rock Polish
+SANDSTORM,Sandstorm
+STEALTHROCK,Stealth Rock
+TARSHOT,Tar Shot
+WIDEGUARD,Wide Guard
+DOOMDESIRE,Doom Desire
+STEELBEAM,Steel Beam
+STEELROLLER,Steel Roller
+BEHEMOTHBASH,Behemoth Bash
+BEHEMOTHBLADE,Behemoth Blade
+IRONTAIL,Iron Tail
+SUNSTEELSTRIKE,Sunsteel Strike
+METEORMASH,Meteor Mash
+ANCHORSHOT,Anchor Shot
+FLASHCANNON,Flash Cannon
+IRONHEAD,Iron Head
+SMARTSTRIKE,Smart Strike
+STEELWING,Steel Wing
+DOUBLEIRONBASH,Double Iron Bash
+MIRRORSHOT,Mirror Shot
+MAGNETBOMB,Magnet Bomb
+GEARGRIND,Gear Grind
+METALCLAW,Metal Claw
+BULLETPUNCH,Bullet Punch
+GYROBALL,Gyro Ball
+HEAVYSLAM,Heavy Slam
+METALBURST,Metal Burst
+AUTOTOMIZE,Autotomize
+GEARUP,Gear Up
+IRONDEFENSE,Iron Defense
+KINGSSHIELD,King's Shield
+METALSOUND,Metal Sound
+SHIFTGEAR,Shift Gear
+HYDROCANNON,Hydro Cannon
+WATERSPOUT,Water Spout
+HYDROPUMP,Hydro Pump
+ORIGINPULSE,Origin Pulse
+STEAMERUPTION,Steam Eruption
+CRABHAMMER,Crabhammer
+AQUATAIL,Aqua Tail
+MUDDYWATER,Muddy Water
+SPARKLINGARIA,Sparkling Aria
+SURF,Surf
+FISHIOUSREND,Fishious Rend
+LIQUIDATION,Liquidation
+DIVE,Dive
+SCALD,Scald
+SNIPESHOT,Snipe Shot
+WATERPLEDGE,Water Pledge
+WATERFALL,Waterfall
+RAZORSHELL,Razor Shell
+BRINE,Brine
+BUBBLEBEAM,Bubble Beam
+OCTAZOOKA,Octazooka
+FLIPTURN,Flip Turn
+WATERPULSE,Water Pulse
+AQUAJET,Aqua Jet
+BUBBLE,Bubble
+WATERGUN,Water Gun
+CLAMP,Clamp
+WHIRLPOOL,Whirlpool
+SURGINGSTRIKES,Surging Strikes
+WATERSHURIKEN,Water Shuriken
+AQUARING,Aqua Ring
+LIFEDEW,Life Dew
+RAINDANCE,Rain Dance
+SOAK,Soak
+WATERSPORT,Water Sport
+WITHDRAW,Withdraw
+ALLURINGVOICE,Alluring Voice
+AQUACUTTER,Aqua Cutter
+AQUASTEP,Aqua Step
+ARMORCANNON,Armor Cannon
+AXEKICK,Axe Kick
+BARBBARRAGE,Barb Barrage
+BITTERBLADE,Bitter Blade
+BITTERMALICE,Bitter Malice
+BLAZINGTORQUE,Blazing Torque
+BLEAKWINDSTORM,Bleakwind Storm
+BLOODMOON,Blood Moon
+BURNINGBULWARK,Burning Bulwark
+CEASELESSEDGE,Ceasless Edge
+CHILLINGWATER,Chilling Water
+CHILLYRECEPTION,Chilly Reception
+CHLOROBLAST,Chloro Blast
+COLLISIONCOURSE,Collision Course
+COMBATTORQUE,Combat Torque
+COMEUPPANCE,Comeuppance
+DIRECLAW,Dire Claw
+DOODLE,Doodle
+DOUBLESHOCK,Double Shock
+DRAGONCHEER,Dragon Cheer
+ELECTRODRIFT,Electro Drift
+ELECTROSHOT,Electro Shot
+ESPERWING,Esper Wing
+FICKLEBEAM,Fickle Beam
+FILLETAWAY,Fillet Away
+FLOWERTRICK,Flower Trick
+GASTROACID,Gastro Acid
+GIGATONHAMMER,Gigaton Hammer
+GLAIVERUSH,Glaive Rush
+HARDPRESS,Hard Press
+HEADLONGRUSH,Headlong Rush
+HYDROSTEAM,Hydro Steam
+HYPERDRILL,Hyper Drill
+ICESPINNER,Ice Spinner
+INFERNALPARADE,Infernal Parade
+IVYCUDGEL,Ivy Cudgel
+JETPUNCH,Jet Punch
+KOWTOWCLEAVE,Kowtow Cleave
+LASTRESPECTS,Last Respects
+LUMINACRASH,Lumina Crash
+LUNARBLESSING,Lunar Blessing
+MAGICALTORQUE,Magical Torque
+MAKEITRAIN,Make It Rain
+MALIGNANTCHAIN,Malignant Chain
+MATCHAGOTCHA,Matcha Gotcha
+MIGHTYCLEAVE,Mighty Cleave
+MORTALSPIN,Mortal Spin
+MOUNTAINGALE,Mountain Gale
+MYSTICALPOWER,Mystical Power
+NOXIOUSTORQUE,Noxious Torque
+ORDERUP,Order Up
+POPULATIONBOMB,Population Bomb
+POUNCE,Pounce
+POWERSHIFT,Power Shift
+PSYBLADE,Psyblade
+PSYCHICNOISE,Psychic Noise
+PSYSHIELDBASH,Psyshield Bash
+RAGEFIST,Rage Fist
+RAGINGBULL,Raging Bull
+RAGINGFURY,Raging Fury
+REVIVALBLESSING,Revival Blessing
+RUINATION,Ruination
+SALTCURE,Salt Cure
+SANDSEARSTORM,Sandsear Storm
+SHEDTAIL,Shed Tail
+SHELTER,Shelter
+SILKTRAP,Silk Trap
+SNOWSCAPE,Snow Scape
+SPICYEXTRACT,Spicy Extract
+SPINOUT,Spin Out
+SPRINGTIDESTORM,Springtide Storm
+STONEAXE,Stone Axe
+SUPERCELLSLAM,Supercell Slam
+SYRUPBOMB,Syrup Bomb
+TACHYONCUTTER,Tachyon Cutter
+TAKEHEART,Take Heart
+TEMPERFLARE,Temper Flare
+TERABLAST,Tera Blast
+TERASTARSTORM,Tera Starstorm
+THUNDERCLAP,Thunder Clamp
+TIDYUP,Tidy Up
+TORCHSONG,Torch Song
+TRAILBLAZE,Trailblaze
+TRIPLEARROWS,Triple Arrows
+TRIPLEDIVE,Triple Dive
+TWINBEAM,Twin Beam
+UPPERHAND,Upper Hand
+VICTORYDANCE,Victory Dance
+WAVECRASH,Wave Crash
+WICKEDTORQUE,Wicked Torque
+WILDBOLTSTORM,Wildbolt Storm
+DIRECLAW,Dire Claw
+RAGINGFURY,Raging Fury
+CHLOROBLAST,Chloro Blast
+MOUNTAINGALE,Mountain Gale
+HEADLONGRUSH,Headlong Rush
+BARBBARRAGE,Barb Barrage
+ESPERWING,Esper Wing
+BITTERMALICE,Bitter Malice
+TRIPLEARROWS,Triple Arrows
+BLEAKWINDSTORM,Bleakwind Storm
+SANDSEARSTORM,Sandsear Storm
+LUNARBLESSING,Lunar Blessing
+PSYSHIELDBASH,Psyshield Bash
+POWERSHIFT,Power Shift
+STONEAXE,Stone Axe
+MYSTICALPOWER,Mystical Power
+VICTORYDANCE,Victory Dance
+SHELTER,Shelter
+INFERNALPARADE,Infernal Parade
+CEASELESSEDGE,Ceaseless Edge
+TAKEHEART,Take Heart
+AQUACUTTER,Aqua Cutter
+AQUASTEP,Aqua Step
+ARMORCANNON,Armor Cannon
+AXEKICK,Axe Kick
+BITTERBLADE,Bitter Blade
+BLAZINGTORQUE,Blazing Torque
+CHILLINGWATER,Chilling Water
+CHILLYRECEPTION,Chilly Reception
+COLLISIONCOURSE,Collision Course
+COMBATTORQUE,Combat Torque
+COMEUPPANCE,Comeuppance
+DOODLE,Doodle
+DOUBLESHOCK,Double Shock
+ELECTRODRIFT,Electro Drift
+FILLETAWAY,Fillet Away
+FLOWERTRICK,Flower Trick
+GIGATONHAMMER,Gigaton Hammer
+GLAIVERUSH,Glaive Rush
+HYPERDRILL,Hyper Drill
+ICESPINNER,Ice Spinner
+JETPUNCH,Jet Punch
+KOWTOWCLEAVE,Kowtow Cleave
+LASTRESPECTS,Last Respects
+LUMINACRASH,Lumina Crash
+MAGICALTORQUE,Magical Torque
+MAKEITRAIN,Make It Rain
+MORTALSPIN,Mortal Spin
+NOXIOUSTORQUE,Noxious Torque
+ORDERUP,Order Up
+POPULATIONBOMB,Population Bomb
+POUNCE,Pounce
+RAGEFIST,Rage Fist
+RAGINGBULL,Raging Bull
+REVIVALBLESSING,Revival Blessing
+RUINATION,Ruination
+SALTCURE,Salt Cure
+SHEDTAIL,Shed Tail
+SILKTRAP,Silk Trap
+SNOWSCAPE,Snowscape
+SPICYEXTRACT,Spicy Extract
+SPINOUT,Spin Out
+TIDYUP,Tidy Up
+TORCHSONG,Torch Song
+TRAILBLAZE,Trailblaze
+TRIPLEDIVE,Triple Dive
+TWINBEAM,Twin Beam
+HYDROSTEAM,Hydro Steam
+PSYBLADE,Psyblade
+BLOODMOON,Blood Moon
+MATCHAGOTCHA,Matcha Gotcha
+SYRUPBOMB,Syrup Bomb
+IVYCUDGEL,Ivy Cudgel
+ELECTROSHOT,Electro Shot
+TERASTARSTORM,Tera Starstorm
+FICKLEBEAM,Fickle Beam
+BURNINGBULWARK,Burning Bulwark
+THUNDERCLAP,Thunderclap
+MIGHTYCLEAVE,Mighty Cleave
+TACHYONCUTTER,Tachyon Cutter
+HARDPRESS,Hard Press
+DRAGONCHEER,Dragon Cheer
+ALLURINGVOICE,Alluring Voice
+TEMPERFLARE,Temper Flare
+SUPERCELLSLAM,Supercell Slam
+PSYCHICNOISE,Psychic Noise
+UPPERHAND,Upper Hand
+MALIGNANTCHAIN,Malignant Chain
+TERABLAST,Tera Blast
+ESCALOFRIO,Escalofrio
+DESLIZAMIENTO,Deslizamiento
+TRIPLEHIT,Triple Hit
+EEVEEVOLLEY,Eevee Volley
+BOUNCYBUBBLE,Bouncy Bubble
+BUZZYBUZZ,Buzzy Buzz
+SIZZLYSLIDE,Sizzly Slide
+GLITZYGLOW,Glitzy Glow
+BADDYBAD,Baddy Bad
+SAPPYSEED,Sappy Seed
+FREEZYFROST,Freezy Frost
+SPARKLYSWIRL,Sparkly Swirl
+PIKAPAPOW,Pika Papow
+ZIPPYZAP,Zippy Zap
+SPLISHYSPLASH,Splishy Splash
+FLOATYFALL,Floaty Fall
+NIHILLIGHT,Nihil Light

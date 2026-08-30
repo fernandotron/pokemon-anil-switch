@@ -1,0 +1,6 @@
+Name       = Continuos Weather Animations
+Version    = 1.0.0
+Essentials = 21.1
+Requires   = v21.1 Hotfixes
+Credits    = DPertierra
+Disabled   = 
