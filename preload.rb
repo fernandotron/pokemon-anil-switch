@@ -1932,7 +1932,8 @@ class Module
   end
 end
 
-# 1.18 Monitor de carga de plugins y parcheador al vuelo en Kernel.eval + Global tsOff? / tsOn?
+$ORIGINAL_KERNEL_EVAL ||= Kernel.method(:eval)
+
 module Kernel
   # Limpiar constantes si se hubieran definido erróneamente en Kernel
   [:Viewport, :Sprite, :Plane, :Window, :Tilemap, :Bitmap, :Rect, :Color, :Tone, :Font, :Battle, :RecordedBattle].each do |c|
@@ -1961,11 +1962,10 @@ module Kernel
   def isTempSwitchOn?(c); tsOn?(c); end
   module_function :tsOff?, :tsOn?, :isTempSwitchOff?, :isTempSwitchOn? rescue nil
 
-  alias __switch_orig_eval eval unless method_defined?(:__switch_orig_eval) rescue nil
   def eval(src, *args, &block)
-    # Si se evalúa una simple expresión/código sin parámetros de archivo/binding, usar el scope del llamador
+    # Si se evalúa una simple expresión/código sin parámetros de archivo/binding, usar el eval nativo en C
     if args.empty? && block.nil?
-      return __switch_orig_eval(src)
+      return $ORIGINAL_KERNEL_EVAL.call(src)
     end
 
     # Si el primer argumento es un Binding explícito, usarlo; si no, usar TOPLEVEL_BINDING
