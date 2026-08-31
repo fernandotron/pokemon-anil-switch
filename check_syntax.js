@@ -1,55 +1,56 @@
 const fs = require('fs');
-const content = fs.readFileSync('preload.rb', 'utf-8');
+const target = process.argv[2] || 'preload.rb';
+const content = fs.readFileSync(target, 'utf-8');
+console.log('Checking syntax:', target);
 
-// Accurate Ruby lexer / block parser
-function checkRubySyntax(code) {
-  const lines = code.split('\n');
+function checkRubySyntax(src) {
+  const lines = src.split('\n');
   const stack = [];
+  let extraEnds = 0;
 
   for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
-    // Remove comments
-    line = line.replace(/#.*$/, '');
-    // Strip strings
-    line = line.replace(/\"(?:[^\"\\]|\\.)*\"/g, '""');
-    line = line.replace(/\'(?:[^\'\\]|\\.)*\'/g, "''");
-    line = line.replace(/:(?:\w+|[^\s]+)/g, ''); // strip symbols
-    
-    // Normalize semicolons as linebreaks
-    const sublines = line.split(';');
-    for (let part of sublines) {
-      part = part.trim();
-      if (!part) continue;
+    let line = lines[i].replace(/#.*$/, '');
+    line = line.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+    line = line.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+    line = line.replace(/\/(?:[^\/\\]|\\.)*\//g, '//');
 
-      // Handle single-line definitions
-      if (/^def\s+.*?\bend(\s+(?:if|unless|rescue)\b.*)?$/.test(part)) continue;
-      if (/^(?:class|module)\s+.*?\bend$/.test(part)) continue;
+    const words = line.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) continue;
 
-      const words = part.split(/\s+/);
-      const first = words[0];
+    // Tokenize
+    const tokens = line.match(/\b(?:class|module|def|if|unless|case|while|until|for|begin|do|end)\b/g) || [];
 
-      if (['class', 'module', 'case', 'begin'].includes(first)) {
-        stack.push({ line: i + 1, type: first, text: part });
-      } else if (first === 'def') {
-        stack.push({ line: i + 1, type: 'def', text: part });
-      } else if (['if', 'unless', 'while', 'until', 'for'].includes(first)) {
-        stack.push({ line: i + 1, type: first, text: part });
-      } else if (/\bdo\b(\s*\|[^|]*\|)?\s*$/.test(part)) {
-        stack.push({ line: i + 1, type: 'do', text: part });
-      }
-
-      if (first === 'end' || words[words.length - 1] === 'end') {
+    for (let t of tokens) {
+      if (['class', 'module', 'case', 'begin', 'def'].includes(t)) {
+        stack.push({ line: i + 1, token: t, code: lines[i].trim() });
+      } else if (['if', 'unless', 'while', 'until', 'for'].includes(t)) {
+        const idx = line.indexOf(t);
+        const before = line.substring(0, idx).trim();
+        if (before === '' || before.endsWith(';') || before.endsWith('=') || before.endsWith('then') || before.endsWith('do')) {
+          stack.push({ line: i + 1, token: t, code: lines[i].trim() });
+        }
+      } else if (t === 'do') {
+        stack.push({ line: i + 1, token: t, code: lines[i].trim() });
+      } else if (t === 'end') {
         if (stack.length > 0) {
-          const popped = stack.pop();
+          stack.pop();
         } else {
-          console.error('EXTRA end at line ' + (i + 1) + ': ' + part);
+          extraEnds++;
+          console.error(`[SYNTAX ERROR] Unmatched extra 'end' at line ${i + 1}: ${lines[i]}`);
         }
       }
     }
   }
 
-  console.log('Final stack count:', stack.length);
-  stack.forEach(s => console.log('Unclosed ' + s.type + ' at line ' + s.line + ': ' + s.text));
+  console.log(`Remaining unclosed stack depth: ${stack.length}`);
+  if (stack.length > 0 || extraEnds > 0) {
+    stack.forEach(s => console.error(`  Unclosed ${s.token} from line ${s.line}: ${s.code}`));
+    console.error(`[ERROR] check_syntax.js: Se encontraron errores de sintaxis en ${target}.`);
+    process.exit(1);
+  } else {
+    console.log(`[SUCCESS] 0 syntax errors. Every block in ${target} is 100% matched!`);
+    process.exit(0);
+  }
 }
 
 checkRubySyntax(content);

@@ -2,7 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-console.log('=== 1. CONVIRTIENDO AUDIOS (SE y ME) A PCM WAV SIN LATENCIA ===');
+console.log('=== 1. VALIDACIÓN DE SINTAXIS RUBY ===');
+try {
+  execSync('node check_syntax.js', { stdio: 'inherit' });
+  execSync('node validate_ruby.js', { stdio: 'inherit' });
+} catch (e) {
+  console.error('[ERROR] Falló la validación de sintaxis Ruby.');
+  process.exit(1);
+}
+
+console.log('\n=== 2. CONVIRTIENDO AUDIOS (SE y ME) A PCM WAV SIN LATENCIA ===');
 if (fs.existsSync('convert_audio_to_wav.js')) {
   try {
     execSync('node convert_audio_to_wav.js', { stdio: 'inherit' });
@@ -14,7 +23,7 @@ if (fs.existsSync('convert_audio_to_wav.js')) {
   console.warn('[AVISO] convert_audio_to_wav.js no existe; los .wav ya estan versionados. Paso omitido.');
 }
 
-console.log('\n=== 2. GENERANDO ÍNDICE BINARIO (.dat) Y FALLBACK (.rb) DE ASSETS EN RAM ===');
+console.log('\n=== 3. GENERANDO ÍNDICE BINARIO (.dat) Y FALLBACK (.rb) DE ASSETS EN RAM ===');
 try {
   execSync('node generate_asset_cache.js', { stdio: 'inherit' });
 } catch (e) {
@@ -22,7 +31,7 @@ try {
   process.exit(1);
 }
 
-console.log('\n=== 3. RECONSTRUYENDO Data/Scripts.rxdata CON OPTIMIZACIONES DE AUDIO ===');
+console.log('\n=== 4. RECONSTRUYENDO Data/Scripts.rxdata CON OPTIMIZACIONES DE AUDIO ===');
 try {
   execSync('node patch_scripts.js', { stdio: 'inherit' });
 } catch (e) {
@@ -30,7 +39,7 @@ try {
   process.exit(1);
 }
 
-console.log('\n=== 4. RECONSTRUYENDO Data/PluginScripts.rxdata ===');
+console.log('\n=== 5. RECONSTRUYENDO Data/PluginScripts.rxdata ===');
 try {
   execSync('node patch_plugins_complete.js', { stdio: 'inherit' });
 } catch (e) {
@@ -38,7 +47,7 @@ try {
   process.exit(1);
 }
 
-console.log('\n=== 5. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
+console.log('\n=== 6. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
 const now = new Date();
 
 function copyAndTouch(src, dest) {
@@ -111,7 +120,7 @@ targets.forEach(dir => {
   }
 });
 
-console.log('\n=== 6. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
+console.log('\n=== 7. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
 function list(dir, base = '') {
   for (const f of fs.readdirSync(dir)) {
     const p = path.join(dir, f);
@@ -138,3 +147,11 @@ if (fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) {
   process.exit(1);
 }
 console.log('[OK] Despliegue verificado.');
+
+console.log('\n=== 8. VERIFICACIÓN DEL ARTEFACTO FINAL (verify_artifact.js) ===');
+try {
+  execSync('node verify_artifact.js', { stdio: 'inherit' });
+} catch (e) {
+  console.error('[ERROR] Falló la verificación del artefacto Scripts.rxdata.');
+  process.exit(1);
+}

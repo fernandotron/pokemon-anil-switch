@@ -6,6 +6,7 @@ console.log('Validating:', target);
 function validateRuby(src) {
   const lines = src.split('\n');
   const stack = [];
+  let extraEnds = 0;
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].replace(/#.*$/, '');
@@ -37,6 +38,7 @@ function validateRuby(src) {
         if (stack.length > 0) {
           const popped = stack.pop();
         } else {
+          extraEnds++;
           console.error(`[SYNTAX ERROR] Unmatched extra 'end' at line ${i + 1}: ${lines[i]}`);
         }
       }
@@ -44,10 +46,13 @@ function validateRuby(src) {
   }
 
   console.log(`Remaining unclosed stack depth: ${stack.length}`);
-  if (stack.length > 0) {
+  if (stack.length > 0 || extraEnds > 0) {
     stack.forEach(s => console.error(`  Unclosed ${s.token} from line ${s.line}: ${s.code}`));
+    console.error(`[ERROR] validate_ruby.js: Se encontraron errores de validación en ${target}.`);
+    process.exit(1);
   } else {
-    console.log('[SUCCESS] 0 syntax errors. Every block in preload.rb is 100% matched!');
+    console.log(`[SUCCESS] 0 syntax errors. Every block in ${target} is 100% matched!`);
+    process.exit(0);
   }
 }
 

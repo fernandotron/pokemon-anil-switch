@@ -239,19 +239,29 @@ for (let s of scripts) {
   });
 }
 
+let patchesFallidos = [];
+function sub(texto, patron, reemplazo, nombre) {
+  const antes = texto;
+  const despues = texto.replace(patron, reemplazo);
+  if (antes === despues) {
+    patchesFallidos.push(nombre || String(patron));
+  }
+  return despues;
+}
+
 let patchedCount = 0;
 for (let s of scripts) {
   let changed = false;
   
   if (s.code.includes('def pbSetResizeFactor')) {
     console.log('Patching pbSetResizeFactor in:', s.name);
-    s.code = s.code.replace(/def pbSetResizeFactor[\s\S]*?\bend\b/m, `def pbSetResizeFactor(factor = 0)
+    s.code = sub(s.code, /def pbSetResizeFactor[\s\S]*?\bend\b/m, `def pbSetResizeFactor(factor = 0)
   Graphics.fixed_aspect_ratio = (factor == 1) rescue nil
   Graphics.integer_scaling = false rescue nil
   Graphics.smooth_scaling = 3 rescue nil
   Graphics.fullscreen = true rescue nil
   Graphics.center rescue nil
-end`);
+end`, 'pbSetResizeFactor');
     changed = true;
   }
   
@@ -2197,7 +2207,8 @@ end unless defined?(PBAnimations)`
 
   if (s.name.includes('MiscPBSData') || s.code.includes('def pbLoadBattleAnimations')) {
     console.log('Patching MiscPBSData pbLoadBattleAnimations in:', s.name);
-    s.code = s.code.replace(
+    s.code = sub(
+      s.code,
       /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?return \$game_temp\.move_to_battle_animation_data\s*\nend/m,
 `def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations && !$PokemonBattleAnimations.empty?
@@ -2215,15 +2226,17 @@ def pbLoadMoveToAnim
   data = (load_data("Data/move2anim.dat") rescue nil) || []
   $game_temp.move_to_battle_animation_data = data if defined?($game_temp) && $game_temp
   return data
-end`
+end`,
+      'MiscPBSData_pbLoadBattleAnimations'
     );
     changed = true;
   }
 
   if (s.name.includes('BattleAnimationPlayer') || s.code.includes('class PBAnimationPlayerX')) {
     console.log('Patching BattleAnimationPlayer in:', s.name);
-    s.code = s.code.replace(
-      /class PBAnimations < Array[\s\S]*?#={10,}\s*\n# Animation player/m,
+    s.code = sub(
+      s.code,
+      /class PBAnimations(?:\s*<\s*Array)?[\s\S]*?#={10,}\s*\n# Animation player/m,
 `class PBAnimations < Array
   include Enumerable
   attr_accessor :array, :selected
@@ -2380,7 +2393,8 @@ class PBAnimation < Array
   end
 
 #===============================================================================
-# Animation player`
+# Animation player`,
+      'BattleAnimationPlayer_PBAnimations'
     );
     changed = true;
   }
@@ -2665,6 +2679,12 @@ end
 
 console.log('Total scripts patched:', patchedCount);
 
+if (patchesFallidos.length > 0) {
+  console.error('[ERROR] Las siguientes sustituciones fallaron al aplicarse en patch_scripts.js:');
+  patchesFallidos.forEach(p => console.error('  - ' + p));
+  process.exit(1);
+}
+
 // Re-encode to Marshal
 const chunks = [];
 chunks.push(Buffer.from([0x04, 0x08, 0x5b]));
@@ -2695,6 +2715,121 @@ for (let s of scripts) {
 
 const outBuf = Buffer.concat(chunks);
 console.log('Original size:', buf.length, 'New size:', outBuf.length);
+
+// Round-trip verification
+function verifyRoundTrip(buffer, originalScripts) {
+  let p = 2;
+  function rByte() { return buffer[p++]; }
+  function rFixnum() {
+    const b = buffer[p++];
+    if (b === 0) return 0;
+    if (b > 0 && b <= 4) {
+      let val = 0;
+      for (let i = 0; i < b; i++) val |= buffer[p++] << (i * 8);
+      return val;
+    }
+    if (b >= 5 && b <= 127) return b - 5;
+    if (b >= 252) {
+      const count = 256 - b;
+      let val = 0;
+      for (let i = 0; i < count; i++) val |= buffer[p++] << (i * 8);
+      return -(~val + 1);
+    }
+    if (b >= 128) return b - 251;
+    return b;
+  }
+  function rString() {
+    const t = rByte();
+    if (t === 0x49) {
+      const raw = rString();
+      const ivars = rFixnum();
+      for (let i = 0; i < ivars; i++) { rObject(); rObject(); }
+      return raw;
+    } else if (t === 0x22) {
+      const len = rFixnum();
+      const s = buffer.subarray(p, p + len);
+      p += len;
+      return s;
+    } else if (t === 0x3a) {
+      const len = rFixnum();
+      const s = buffer.subarray(p, p + len).toString('utf-8');
+      p += len;
+      return s;
+    } else if (t === 0x3b) {
+      return 'sym_' + rFixnum();
+    }
+  }
+  function rObject() {
+    const t = rByte();
+    if (t === 0x69) return rFixnum();
+    if (t === 0x54) return true;
+    if (t === 0x46) return false;
+    if (t === 0x30) return null;
+    if (t === 0x3a) {
+      const len = rFixnum();
+      const s = buffer.subarray(p, p + len).toString('utf-8');
+      p += len;
+      return s;
+    }
+    if (t === 0x3b) return 'sym_link_' + rFixnum();
+    if (t === 0x22) {
+      const len = rFixnum();
+      const s = buffer.subarray(p, p + len);
+      p += len;
+      return s;
+    }
+    if (t === 0x49) { p--; return rString(); }
+    if (t === 0x5b) {
+      const len = rFixnum();
+      const arr = [];
+      for (let i = 0; i < len; i++) arr.push(rObject());
+      return arr;
+    }
+  }
+
+  rByte(); // array
+  const total = rFixnum();
+  const nameCounts = {};
+  let totalDefs = 0;
+
+  for (let i = 0; i < total; i++) {
+    rByte(); // '['
+    rFixnum(); // 3
+    const id = rObject();
+    const nameObj = rObject();
+    const nameStr = Buffer.isBuffer(nameObj) ? nameObj.toString('utf-8') : String(nameObj);
+    const codeObj = rObject();
+    const codeBuf = Buffer.isBuffer(codeObj) ? codeObj : Buffer.from(codeObj);
+    const decompressed = zlib.inflateSync(codeBuf).toString('utf-8');
+
+    if (nameStr !== '==================' && nameStr.trim() !== '') {
+      nameCounts[nameStr] = (nameCounts[nameStr] || 0) + 1;
+    }
+    const defMatches = decompressed.match(/\bdef\s+/g);
+    if (defMatches) totalDefs += defMatches.length;
+  }
+
+  const duplicates = Object.entries(nameCounts).filter(([k, v]) => v > 1);
+  if (duplicates.length > 0) {
+    console.error('[ERROR Round-trip] Nombres de scripts duplicados detectados:', duplicates);
+    process.exit(1);
+  }
+
+  let origDefs = 0;
+  for (let s of originalScripts) {
+    const m = s.code.match(/\bdef\s+/g);
+    if (m) origDefs += m.length;
+  }
+
+  if (totalDefs < origDefs) {
+    console.error(`[ERROR Round-trip] El número de métodos def disminuyó: antes=${origDefs}, después=${totalDefs}`);
+    process.exit(1);
+  }
+
+  console.log(`[OK Round-trip] Verificado: ${total} scripts, ${totalDefs} métodos def (original: ${origDefs}), 0 nombres duplicados.`);
+}
+
+verifyRoundTrip(outBuf, scripts);
 
 if (!fs.existsSync('Data/Scripts.rxdata.bak')) {
   fs.writeFileSync('Data/Scripts.rxdata.bak', buf);
