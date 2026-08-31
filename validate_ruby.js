@@ -9,7 +9,7 @@ function validateRuby(src) {
   let extraEnds = 0;
 
   for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].replace(/#.*$/, '');
+    let line = lines[i].replace(/\r/g, '').replace(/#.*/, '');
     line = line.replace(/"(?:[^"\\]|\\.)*"/g, '""');
     line = line.replace(/'(?:[^'\\]|\\.)*'/g, "''");
     line = line.replace(/\/(?:[^\/\\]|\\.)*\//g, '//');
