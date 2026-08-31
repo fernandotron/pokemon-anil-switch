@@ -50,7 +50,7 @@ const metrics = [
   {
     name: 'Bytes de Ruby inflado',
     actual: totalBytes,
-    expected: 6030854,
+    expected: 6030825,
     type: 'exact',
     description: 'Tamaño total del código fuente Ruby inflado'
   },
@@ -78,9 +78,9 @@ const metrics = [
   {
     name: 'prewarm_all',
     actual: countOccurrences(totalRuby, 'prewarm_all'),
-    expected: 0,
+    expected: 1,
     type: 'exact',
-    description: 'Llamadas no conectadas a prewarm_all'
+    description: 'Llamada conectada a SwitchAssetOptimizer.prewarm_all en arranque'
   },
   {
     name: '!$PokemonBattleAnimations.empty?',

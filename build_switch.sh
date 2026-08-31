@@ -178,9 +178,6 @@ with open("cont.c", "r") as f:
 # Eliminar completamente el bloque mprotect / guard page en cont.c
 code = re.sub(r'if\s*\(\s*mprotect\s*\([^)]*\)\s*<\s*0\s*\)\s*\{[^}]*\}', '/* guard page bypassed on switch */', code)
 
-# Hacer fiber_pool_initialize lazy (no reservar memoria por adelantado al arrancar la VM)
-code = code.replace("fiber_pool_expand(fiber_pool, count);", "/* lazy pool */")
-
 # Predefinir rb_cFiber y rb_eFiberError al inicio de Init_Cont
 init_cont_pos = code.find("void\nInit_Cont(void)\n{")
 if init_cont_pos != -1:
@@ -197,7 +194,7 @@ with open("cont.c", "w") as f:
 print(">>> Parche cont.c aplicado exitosamente con Python")
 PYEOF
     sed -i 's/rb_provide("fiber.so");/rb_provide("fiber.so"); log_ruby_step("      [cont] Init_Cont complete");/g' cont.c || true
-    CFLAGS="-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
+    CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
     LDFLAGS="-specs=$DEVKITPRO/libnx/switch.specs -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -L$DEVKITPRO/libnx/lib -L$DEVKITPRO/portlibs/switch/lib -lnx" \
     ./configure \
         --host=aarch64-none-elf \

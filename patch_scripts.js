@@ -2582,7 +2582,7 @@ log_compat("[Main] 4. Configurando sistema...") rescue puts("[Main] 4. Configura
 begin
   SaveData.initialize_bootup_values rescue nil
   Game.set_up_system
-  # [ANCLA FASE 4.15]: SwitchAssetOptimizer prewarm hook aqui
+  SwitchAssetOptimizer.prewarm_all rescue nil
 rescue Exception => e
   log_compat("[Error set_up_system] #{e.class}: #{e.message}") rescue nil
   if e.backtrace

@@ -194,7 +194,7 @@ class Game_Map
 
   def setup(map_id)
     @map_id = map_id
-    @map = load_data(sprintf("Data/Map%03d.rxdata", map_id))
+    @map = (defined?(pbGetCachedMap) ? pbGetCachedMap(map_id) : nil) || load_data(sprintf("Data/Map%03d.rxdata", map_id))
     @side_stairs = {}  # Keep side stair events here
     tileset = $data_tilesets[@map.tileset_id]
     updateTileset
