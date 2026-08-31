@@ -153,20 +153,25 @@ for (let s = 0; s < numScripts; s++) {
 
 console.log('Successfully decoded all', scripts.length, 'scripts!');
 
+const alreadyPatched = scripts.some(s => s.name === 'UI_base' || (s.code && s.code.includes('eval(script, binding)')));
+if (alreadyPatched) {
+  console.warn('[AVISO] La entrada ' + sourceFile + ' parece estar ya parcheada (contiene UI_base o eval). Operando en modo idempotente.');
+}
+
 // Sync modified and missing scripts from Data/Scripts directory on disk
 function syncFromDisk(dir) {
   if (!fs.existsSync(dir)) return;
   let maxId = scripts.reduce((max, s) => Math.max(max, s.id || 0), 0);
   
-  // 1. If 000_UI_base.rb exists, assign it to [[ UI ]] (or insert before UI_PauseMenu)
+  // 1. If 000_UI_base.rb exists, assign it to UI_base / [[ UI ]] (or insert before UI_PauseMenu)
   const uiBaseFile = 'Data/Scripts/048_UI/000_UI_base.rb';
   if (fs.existsSync(uiBaseFile)) {
     const uiCode = fs.readFileSync(uiBaseFile, 'utf-8');
-    const uiHeaderIdx = scripts.findIndex(s => s.name === '[[ UI ]]');
-    if (uiHeaderIdx >= 0) {
-      console.log('  -> Assigning 000_UI_base.rb to [[ UI ]]');
-      scripts[uiHeaderIdx].name = 'UI_base';
-      scripts[uiHeaderIdx].code = uiCode;
+    const idx = scripts.findIndex(s => s.name === 'UI_base' || s.name === '[[ UI ]]');
+    if (idx >= 0) {
+      console.log(`  -> Assigning 000_UI_base.rb to ${scripts[idx].name}`);
+      scripts[idx].name = 'UI_base';
+      scripts[idx].code = uiCode;
     } else {
       const pauseIdx = scripts.findIndex(s => s.name === 'UI_PauseMenu');
       if (pauseIdx >= 0) {
