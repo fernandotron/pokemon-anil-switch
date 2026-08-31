@@ -50,7 +50,7 @@ const metrics = [
   {
     name: 'Bytes de Ruby inflado',
     actual: totalBytes,
-    expected: 6019546,
+    expected: 6030854,
     type: 'exact',
     description: 'Tamaño total del código fuente Ruby inflado'
   },
@@ -88,6 +88,13 @@ const metrics = [
     expected: 0,
     type: 'exact',
     description: 'Guarda rota de caché de animaciones que no debe aparecer en Scripts.rxdata'
+  },
+  {
+    name: 'Data/battle_animations.dat',
+    actual: countOccurrences(totalRuby, 'Data/battle_animations.dat'),
+    expected: 0,
+    type: 'exact',
+    description: 'Fallback a archivo inexistente de animaciones de combate'
   }
 ];
 

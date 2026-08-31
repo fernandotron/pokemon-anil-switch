@@ -32,6 +32,7 @@ class Battle::Scene
     @weatherAnimationPlayer = nil
     @weatherAnimationTimer = 0
     @weatherAnimationInterval = ContinuousWeatherSettings::ANIMATION_RESTART_INTERVAL
+    @weather_warned = false
   end
 
   def pbStartContinuousWeather(battleWeather)
@@ -58,6 +59,7 @@ class Battle::Scene
     @currentWeatherAnimation = weather_data.animation
     @continuousWeatherActive = true
     @weatherAnimationTimer = 0
+    @weather_warned = false
     
     # Start the first weather animation immediately
     pbStartWeatherAnimation
@@ -77,6 +79,7 @@ class Battle::Scene
     @currentWeatherType = :None
     @currentWeatherAnimation = nil
     @weatherAnimationTimer = 0
+    @weather_warned = false
   end
 
   def pbStartWeatherAnimation
@@ -89,13 +92,17 @@ class Battle::Scene
       return
     end
     
+    target_anim_name = "Common:" + @currentWeatherAnimation
     animation = nil
     animations.each do |a|
-      next if !a || a.name != "Common:" + @currentWeatherAnimation
+      next if !a || a.name != target_anim_name
       animation = a
       break
     end
     if !animation
+      @continuousWeatherActive = false
+      log_compat("[Clima] Sin animacion para #{@currentWeatherAnimation}") if !@weather_warned
+      @weather_warned = true
       return
     end
     
@@ -104,6 +111,7 @@ class Battle::Scene
     
     # Create animation player using the scene (same as original approach)
     @weatherAnimationPlayer = PBAnimationPlayerX.new(animation, nil, nil, self, false)
+    @weatherAnimationPlayer.looping = true
     
     # Start the animation
     @weatherAnimationPlayer.start
@@ -114,14 +122,9 @@ class Battle::Scene
     return if !ContinuousWeatherSettings::ENABLED
     return if !@continuousWeatherActive
     
-    @weatherAnimationTimer += 1
-    # Update the current animation player
-    if @weatherAnimationPlayer && !@weatherAnimationPlayer.animDone?
+    if @weatherAnimationPlayer
       @weatherAnimationPlayer.update
-    end
-    
-    # Check if we need to restart the animation
-    if !@weatherAnimationPlayer || @weatherAnimationPlayer.animDone? || @weatherAnimationTimer >= @weatherAnimationInterval
+    else
       pbStartWeatherAnimation
     end
   end

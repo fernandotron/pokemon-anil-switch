@@ -327,6 +327,7 @@ module FileTest
       $AUDIO_LOOKUP_TABLE.has_key?(File.basename(fn).sub(/\.[^.]+$/, "")) ||
       $AUDIO_LOOKUP_TABLE.has_key?(File.basename(fn).sub(/\.[^.]+$/, "").delete(" "))
     )
+    return true if RTP.exists?(filename, AUDIO_EXTENSIONS)
     return false
   end
 
@@ -339,6 +340,7 @@ module FileTest
       $GRAPHICS_LOOKUP_TABLE.has_key?(File.basename(fn)) ||
       $GRAPHICS_LOOKUP_TABLE.has_key?(File.basename(fn).sub(/\.[^.]+$/, ""))
     )
+    return true if RTP.exists?(filename, IMAGE_EXTENSIONS)
     return false
   end
 end

@@ -229,25 +229,65 @@ def pbGetAutotile(name, hue = 0)
 end
 
 $ANIMATION_BITMAP_CACHE ||= {}
+$ANIMATION_BITMAP_SIZES ||= {}
+$ANIMATION_BITMAP_BYTES ||= 0
+$ANIMATION_BITMAP_MAX_BYTES = 40 * 1024 * 1024 # 40 MB
+
+def pbClearAnimationCache
+  if defined?($ANIMATION_BITMAP_CACHE) && $ANIMATION_BITMAP_CACHE
+    $ANIMATION_BITMAP_CACHE.each_value do |bm|
+      bm.dispose if bm && !bm.disposed?
+    end
+    $ANIMATION_BITMAP_CACHE.clear
+  end
+  $ANIMATION_BITMAP_SIZES&.clear
+  $ANIMATION_BITMAP_BYTES = 0
+end
 
 def pbGetAnimation(name, hue = 0)
   return nil if nil_or_empty?(name)
   key = "#{name}_#{hue}"
-  bm = $ANIMATION_BITMAP_CACHE[key]
-  if !bm || bm.disposed?
-    clean_name = name.to_s.sub(/^Graphics\/Animations\//i, "").sub(/^Animations\//i, "").sub(/^Graphics\/Battle animations\//i, "").sub(/^Battle animations\//i, "")
-    real_path = pbResolveBitmap("Graphics/Animations/" + clean_name) ||
-                pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
-                pbResolveBitmap(clean_name)
-    if real_path
-      bm = (Bitmap.new(real_path) rescue nil) ||
-           (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
-    else
-      bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
-           (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+  if $ANIMATION_BITMAP_CACHE.has_key?(key)
+    bm = $ANIMATION_BITMAP_CACHE[key]
+    if bm.nil?
+      return nil
+    elsif !bm.disposed?
+      $ANIMATION_BITMAP_CACHE.delete(key)
+      $ANIMATION_BITMAP_CACHE[key] = bm
+      return bm
     end
-    $ANIMATION_BITMAP_CACHE[key] = bm if bm
   end
+
+  clean_name = name.to_s.sub(/^Graphics\/Animations\//i, "").sub(/^Animations\//i, "").sub(/^Graphics\/Battle animations\//i, "").sub(/^Battle animations\//i, "")
+  real_path = pbResolveBitmap("Graphics/Animations/" + clean_name) ||
+              pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
+              pbResolveBitmap(clean_name)
+  if real_path
+    bm = (Bitmap.new(real_path) rescue nil) ||
+         (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
+  else
+    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
+         (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+  end
+
+  size = (bm && !bm.disposed?) ? (bm.width * bm.height * 4) : 0
+  if $ANIMATION_BITMAP_CACHE.has_key?(key)
+    old_size = $ANIMATION_BITMAP_SIZES.delete(key) || 0
+    $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_size, 0].max
+  end
+
+  $ANIMATION_BITMAP_CACHE[key] = bm
+  $ANIMATION_BITMAP_SIZES[key] = size
+  $ANIMATION_BITMAP_BYTES += size
+
+  while $ANIMATION_BITMAP_BYTES > $ANIMATION_BITMAP_MAX_BYTES && !$ANIMATION_BITMAP_CACHE.empty?
+    oldest_key = $ANIMATION_BITMAP_CACHE.keys.first
+    old_bm = $ANIMATION_BITMAP_CACHE.delete(oldest_key)
+    old_sz = $ANIMATION_BITMAP_SIZES.delete(oldest_key) || 0
+    $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_sz, 0].max
+    old_bm.dispose if old_bm && !old_bm.disposed?
+  end
+
   return bm
 end
 

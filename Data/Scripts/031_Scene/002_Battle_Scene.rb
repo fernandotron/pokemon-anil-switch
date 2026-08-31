@@ -329,6 +329,7 @@ class Battle::Scene
 
   def pbDisposeSprites
     pbDisposeSpriteHash(@sprites)
+    pbClearAnimationCache if defined?(pbClearAnimationCache)
   end
 
   # Used by Ally Switch.

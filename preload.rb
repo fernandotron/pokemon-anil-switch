@@ -1348,38 +1348,40 @@ module ::Audio
       alias __switch_native_bgs_play bgs_play rescue nil
       alias __switch_native_me_play me_play rescue nil
       alias __switch_native_se_play se_play rescue nil
+      alias __switch_native_me_stop me_stop rescue nil
+      alias __switch_native_me_fade me_fade rescue nil
     end
 
     $LAST_SE_TIME ||= {}
 
     def resolve_audio_file(path, exts = nil, default_dir = "Audio/SE")
       return "" if path.nil? || path.to_s.empty?
-      cache_key = "#{path}_#{default_dir}"
+      p = path.to_s.gsub("\\", "/").gsub(/\.\.\//, "").sub(/^\/+/, "")
+      cache_key = "#{p}_#{default_dir}"
       cached = $RESOLVE_AUDIO_MEMO_CACHE[cache_key]
       return cached if cached
 
-      p = path.to_s.gsub("\\", "/").gsub(/\.\.\//, "").sub(/^\/+/, "")
       p_down = p.downcase
       p_clean = p_down.sub(/\.[^.]+$/, "")
       base = File.basename(p)
       base_down = base.downcase
       base_clean = base_down.sub(/\.[^.]+$/, "")
       def_down = default_dir.to_s.downcase
+      def_clean = def_down.sub(/^audio\//i, "")
 
       if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
-        found = $AUDIO_LOOKUP_TABLE[p_down] ||
-                $AUDIO_LOOKUP_TABLE[p_clean] ||
-                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_down}"] ||
+        found = $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_down}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean}"] ||
+                $AUDIO_LOOKUP_TABLE["#{def_clean}/#{base_down}"] ||
+                $AUDIO_LOOKUP_TABLE["#{def_clean}/#{base_clean}"] ||
+                $AUDIO_LOOKUP_TABLE[p_down] ||
+                $AUDIO_LOOKUP_TABLE[p_clean] ||
                 $AUDIO_LOOKUP_TABLE["audio/" + p_down] ||
                 $AUDIO_LOOKUP_TABLE["audio/" + p_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/se/" + base_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/se/" + base_down] ||
-                $AUDIO_LOOKUP_TABLE["audio/bgm/" + base_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/bgs/" + base_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/me/" + base_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/se/anim/" + base_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/se/cries/" + base_clean] ||
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' ')}"] ||
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete('_')}"] ||
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete('-')}"] ||
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' _-')}"] ||
                 $AUDIO_LOOKUP_TABLE[base_clean] ||
                 $AUDIO_LOOKUP_TABLE[base_down] ||
                 $AUDIO_LOOKUP_TABLE[base_clean.delete(" ")] ||
@@ -1387,12 +1389,12 @@ module ::Audio
                 $AUDIO_LOOKUP_TABLE[base_clean.delete("-")] ||
                 $AUDIO_LOOKUP_TABLE[base_clean.delete(" _-")]
 
-        if found
+        if found && !found.empty?
           $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
           return found
         end
 
-        # Probar extensiones .wav y .ogg prioritarias
+        # Probar extensiones .wav y .ogg prioritarias bajo default_dir
         clean_p = p.sub(/\.[^.]+$/, "")
         cand = p.start_with?("Audio/") ? clean_p : "#{default_dir}/#{clean_p}"
         [cand + ".wav", cand + ".ogg", cand + ".mp3", p].each do |test_f|
@@ -1405,7 +1407,7 @@ module ::Audio
       end
 
       res = (p.end_with?(".wav") || p.end_with?(".ogg") || p.end_with?(".mp3")) ? (p.start_with?("Audio/") ? p : "#{default_dir}/#{p}") : ""
-      $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res
+      $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res if res && !res.empty?
       return res
     end
 
@@ -1437,23 +1439,22 @@ module ::Audio
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/ME")
       file = filename.to_s if file.nil? || file.empty?
-      # Reproducir MEs a traves del canal SE para evitar que el hilo C++ meWatch silencie permanentemente la BGM
-      __switch_native_se_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
+      __switch_native_me_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
     rescue Exception
     end
 
     def me_stop
-      # No-op en Switch para no cortar la música de fondo
+      __switch_native_me_stop rescue nil
     end
 
     def me_fade(time)
-      # No-op en Switch
+      __switch_native_me_fade(time) rescue nil
     end
 
     def se_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/SE")
-      return if file.nil? || file.empty?
+      file = filename.to_s if file.nil? || file.empty?
 
       now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
 
@@ -1676,12 +1677,6 @@ class Battle
   end
 end
 
-module FileTest
-  def self.audio_exist?(filename)
-    return true if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
-    exist?(filename)
-  end
-end
 
 $FILE_EXIST_CACHE ||= {}
 $DIR_EXIST_CACHE  ||= {}
@@ -2139,11 +2134,7 @@ module ::FileTest
   def file?(path); ::File.file?(path); end
   def exist?(path); ::File.exist?(path); end
   def exists?(path); ::File.exist?(path); end
-  def size(path); ::File.size(path) rescue 0; end
-  def audio_exist?(path); ::FileTest.audio_exist?(path); end
-  def image_exist?(path); ::FileTest.image_exist?(path); end
-
-  module_function :directory?, :file?, :exist?, :exists?, :size, :audio_exist?, :image_exist? rescue nil
+  module_function :directory?, :file?, :exist?, :exists?, :size rescue nil
 end
 
 
@@ -3251,33 +3242,80 @@ def pbResolveBitmap(x)
 end
 
 $ANIMATION_BITMAP_CACHE ||= {}
+$ANIMATION_BITMAP_SIZES ||= {}
+$ANIMATION_BITMAP_BYTES ||= 0
+$ANIMATION_BITMAP_MAX_BYTES = 40 * 1024 * 1024 # 40 MB
+
+def pbClearAnimationCache
+  if defined?($ANIMATION_BITMAP_CACHE) && $ANIMATION_BITMAP_CACHE
+    $ANIMATION_BITMAP_CACHE.each_value do |bm|
+      bm.dispose if bm && !bm.disposed?
+    end
+    $ANIMATION_BITMAP_CACHE.clear
+  end
+  $ANIMATION_BITMAP_SIZES&.clear
+  $ANIMATION_BITMAP_BYTES = 0
+end
 
 def pbGetAnimation(name, hue = 0)
   return nil if nil_or_empty?(name)
   key = "#{name}_#{hue}"
-  bm = $ANIMATION_BITMAP_CACHE[key]
-  if !bm || bm.disposed?
-    clean_name = name.to_s.sub(/^Graphics\/Animations\//i, "").sub(/^Animations\//i, "").sub(/^Graphics\/Battle animations\//i, "").sub(/^Battle animations\//i, "")
-    real_path = pbResolveBitmap("Graphics/Animations/" + clean_name) ||
-                pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
-                pbResolveBitmap(clean_name)
-    if real_path
-      bm = (Bitmap.new(real_path) rescue nil) ||
-           (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
-    else
-      bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
-           (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+  if $ANIMATION_BITMAP_CACHE.has_key?(key)
+    bm = $ANIMATION_BITMAP_CACHE[key]
+    if bm.nil?
+      return nil
+    elsif !bm.disposed?
+      $ANIMATION_BITMAP_CACHE.delete(key)
+      $ANIMATION_BITMAP_CACHE[key] = bm
+      return bm
     end
-    $ANIMATION_BITMAP_CACHE[key] = bm if bm
   end
+
+  clean_name = name.to_s.sub(/^Graphics\/Animations\//i, "").sub(/^Animations\//i, "").sub(/^Graphics\/Battle animations\//i, "").sub(/^Battle animations\//i, "")
+  real_path = pbResolveBitmap("Graphics/Animations/" + clean_name) ||
+              pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
+              pbResolveBitmap(clean_name)
+  if real_path
+    bm = (Bitmap.new(real_path) rescue nil) ||
+         (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
+  else
+    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
+         (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+  end
+
+  size = (bm && !bm.disposed?) ? (bm.width * bm.height * 4) : 0
+  if $ANIMATION_BITMAP_CACHE.has_key?(key)
+    old_size = $ANIMATION_BITMAP_SIZES.delete(key) || 0
+    $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_size, 0].max
+  end
+
+  $ANIMATION_BITMAP_CACHE[key] = bm
+  $ANIMATION_BITMAP_SIZES[key] = size
+  $ANIMATION_BITMAP_BYTES += size
+
+  while $ANIMATION_BITMAP_BYTES > $ANIMATION_BITMAP_MAX_BYTES && !$ANIMATION_BITMAP_CACHE.empty?
+    oldest_key = $ANIMATION_BITMAP_CACHE.keys.first
+    old_bm = $ANIMATION_BITMAP_CACHE.delete(oldest_key)
+    old_sz = $ANIMATION_BITMAP_SIZES.delete(oldest_key) || 0
+    $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_sz, 0].max
+    old_bm.dispose if old_bm && !old_bm.disposed?
+  end
+
   return bm
 end
 
 def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
-  $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
-                             (load_data("Data/battle_animations.dat") rescue nil) ||
-                             (load_data("Data/Animations.rxdata") rescue nil)
+  begin
+    $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+  rescue Exception => e
+    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
+    $PokemonBattleAnimations = nil
+  end
+  if !$PokemonBattleAnimations.is_a?(PBAnimations)
+    log_compat("[Animaciones] Tipo inesperado: #{$PokemonBattleAnimations.class}")
+    $PokemonBattleAnimations = PBAnimations.new(0)
+  end
   if defined?($game_temp) && $game_temp
     $game_temp.battle_animations_data = $PokemonBattleAnimations
   end
