@@ -339,6 +339,17 @@ fi
 
 cd "$PROJECT_ROOT/mkxp-z"
 
+# Aplicar parches de Nintendo Switch a mkxp-z si están disponibles
+if [ -f "$PROJECT_ROOT/patches/mkxp-z-switch.patch" ]; then
+    echo "--- Comprobando y aplicando parches de Nintendo Switch a mkxp-z ---"
+    if git apply --check "$PROJECT_ROOT/patches/mkxp-z-switch.patch" >/dev/null 2>&1; then
+        git apply "$PROJECT_ROOT/patches/mkxp-z-switch.patch"
+        echo "Parches aplicados exitosamente a mkxp-z."
+    else
+        echo "Parches de Nintendo Switch ya aplicados o no requeridos en mkxp-z."
+    fi
+fi
+
 echo "=== [3/6] Configurando Meson con switch.cross ==="
 if [ ! -d "$BUILD_DIR" ]; then
     meson setup "$BUILD_DIR" \
