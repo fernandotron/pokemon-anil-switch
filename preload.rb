@@ -7,6 +7,7 @@ $mkxp_log_file ||= (File.open("mkxp_ruby.log", "a") rescue nil)
 $LOG_COMPAT_DEDUP ||= {}
 $LOG_COMPAT_COUNT ||= 0
 $LOG_COMPAT_MAX_LINES ||= 5000
+$SWITCH_STRICT_EVENTS ||= false
 
 def log_compat(msg)
   return if $LOG_COMPAT_COUNT >= $LOG_COMPAT_MAX_LINES
@@ -483,6 +484,10 @@ class PBAnimations < Array
   def length
     return @array.length if @array
     return super rescue 0
+  end
+
+  def empty?
+    return (@array || []).empty?
   end
 
   def size
@@ -1584,6 +1589,7 @@ class PBAnimations < Array
     @array = []; @selected = 0
   end
   def length; (@array ? @array.length : super); end
+  def empty?; (@array ? @array.empty? : super rescue true); end
   def each; if @array then @array.each { |i| yield i } else super { |i| yield i } end; end
   def [](i); (@array ? @array[i] : super(i)); end
   def []=(i, value); if @array then @array[i] = value else super(i, value) end; end
@@ -1677,17 +1683,47 @@ module FileTest
   end
 end
 
+$FILE_EXIST_CACHE ||= {}
+$DIR_EXIST_CACHE  ||= {}
+
+def switch_invalidate_file_cache(p)
+  return if !p.is_a?(String)
+  $FILE_EXIST_CACHE.delete(p)
+  $FILE_EXIST_CACHE.delete("./" + p)
+  $FILE_EXIST_CACHE.delete(p.sub(/\A\.\//, ""))
+rescue
+  nil
+end
+
+def switch_invalidate_dir_cache(p)
+  return if !p.is_a?(String)
+  $DIR_EXIST_CACHE.delete(p)
+  $DIR_EXIST_CACHE.delete("./" + p)
+  $DIR_EXIST_CACHE.delete(p.sub(/\A\.\//, ""))
+rescue
+  nil
+end
+
 class << Dir
   unless method_defined?(:__switch_orig_mkdir)
     alias __switch_orig_mkdir mkdir rescue nil
   end
+  unless method_defined?(:__switch_orig_rmdir)
+    alias __switch_orig_rmdir rmdir rescue nil
+  end
 
   def mkdir(path, *args)
+    switch_invalidate_dir_cache(path.to_s)
     __switch_orig_mkdir(path, *args)
   rescue Errno::EEXIST, Errno::EACCES
     0
   rescue Exception => e
     0
+  end
+
+  def rmdir(path, *args)
+    switch_invalidate_dir_cache(path.to_s)
+    __switch_orig_rmdir(path, *args)
   end
 end
 
@@ -1921,6 +1957,58 @@ end
 
 class ::File
   class << self
+    unless method_defined?(:__switch_orig_file_open)
+      alias __switch_orig_file_open open rescue nil
+    end
+    unless method_defined?(:__switch_orig_file_new)
+      alias __switch_orig_file_new new rescue nil
+    end
+    unless method_defined?(:__switch_orig_file_delete)
+      alias __switch_orig_file_delete delete rescue nil
+    end
+    unless method_defined?(:__switch_orig_file_unlink)
+      alias __switch_orig_file_unlink unlink rescue nil
+    end
+    unless method_defined?(:__switch_orig_file_rename)
+      alias __switch_orig_file_rename rename rescue nil
+    end
+
+    def open(path, *args, &block)
+      mode = args[0]
+      if mode.is_a?(String) && (mode.include?("w") || mode.include?("a") || mode.include?("+"))
+        switch_invalidate_file_cache(path.to_s)
+      elsif mode.is_a?(Integer) && (mode & (::File::WRONLY | ::File::RDWR | ::File::CREAT | ::File::APPEND) != 0)
+        switch_invalidate_file_cache(path.to_s)
+      end
+      __switch_orig_file_open(path, *args, &block)
+    end
+
+    def new(path, *args, &block)
+      mode = args[0]
+      if mode.is_a?(String) && (mode.include?("w") || mode.include?("a") || mode.include?("+"))
+        switch_invalidate_file_cache(path.to_s)
+      elsif mode.is_a?(Integer) && (mode & (::File::WRONLY | ::File::RDWR | ::File::CREAT | ::File::APPEND) != 0)
+        switch_invalidate_file_cache(path.to_s)
+      end
+      __switch_orig_file_new(path, *args, &block)
+    end
+
+    def delete(*paths)
+      paths.each { |p| switch_invalidate_file_cache(p.to_s) }
+      __switch_orig_file_delete(*paths)
+    end
+
+    def unlink(*paths)
+      paths.each { |p| switch_invalidate_file_cache(p.to_s) }
+      __switch_orig_file_unlink(*paths)
+    end
+
+    def rename(old_name, new_name)
+      switch_invalidate_file_cache(old_name.to_s)
+      switch_invalidate_file_cache(new_name.to_s)
+      __switch_orig_file_rename(old_name, new_name)
+    end
+
     def directory?(path); ::Dir.exist?(path); end
     def file?(path)
       return false if path.nil? || ::Dir.exist?(path)
@@ -1948,7 +2036,8 @@ class ::File
 
       res = (open(p, "rb") { true } rescue false)
       res = ::Dir.exist?(p) if !res
-      $FILE_EXIST_CACHE[p] = res
+      writable = (p =~ /\.(rxdata|bak|sav|log|txt)$/i && !p.start_with?("Data/"))
+      $FILE_EXIST_CACHE[p] = res if !writable
       res
     end
     def exists?(path); exist?(path); end
@@ -1982,9 +2071,12 @@ class ::File
       parts.join("/")
     end
     def copy(src, dst)
+      switch_invalidate_file_cache(dst.to_s)
       open(src, "rb") { |r| open(dst, "wb") { |w| w.write(r.read) } } rescue nil
     end
     def move(src, dst)
+      switch_invalidate_file_cache(src.to_s)
+      switch_invalidate_file_cache(dst.to_s)
       copy(src, dst)
       delete(src) rescue nil
     end
@@ -2841,6 +2933,7 @@ class PBAnimations < Array
     @array = []; @selected = 0
   end
   def length; @array.length; end
+  def empty?; (@array || []).empty?; end
   def [](i); @array[i]; end
   def []=(i, v); @array[i] = v; end
   def get_from_name(name)
@@ -3181,7 +3274,7 @@ def pbGetAnimation(name, hue = 0)
 end
 
 def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations && !$PokemonBattleAnimations.empty?
+  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
   $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
                              (load_data("Data/battle_animations.dat") rescue nil) ||
                              (load_data("Data/Animations.rxdata") rescue nil)

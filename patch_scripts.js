@@ -2214,7 +2214,7 @@ end unless defined?(PBAnimations)`
       s.code,
       /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?return \$game_temp\.move_to_battle_animation_data\s*\nend/m,
 `def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations && !$PokemonBattleAnimations.empty?
+  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
   $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
                              (load_data("Data/battle_animations.dat") rescue nil) ||
                              (load_data("Data/Animations.rxdata") rescue nil)
@@ -2259,6 +2259,10 @@ end`,
   def size
     return @array.size if @array
     return super rescue 0
+  end
+
+  def empty?
+    return (@array || []).empty?
   end
 
   def each(&block)

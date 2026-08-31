@@ -3,7 +3,8 @@
 #-------------------------------------------------------------------------------
 #  This interpreter runs event commands. This class is used within the
 #  Game_System class and the Game_Event class.
-#===============================================================================
+$SWITCH_STRICT_EVENTS = false unless defined?($SWITCH_STRICT_EVENTS)
+
 class Interpreter
   # Object Initialization
   #     depth : nest depth
@@ -138,9 +139,13 @@ class Interpreter
       result = eval(script)
       return result
     rescue Exception => e
-      raise if e.is_a?(SystemExit) || e.class.to_s == "Reset"
+      raise if $SWITCH_STRICT_EVENTS || e.is_a?(SystemExit) || e.class.to_s == "Reset"
       log_compat("[EVENT SCRIPT RECOVERED] #{e.class}: #{e.message}\n  Script: #{script.inspect}\n  Backtrace:\n#{e.backtrace&.join("\n")}") rescue nil
-      return nil
+      if @event_id > 0 && $game_map.events[@event_id]&.trigger == 3
+        $game_map.events[@event_id].clear_starting
+      end
+      command_end
+      return false
     end
   end
 

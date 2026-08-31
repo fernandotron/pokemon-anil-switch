@@ -234,11 +234,11 @@ module SaveData
   # @raise [Error::ENOENT]
   def self.delete_file(file_path=nil)
     if file_path
-      File.delete(file_path) if File.file?(file_path)
+      (File.delete(file_path) rescue nil) if File.file?(file_path)
     else
       self.each_slot do |slot|
         full_path = self.get_full_path(slot)
-        File.delete(full_path) if File.file?(full_path)
+        (File.delete(full_path) rescue nil) if File.file?(full_path)
       end
     end
   end
@@ -673,7 +673,8 @@ class PokemonSaveScreen
     @save_info_cache ||= {}
     
     # Check if we need to refresh cache (file modified since last read)
-    file_mtime = File.mtime(full_path)
+    file_mtime = (File.mtime(full_path) rescue nil)
+    return _INTL("<ac><c3=D0D0C8,3050C8>(Vacío)</c3></ac>") if !file_mtime
     cached_entry = @save_info_cache[slot]
     
     if cached_entry && cached_entry[:mtime] == file_mtime
@@ -681,10 +682,11 @@ class PokemonSaveScreen
     end
     
     # Read file and cache the result
-    temp_save_data = SaveData.read_from_file(full_path)
+    temp_save_data = (SaveData.read_from_file(full_path) rescue nil)
+    return _INTL("<ac><c3=D0D0C8,3050C8>(Vacío)</c3></ac>") if !temp_save_data || !temp_save_data.is_a?(Hash)
 
     # Last save time
-    time = temp_save_data[:player].last_time_saved
+    time = (temp_save_data[:player].last_time_saved rescue nil)
     if time
       date_str = time.strftime("%x")
       time_str = time.strftime(_INTL("%I:%M%p"))
@@ -785,7 +787,11 @@ module Game
         break
       end
       # Use file modification time instead of reading the entire save file
-      file_mtime = File.mtime(full_path)
+      file_mtime = (File.mtime(full_path) rescue nil)
+      if file_mtime.nil?
+        oldest_slot = slot
+        break
+      end
       if oldest_time.nil? || file_mtime < oldest_time
         oldest_time = file_mtime
         oldest_slot = slot

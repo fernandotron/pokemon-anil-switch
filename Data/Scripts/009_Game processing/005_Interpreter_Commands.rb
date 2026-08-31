@@ -431,7 +431,13 @@ class Interpreter
     when 11   # button
       result = Input.press?(@parameters[1])
     when 12   # script
-      result = execute_script(@parameters[1])
+      begin
+        result = eval(@parameters[1])
+      rescue Exception => e
+        raise if $SWITCH_STRICT_EVENTS || e.is_a?(SystemExit) || e.class.to_s == "Reset"
+        log_compat("[CONDITIONAL SCRIPT ERROR] #{e.class}: #{e.message}\n  Script: #{@parameters[1].inspect}\n  Backtrace:\n#{e.backtrace&.join("\n")}") rescue nil
+        result = false
+      end
     end
     # Store result in hash
     @branch[@list[@index].indent] = result
@@ -1174,7 +1180,8 @@ class Interpreter
       @index += 1
     end
     # Run the script
-    execute_script(script)
+    result = execute_script(script)
+    return false if result == false
     return true
   end
 end
