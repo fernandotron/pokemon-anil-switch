@@ -7,6 +7,7 @@ $mkxp_log_file ||= (File.open("mkxp_ruby.log", "a") rescue nil)
 $LOG_COMPAT_DEDUP ||= {}
 $LOG_COMPAT_COUNT ||= 0
 $LOG_COMPAT_MAX_LINES ||= 5000
+$SWITCH_STRICT_EVENTS ||= false
 
 def log_compat(msg)
   return if $LOG_COMPAT_COUNT >= $LOG_COMPAT_MAX_LINES
