@@ -22,8 +22,10 @@ class MTS_Element_FX1
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -98,8 +100,10 @@ class MTS_Element_FX2
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -174,8 +178,10 @@ class MTS_Element_FX3
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -243,8 +249,10 @@ class MTS_Element_FX4
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -312,8 +320,10 @@ class MTS_Element_FX5
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -375,8 +385,10 @@ class MTS_Element_FX6
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -426,8 +438,10 @@ class MTS_Element_FX7
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # changes visibility
   def visible=(val)
@@ -495,8 +509,10 @@ class MTS_Element_FX8
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -758,8 +774,10 @@ class MTS_Element_FX11
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -819,8 +837,10 @@ class MTS_Element_FX12
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose
@@ -881,8 +901,10 @@ class MTS_Element_FX13
   end
   # positions effect on screen
   def position(x,y)
-    @x = x.nil? ? @viewport.rect.width/2 : x
-    @y = y.nil? ? @viewport.rect.height/2 : y
+    vw = (@viewport && @viewport.rect) ? @viewport.rect.width : Graphics.width
+    vh = (@viewport && @viewport.rect) ? @viewport.rect.height : Graphics.height
+    @x = x.nil? ? vw/2 : x
+    @y = y.nil? ? vh/2 : y
   end
   # disposes of everything
   def dispose

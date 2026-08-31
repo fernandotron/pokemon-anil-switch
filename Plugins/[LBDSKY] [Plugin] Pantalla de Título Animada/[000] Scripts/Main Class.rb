@@ -219,7 +219,7 @@ class ModularTitleScreen
     i = 0; o = 0; m = 0
     for mod in @mods
       arg = mod.to_s.upcase
-      x = "nil"; y = "nil"; z = "nil"; zoom = "nil"; file = "nil"; speed="nil"
+      x = nil; y = nil; z = nil; zoom = nil; file = nil; speed = nil
       #-------------------------------------------------------------------------
       # setting up background
       # uses first available background element
@@ -227,13 +227,13 @@ class ModularTitleScreen
       if arg.include?("BACKGROUND:") # loads specific BG graphic
         next if bg_selected
         cmd = arg.split("_").compact
-        backdrop = "\"" + cmd[0].gsub("BACKGROUND:","") + "\""
+        backdrop = cmd[0].gsub("BACKGROUND:","")
         bg_selected = true
       elsif arg.include?("BACKGROUND") # loads modifier as object
         next if bg_selected
         cmd = arg.split("_").compact
         s = "BG" + cmd[0].gsub("BACKGROUND","")
-        if eval("defined?(MTS_Element_#{s})")
+        if Object.const_defined?("MTS_Element_#{s}")
           bg = s
           bg_selected = true
         end
@@ -258,14 +258,13 @@ class ModularTitleScreen
             z = cmd[j].gsub("Z","").to_i
           end
         end
-        z = nil if z == "nil"
         @sprites["ol#{o}"] = MTS_Element_OLX.new(@viewport,file,z)
         o += 1
       elsif arg.include?("OVERLAY")
         cmd1 = mod.split("_").compact
         cmd2 = cmd1[0].split(":").compact
         s = "OL" + cmd2[0].upcase.gsub("OVERLAY","")
-        f = cmd2.length > 1 ? ("\"" + cmd2[1] + "\"") : "nil"
+        f = cmd2.length > 1 ? cmd2[1] : nil
         # applies positioning modifiers
         for j in 1...cmd1.length
           next if cmd1.length < 2
@@ -275,8 +274,9 @@ class ModularTitleScreen
             speed = cmd1[j].upcase.gsub("S","").to_i
           end
         end
-        if eval("defined?(MTS_Element_#{s})") # loads modifier as object
-          @sprites["ol#{o}"] = eval("MTS_Element_#{s}.new(@viewport,#{f},#{z},#{speed})")
+        if Object.const_defined?("MTS_Element_#{s}")
+          klass = Object.const_get("MTS_Element_#{s}")
+          @sprites["ol#{o}"] = klass.new(@viewport,f,z,speed)
           o += 1
         end
       #---------------------------------------------------------------------------
@@ -290,16 +290,17 @@ class ModularTitleScreen
         for j in 1...cmd.length
           next if cmd.length < 2
           if cmd[j].include?("X")
-            x = cmd[j].gsub("X","")
+            x = cmd[j].gsub("X","").to_i
           elsif cmd[j].include?("Y")
-            y = cmd[j].gsub("Y","")
+            y = cmd[j].gsub("Y","").to_i
           elsif cmd[j].include?("Z")
-            z = cmd[j].gsub("Z","")
+            z = cmd[j].gsub("Z","").to_i
           end
         end
         # loads the sprite class
-        if eval("defined?(MTS_Element_#{s})") # loads modifier as object
-          @sprites["fx#{i}"] = eval("MTS_Element_#{s}.new(@viewport,#{x},#{y},#{z})")
+        if Object.const_defined?("MTS_Element_#{s}")
+          klass = Object.const_get("MTS_Element_#{s}")
+          @sprites["fx#{i}"] = klass.new(@viewport,x,y,z)
           i += 1
         end
       #---------------------------------------------------------------------------
@@ -310,28 +311,30 @@ class ModularTitleScreen
         cmd = mod.split("_").compact
         mfx = cmd[0].split(":").compact
         s = "MX" + mfx[0].upcase.gsub("MISC","")
-        file = "\"" + mfx[1] + "\"" if mfx.length > 1
+        file = mfx[1] if mfx.length > 1
         # applies positioning modifiers
         for j in 1...cmd.length
           next if cmd.length < 2
           if cmd[j].upcase.include?("X")
-            x = cmd[j].upcase.gsub("X","")
+            x = cmd[j].upcase.gsub("X","").to_i
           elsif cmd[j].upcase.include?("Y")
-            y = cmd[j].upcase.gsub("Y","")
+            y = cmd[j].upcase.gsub("Y","").to_i
           elsif cmd[j].upcase.include?("Z")
-            z = cmd[j].upcase.gsub("Z","")
+            z = cmd[j].upcase.gsub("Z","").to_i
           elsif cmd[j].upcase.include?("S")
-            zoom = cmd[j].upcase.gsub("S","")
+            zoom = cmd[j].upcase.gsub("S","").to_f
           end
         end
         # loads the sprite class
-        if eval("defined?(MTS_Element_#{s})") # loads modifier as object
-          @sprites["mx#{m}"] = eval("MTS_Element_#{s}.new(@viewport,#{x},#{y},#{z},#{zoom},#{file})")
+        if Object.const_defined?("MTS_Element_#{s}")
+          klass = Object.const_get("MTS_Element_#{s}")
+          @sprites["mx#{m}"] = klass.new(@viewport,x,y,z,zoom,file)
           m += 1
         end
       end
     end
-    @sprites["bg"] = eval("MTS_Element_#{bg}.new(@viewport,#{backdrop})")
+    bg_klass = Object.const_defined?("MTS_Element_#{bg}") ? Object.const_get("MTS_Element_#{bg}") : MTS_Element_BG0
+    @sprites["bg"] = bg_klass.new(@viewport, backdrop == "nil" ? nil : backdrop)
 
     #---------------------------------------------------------------------------
     # setting up game logo
@@ -522,21 +525,29 @@ class ModularTitleScreen
   
   # trigger for playing the intro animation
   def intro
-    if eval("defined?(MTS_INTRO_ANIM#{@intro})")
-      intro = eval("MTS_INTRO_ANIM#{@intro}.new(@viewport,@sprites)")
-    else
-      intro = MTS_INTRO_ANIM.new(@viewport,@sprites)
+    begin
+      if @intro && Object.const_defined?("MTS_INTRO_ANIM#{@intro}")
+        intro = Object.const_get("MTS_INTRO_ANIM#{@intro}").new(@viewport,@sprites)
+      elsif Object.const_defined?("MTS_INTRO_ANIM")
+        intro = MTS_INTRO_ANIM.new(@viewport,@sprites)
+      end
+      @currentFrame = intro.currentFrame rescue 0
+    rescue Exception => e
+      log_compat("[ModularTitle intro error] #{e.class}: #{e.message}") rescue nil
+    ensure
+      @sprites.each_value { |s| s.visible = true rescue nil } if @sprites
     end
-    @currentFrame = intro.currentFrame
-    @sprites["start"].visible = true
+    @sprites["start"].visible = true if @sprites && @sprites["start"]
   end
   # main update for all the visual elements
   def updateElements
     for key in @sprites.keys
       @sprites[key].update if @sprites[key].respond_to?(:update)
     end
-    @sprites["start"].opacity -= @fade
-    @fade *= -1 if @sprites["start"].opacity <= 0 || @sprites["start"].opacity >= 255
+    if @sprites["start"]
+      @sprites["start"].opacity -= @fade
+      @fade *= -1 if @sprites["start"].opacity <= 0 || @sprites["start"].opacity >= 255
+    end
   end
   # update for title screen functionality
   def update
@@ -545,22 +556,31 @@ class ModularTitleScreen
     # Update mega evolution timer
     @mega_timer += 1
     if @mega_timer >= @mega_interval
-      start_mega_evolution
+      start_mega_evolution rescue nil
       @mega_timer = 0
     end
     
     # Update mega evolution animation
-    update_mega_evolution
-    update_revert_animation
+    update_mega_evolution rescue nil
+    update_revert_animation rescue nil
     
-    self.updateElements
+    self.updateElements rescue nil
   end
   # disposes of all visual elements
   def dispose
-    for key in @sprites.keys
-      @sprites[key].dispose
+    if @sprites
+      @sprites.each_key do |key|
+        begin
+          @sprites[key].dispose if @sprites[key] && !@sprites[key].disposed?
+        rescue Exception
+        end
+      end
+      @sprites.clear
     end
-    @viewport.dispose
+    begin
+      @viewport.dispose if @viewport && !@viewport.disposed?
+    rescue Exception
+    end
   end
   # plays appropriate BGM
   def playBGM

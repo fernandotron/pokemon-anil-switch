@@ -217,8 +217,7 @@ const definedClasses = new Set([
   'Rect', 'Color', 'Tone', 'File', 'Dir', 'FileTest',
   'Bitmap', 'Sprite', 'Viewport', 'Plane', 'Window',
   'Tilemap', 'Table', 'Font', 'Audio', 'Input', 'Graphics',
-  'Numeric', 'Fixnum', 'Integer', 'Float', 'String', 'Array', 'Hash',
-  'GameStats', 'Game_Temp', 'PokemonSystem', 'PokemonBoxArrow'
+  'Numeric', 'Fixnum', 'Integer', 'Float', 'String', 'Array', 'Hash'
 ]);
 
 for (let s of scripts) {
@@ -1777,6 +1776,14 @@ end`
     (@salvajes_visibles_en_ow || 0) == 0
   end
 
+  def battlestyle
+    @battlestyle || 0
+  end
+
+  def battlestyle=(val)
+    @battlestyle = (val || 0).to_i
+  end
+
   def method_missing(name, *args, &block)
     if name.to_s.end_with?("=")
       var = "@#{name.to_s.chop}".to_sym
@@ -1796,6 +1803,90 @@ end`
   end
 
   def initialize`
+    );
+    changed = true;
+  }
+
+  if (s.name.includes('ActionSwitching') || s.code.includes('def pbEORSwitch')) {
+    console.log('Patching Battle_ActionSwitching in:', s.name);
+    s.code = s.code.replace(
+      /if @internalBattle && @switchStyle && trainerBattle\?[\s\S]*?pbRecallAndReplace\(idxBattler, idxPartyNew\)/m,
+`is_switch = @switchStyle.nil? ? (($PokemonSystem&.battlestyle || 0) == 0) : @switchStyle
+          if @internalBattle && is_switch && trainerBattle? && pbSideSize(0) == 1 &&
+             opposes?(idxBattler) && !@battlers[0].fainted? && !switched.include?(0) &&
+             pbCanChooseNonActive?(0) && @battlers[0].effects[PBEffects::Outrage] == 0
+            idxPartyForName = idxPartyNew
+            enemyParty = pbParty(idxBattler)
+            if enemyParty[idxPartyNew] && enemyParty[idxPartyNew].ability == :ILLUSION && !pbCheckGlobalAbility(:NEUTRALIZINGGAS)
+              new_index = pbLastInTeam(idxBattler)
+              idxPartyForName = new_index if new_index >= 0 && new_index != idxPartyNew
+            end
+            $PokemonSystem.show_pokemon_on_change ||= 0
+            p_name = (enemyParty[idxPartyForName] ? enemyParty[idxPartyForName].name : "otro Pokémon")
+            change_message = ($PokemonSystem.show_pokemon_on_change == 0) ? 
+              _INTL("{1} va a sacar a {2}. ¿Quieres cambiar de Pokémon?", opponent.full_name, p_name) : 
+              _INTL("{1} cambiará de Pokémon. ¿Quieres cambiar tu también?", opponent.full_name)
+            if pbDisplayConfirm(change_message)
+              idxPlayerPartyNew = pbSwitchInBetween(0, false, true)
+              if idxPlayerPartyNew >= 0
+                pbMessageOnRecall(@battlers[0])
+                pbRecallAndReplace(0, idxPlayerPartyNew)
+                switched.push(0)
+              end
+            end
+          end
+          pbRecallAndReplace(idxBattler, idxPartyNew)`
+    );
+    changed = true;
+  }
+
+  if (s.name.includes('BattleIntroAnim') || (s.code.includes('def pbBattleAnimationCore') && s.code.includes('SpecialBattleIntroAnimations'))) {
+    console.log('Patching Overworld_BattleIntroAnim in:', s.name);
+    s.code = s.code.replace(
+      /def pbBattleAnimation\(bgm = nil, battletype = 0, foe = nil\)[\s\S]*?def pbBattleAnimationCore[\s\S]*?end\s*\n\s*#={10,}/m,
+`def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
+  $game_temp.in_battle = true
+  viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
+  viewport.z = 99999
+  playingBGS = $game_system&.getPlayingBGS
+  playingBGM = $game_system&.getPlayingBGM
+  bgm = pbGetWildBattleBGM([]) if !bgm
+  pbBGMPlay(bgm)
+  
+  # Flash rápido y transición fluida en Switch (0.12s)
+  viewport.color = Color.new(255, 255, 255, 255)
+  5.times do |i|
+    viewport.color.alpha = ((5 - i) * 50).clamp(0, 255)
+    Graphics.update
+  end
+  Graphics.freeze
+  viewport.color = Color.black
+  Graphics.transition(6)
+  
+  pbPushFade
+  yield if block_given?
+  pbPopFade
+  if $game_system.is_a?(Game_System)
+    if playingBGM && !playingBGM.name.to_s.empty?
+      $game_system.bgm_play(playingBGM)
+    elsif $game_map && $game_map.bgm
+      $game_system.bgm_play($game_map.bgm)
+    end
+    if playingBGS && !playingBGS.name.to_s.empty?
+      $game_system.bgs_play(playingBGS)
+    end
+  end
+  $game_temp.memorized_bgm          = nil
+  $game_temp.memorized_bgm_position = 0
+  $PokemonGlobal.nextBattleBGM      = nil
+  $PokemonEncounters.reset_step_count
+  viewport.dispose
+  $game_temp.in_battle = false
+end
+
+def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2); end
+
+#===============================================================================`
     );
     changed = true;
   }
@@ -1935,55 +2026,378 @@ end
   end
 end
 
-def pbPreloadAudioSE(name); end
-def pbPreloadMapEncountersAudio(map_id = nil); end
-def pbWarmupCoreAssets!; end
+$SE_CURSOR ||= ::RPG::AudioFile.new("GUI sel cursor", 80, 100)
+$SE_DECISION ||= ::RPG::AudioFile.new("GUI sel decision", 80, 100)
+$SE_CANCEL ||= ::RPG::AudioFile.new("GUI sel cancel", 80, 100)
+$SE_BUZZER ||= ::RPG::AudioFile.new("GUI sel buzzer", 80, 100)
+$SE_MENU_CLOSE ||= ::RPG::AudioFile.new("GUI menu close", 80, 100)
+$SE_MENU_OPEN ||= ::RPG::AudioFile.new("GUI menu open", 80, 100)
+
+def pbPlayCursorSE
+  if $game_system
+    $game_system.se_play($SE_CURSOR)
+  else
+    ::Audio.se_play("Audio/SE/GUI sel cursor", 80, 100) rescue nil
+  end
+end
+
+def pbPlayDecisionSE
+  if $game_system
+    $game_system.se_play($SE_DECISION)
+  else
+    ::Audio.se_play("Audio/SE/GUI sel decision", 80, 100) rescue nil
+  end
+end
+
+def pbPlayCancelSE
+  if $game_system
+    $game_system.se_play($SE_CANCEL)
+  else
+    ::Audio.se_play("Audio/SE/GUI sel cancel", 80, 100) rescue nil
+  end
+end
+
+def pbPlayBuzzerSE
+  if $game_system
+    $game_system.se_play($SE_BUZZER)
+  else
+    ::Audio.se_play("Audio/SE/GUI sel buzzer", 80, 100) rescue nil
+  end
+end
+
+def pbPlayCloseMenuSE
+  if $game_system
+    $game_system.se_play($SE_MENU_CLOSE)
+  else
+    ::Audio.se_play("Audio/SE/GUI menu close", 80, 100) rescue nil
+  end
+end
+
+def pbPlayOpenMenuSE
+  if $game_system
+    $game_system.se_play($SE_MENU_OPEN)
+  else
+    ::Audio.se_play("Audio/SE/GUI menu open", 80, 100) rescue nil
+  end
+end
+
+def pbPreloadAudioSE(name)
+  return if !name || name.to_s.empty?
+  resolved = ::Audio.resolve_audio_file(name, nil, "Audio/SE") rescue nil
+  if resolved && !resolved.empty?
+    ::Audio.se_play(resolved, 0, 100) rescue nil
+  end
+end
+
+def pbPreloadMapEncountersAudio(map_id = nil)
+  # Pre-calentar gritos de Pokémon y assets
+  warmup_audio_buffers! rescue nil
+end
+
+def pbWarmupCoreAssets!
+  warmup_audio_buffers! rescue nil
+end
 `
     );
     changed = true;
   }
 
-  if (s.name.includes('BattleIntroAnim') || (s.code.includes('def pbBattleAnimationCore') && s.code.includes('SpecialBattleIntroAnimations'))) {
-    console.log('Patching Overworld_BattleIntroAnim in:', s.name);
+  if (s.name.includes('MKXP_Compatibility') || s.code.includes('class PBAnimation < Array')) {
+    console.log('Patching MKXP_Compatibility PBAnimation classes in:', s.name);
     s.code = s.code.replace(
-      /def pbBattleAnimation\(bgm = nil, battletype = 0, foe = nil\)[\s\S]*?def pbBattleAnimationCore[\s\S]*?end\s*\n\s*#={10,}/m,
-`def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
-  $game_temp.in_battle = true
-  viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
-  viewport.z = 99999
-  playingBGS = $game_system&.getPlayingBGS
-  playingBGM = $game_system&.getPlayingBGM
-  bgm = pbGetWildBattleBGM([]) if !bgm
-  pbBGMPlay(bgm)
-  
-  # Flash rápido y transición fluida en Switch (0.12s)
-  viewport.color = Color.new(255, 255, 255, 255)
-  5.times do |i|
-    viewport.color.alpha = ((5 - i) * 50).clamp(0, 255)
-    Graphics.update
+      /class PBAnimation < Array[\s\S]*?end unless defined\?\(PBAnimations\)/m,
+`class PBAnimation < Array
+  attr_accessor :id, :name, :graphic, :hue, :position, :speed, :array, :timing, :scope
+
+  def speed; @speed || 20; end
+  def timing; @timing ||= []; end
+
+  def initialize(size = 1)
+    @id = -1; @name = ""; @graphic = ""; @hue = 0; @position = 4; @array = []; @timing = []; @scope = 0
   end
-  Graphics.freeze
-  viewport.color = Color.black
-  Graphics.transition(6)
-  
-  pbPushFade
-  yield if block_given?
-  pbPopFade
-  if $game_system.is_a?(Game_System)
-    $game_system.bgm_resume(playingBGM)
-    $game_system.bgs_resume(playingBGS)
+
+  def length
+    return @array.length if @array
+    return super rescue 0
   end
-  $game_temp.memorized_bgm          = nil
-  $game_temp.memorized_bgm_position = 0
-  $PokemonGlobal.nextBattleBGM      = nil
-  $PokemonEncounters.reset_step_count
-  viewport.dispose
-  $game_temp.in_battle = false
+
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def [](i)
+    return @array[i] if @array
+    return super(i) rescue nil
+  end
+
+  def []=(i, v)
+    if @array
+      @array[i] = v
+    else
+      super(i, v) rescue nil
+    end
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
+  end
+end unless defined?(PBAnimation)
+
+class PBAnimations < Array
+  attr_accessor :array, :selected
+
+  def initialize(size = 1)
+    @array = []; @selected = 0
+  end
+
+  def length
+    return @array.length if @array
+    return super rescue 0
+  end
+
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def [](i)
+    return @array[i] if @array
+    return super(i) rescue nil
+  end
+
+  def []=(i, v)
+    if @array
+      @array[i] = v
+    else
+      super(i, v) rescue nil
+    end
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
+  end
+
+  def get_from_name(name)
+    list = @array || self
+    list.each { |i| return i if i&.name == name }
+    return nil
+  end
+end unless defined?(PBAnimations)`
+    );
+    changed = true;
+  }
+
+  if (s.name.includes('MiscPBSData') || s.code.includes('def pbLoadBattleAnimations')) {
+    console.log('Patching MiscPBSData pbLoadBattleAnimations in:', s.name);
+    s.code = s.code.replace(
+      /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?return \$game_temp\.move_to_battle_animation_data\s*\nend/m,
+`def pbLoadBattleAnimations
+  return $PokemonBattleAnimations if $PokemonBattleAnimations && !$PokemonBattleAnimations.empty?
+  $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
+                             (load_data("Data/battle_animations.dat") rescue nil) ||
+                             (load_data("Data/Animations.rxdata") rescue nil)
+  if defined?($game_temp) && $game_temp
+    $game_temp.battle_animations_data = $PokemonBattleAnimations
+  end
+  return $PokemonBattleAnimations
 end
 
-def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2); end
+def pbLoadMoveToAnim
+  return $game_temp.move_to_battle_animation_data if defined?($game_temp) && $game_temp&.move_to_battle_animation_data && !$game_temp.move_to_battle_animation_data.empty?
+  data = (load_data("Data/move2anim.dat") rescue nil) || []
+  $game_temp.move_to_battle_animation_data = data if defined?($game_temp) && $game_temp
+  return data
+end`
+    );
+    changed = true;
+  }
 
-#===============================================================================`
+  if (s.name.includes('BattleAnimationPlayer') || s.code.includes('class PBAnimationPlayerX')) {
+    console.log('Patching BattleAnimationPlayer in:', s.name);
+    s.code = s.code.replace(
+      /class PBAnimations < Array[\s\S]*?#={10,}\s*\n# Animation player/m,
+`class PBAnimations < Array
+  include Enumerable
+  attr_accessor :array, :selected
+
+  def initialize(size = 1)
+    @array = []
+    @selected = 0
+    size = 1 if size < 1
+    size.times { @array.push(PBAnimation.new) }
+  end
+
+  def length
+    return @array.length if @array
+    return super rescue 0
+  end
+
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
+  end
+
+  def [](i)
+    return @array[i] if @array
+    return super(i) rescue nil
+  end
+
+  def []=(i, value)
+    if @array
+      @array[i] = value
+    else
+      super(i, value) rescue nil
+    end
+  end
+
+  def get_from_name(name)
+    list = @array || self
+    list.each { |i| return i if i&.name == name }
+    return nil
+  end
+
+  def compact
+    @array.compact! if @array
+  end
+
+  def insert(index, val)
+    @array ? @array.insert(index, val) : super(index, val)
+  end
+
+  def delete_at(index)
+    @array ? @array.delete_at(index) : super(index)
+  end
+
+  def resize(len)
+    arr = @array || self
+    idxStart = arr.length
+    idxEnd   = len
+    if idxStart > idxEnd
+      (idxStart - idxEnd).times { arr.pop }
+    else
+      (idxEnd - idxStart).times { arr.push(PBAnimation.new) }
+    end
+    self.selected = len if self.selected >= len
+  end
+end
+
+class PBAnimation < Array
+  include Enumerable
+  attr_accessor :id, :name, :graphic, :hue, :position, :speed, :array, :timing, :scope
+
+  MAX_SPRITES = 60
+
+  def speed
+    return @speed || 20
+  end
+
+  def timing
+    @timing ||= []
+  end
+
+  def initialize(size = 1)
+    @id       = -1
+    @name     = ""
+    @graphic  = ""
+    @hue      = 0
+    @position = 4
+    @array    = []
+    size      = 1 if size < 1
+    size.times { addFrame }
+    @timing   = []
+    @scope    = 0
+  end
+
+  def length
+    return @array.length if @array
+    return super rescue 0
+  end
+
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
+  end
+
+  def [](i)
+    return @array[i] if @array
+    return super(i) rescue nil
+  end
+
+  def []=(i, value)
+    if @array
+      @array[i] = value
+    else
+      super(i, value) rescue nil
+    end
+  end
+
+  def insert(*arg)
+    @array ? @array.insert(*arg) : super(*arg)
+  end
+
+  def delete_at(*arg)
+    @array ? @array.delete_at(*arg) : super(*arg)
+  end
+
+  def resize(len)
+    arr = @array || self
+    if len < arr.length
+      arr[len, arr.length - len] = []
+    elsif len > arr.length
+      (len - arr.length).times { addFrame }
+    end
+  end
+
+  def addFrame
+    @array ||= []
+    pos = @array.length
+    @array[pos] = []
+    @array[pos][0] = pbCreateCel(Battle::Scene::FOCUSUSER_X, Battle::Scene::FOCUSUSER_Y, -1)
+    @array[pos][0][AnimFrame::FOCUS]  = 2
+    @array[pos][0][AnimFrame::LOCKED] = 1
+    @array[pos][1] = pbCreateCel(Battle::Scene::FOCUSTARGET_X, Battle::Scene::FOCUSTARGET_Y, -2)
+    @array[pos][1][AnimFrame::FOCUS]  = 1
+    @array[pos][1][AnimFrame::LOCKED] = 1
+    @array[pos]
+  end
+
+#===============================================================================
+# Animation player`
+    );
+    changed = true;
+  }
+
+  if (s.name.includes('Game_Map') && !s.name.includes('Game_MapFactory')) {
+    console.log('Patching Game_Map with in-RAM Map Cache in:', s.name);
+    s.code = s.code.replace(
+      /@map\s*=\s*load_data\(sprintf\("Data\/Map%03d\.rxdata",\s*map_id\)\)/g,
+      '@map = pbGetCachedMap(map_id) || load_data(sprintf("Data/Map%03d.rxdata", map_id))'
+    );
+    changed = true;
+  }
+
+  if (s.name.includes('Game_MapFactory')) {
+    console.log('Patching Game_MapFactory with in-RAM Map Cache in:', s.name);
+    s.code = s.code.replace(
+      /map\s*=\s*load_data\(sprintf\("Data\/Map%03d\.rxdata",\s*id\)\)/g,
+      'map = pbGetCachedMap(id) || load_data(sprintf("Data/Map%03d.rxdata", id))'
+    );
+    s.code = s.code.replace(
+      /conns\s*=\s*load_data\("Data\/map_connections\.dat"\)/g,
+      'conns = ($MAP_CONNS_CACHE ||= (load_data("Data/map_connections.dat") rescue []))'
     );
     changed = true;
   }

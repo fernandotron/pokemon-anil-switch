@@ -139,46 +139,8 @@ class Interpreter
       return result
     rescue Exception => e
       raise if e.is_a?(SystemExit) || e.class.to_s == "Reset"
-      log_compat("[EVENT SCRIPT CRASH] #{e.class}: #{e.message}\n  Script: #{script.inspect}\n  Backtrace:\n#{e.backtrace&.join("\n")}") rescue nil
-      if script.include?("setBattleRule") || e.message.include?("regla de combate") || e.message.include?("midbattle")
-        return nil
-      end
-      event = get_self
-      # Gather text for error message
-      message = pbGetExceptionMessage(e)
-      backtrace_text = ""
-      if e.is_a?(SyntaxError)
-        script.each_line do |line|
-          line.gsub!(/\s+$/, "")
-          if line[/^\s*\(/]
-            message += "\r\n***La línea '#{line}' no debería comenzar con '('."
-            message += "Intenta poner el '(' al final de la línea anterior en su"
-            message += " lugar, o utiliza 'extendtext.exe'."
-          end
-        end
-      else
-        backtrace_text += "\r\n"
-        backtrace_text += "Rastro de la traza:"
-        e.backtrace[0, 10].each { |i| backtrace_text += "\r\n#{i}" }
-        backtrace_text.gsub!(/Section(\d+)/) { $RGSS_SCRIPTS[$1.to_i][1] } rescue nil
-        backtrace_text += "\r\n"
-      end
-      # Assemble error message
-      err = "Error de Script en el Intérprete\r\n"
-      if $game_map
-        map_name = ($game_map.name rescue nil) || "???"
-        if event
-          err = "Error de script en el evento #{event.id} (coordenadas #{event.x},#{event.y}), en el mapa #{$game_map.map_id} (#{map_name})\r\n"
-        else
-          err = "Error de script en el Evento Común, en el mapa #{$game_map.map_id} (#{map_name})\r\n"
-        end
-      end
-      err += "Excepción: #{e.class}\r\n"
-      err += "Mensaje: #{message}\r\n\r\n"
-      err += "***Script completo:\r\n#{script}"   # \r\n"
-      err += backtrace_text
-      # Raise error
-      raise EventScriptError.new(err)
+      log_compat("[EVENT SCRIPT RECOVERED] #{e.class}: #{e.message}\n  Script: #{script.inspect}\n  Backtrace:\n#{e.backtrace&.join("\n")}") rescue nil
+      return nil
     end
   end
 

@@ -14,16 +14,19 @@ removeDir('ARCHIVOS_PARA_SWITCH');
 removeDir('switch_release/switch/pokemon_anil');
 removeDir('release_ready/switch/pokemon_anil');
 
-console.log('\n=== 2. GENERANDO ÍNDICE DE ASSETS EN RAM ===');
+console.log('\n=== 2. CONVIRTIENDO AUDIOS (SE y ME) A PCM WAV SIN LATENCIA ===');
+execSync('node convert_audio_to_wav.js', { stdio: 'inherit' });
+
+console.log('\n=== 3. GENERANDO ÍNDICE BINARIO (.dat) Y FALLBACK (.rb) DE ASSETS EN RAM ===');
 execSync('node generate_asset_cache.js', { stdio: 'inherit' });
 
-console.log('\n=== 3. RECONSTRUYENDO Data/Scripts.rxdata ===');
+console.log('\n=== 4. RECONSTRUYENDO Data/Scripts.rxdata CON OPTIMIZACIONES DE AUDIO ===');
 execSync('node patch_scripts.js', { stdio: 'inherit' });
 
-console.log('\n=== 4. RECONSTRUYENDO Data/PluginScripts.rxdata ===');
+console.log('\n=== 5. RECONSTRUYENDO Data/PluginScripts.rxdata ===');
 execSync('node patch_plugins_complete.js', { stdio: 'inherit' });
 
-console.log('\n=== 5. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
+console.log('\n=== 6. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
 const now = new Date();
 
 function copyAndTouch(src, dest) {
@@ -32,16 +35,18 @@ function copyAndTouch(src, dest) {
   fs.utimesSync(dest, now, now);
 }
 
-function copyDir(src, dest) {
+function copyDir(src, dest, filterFn = null) {
   if (!fs.existsSync(src)) return;
   fs.mkdirSync(dest, { recursive: true });
   for (const item of fs.readdirSync(src)) {
     const s = path.join(src, item);
     const d = path.join(dest, item);
     if (fs.statSync(s).isDirectory()) {
-      copyDir(s, d);
+      copyDir(s, d, filterFn);
     } else {
-      copyAndTouch(s, d);
+      if (!filterFn || filterFn(s)) {
+        copyAndTouch(s, d);
+      }
     }
   }
 }
@@ -63,7 +68,7 @@ targets.forEach(dir => {
   });
 
   // Archivos de Data
-  ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.rb'].forEach(f => {
+  ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.dat', 'switch_assets_index.rb', 'PkmnAnimations.rxdata', 'Animations.rxdata', 'move2anim.dat'].forEach(f => {
     const s = path.join('Data', f);
     if (fs.existsSync(s)) {
       copyAndTouch(s, path.join(dir, 'Data', f));
@@ -75,18 +80,26 @@ targets.forEach(dir => {
     copyDir('Fonts', path.join(dir, 'Fonts'));
   }
 
-  // Audio BGM
-  const bgmDir = path.join(dir, 'Audio', 'BGM');
-  fs.mkdirSync(bgmDir, { recursive: true });
-  ['Title.ogg', 'title.ogg', 'title_frlg.ogg'].forEach(f => {
-    const s = path.join('Audio', 'BGM', f);
-    if (fs.existsSync(s)) {
-      copyAndTouch(s, path.join(bgmDir, f));
-    }
-  });
+  // Audio BGM y BGS
+  console.log(`[Despliegue] Copiando audios BGM/BGS a ${dir}...`);
+  if (fs.existsSync('Audio/BGM')) {
+    copyDir('Audio/BGM', path.join(dir, 'Audio', 'BGM'));
+  }
+  if (fs.existsSync('Audio/BGS')) {
+    copyDir('Audio/BGS', path.join(dir, 'Audio', 'BGS'));
+  }
+
+  // Audio SE y ME (Copiar archivos WAV para reproducción instantánea en Switch)
+  console.log(`[Despliegue] Copiando audios SE/ME (.wav) a ${dir}...`);
+  if (fs.existsSync('Audio/SE')) {
+    copyDir('Audio/SE', path.join(dir, 'Audio', 'SE'), (f) => f.toLowerCase().endsWith('.wav'));
+  }
+  if (fs.existsSync('Audio/ME')) {
+    copyDir('Audio/ME', path.join(dir, 'Audio', 'ME'), (f) => f.toLowerCase().endsWith('.wav'));
+  }
 });
 
-console.log('\n=== 5. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
+console.log('\n=== 7. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
 function list(dir, base = '') {
   for (const f of fs.readdirSync(dir)) {
     const p = path.join(dir, f);
@@ -95,9 +108,9 @@ function list(dir, base = '') {
     if (s.isDirectory()) {
       list(p, rel);
     } else {
-      console.log(rel.padEnd(35), (s.size + ' B').padStart(12), '  Última mod:', s.mtime.toLocaleString());
+      console.log(rel.padEnd(45), (s.size + ' B').padStart(12), '  Última mod:', s.mtime.toLocaleString());
     }
   }
 }
 list('ARCHIVOS_PARA_SWITCH');
-console.log('\n¡Todos los archivos han sido regenerados y fechados a este instante!');
+console.log('\n¡Todos los archivos han sido optimizados, regenerados y empaquetados con éxito!');

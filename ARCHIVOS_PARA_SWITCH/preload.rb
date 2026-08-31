@@ -19,18 +19,30 @@ log_compat("[Switch Compatibility] *** PRELOAD BUILD 2026-PERFECT-60FPS-STABLE *
 log_compat("[Switch Compatibility] Iniciando preload.rb en Nintendo Switch...")
 log_compat("=================================================================")
 
-# 1.05 Pre-indexación de Assets en RAM para 60 FPS sin I/O en MicroSD
+# 1.05 Pre-indexación de Assets en RAM para 60 FPS sin I/O en MicroSD (Arranque Instantáneo)
 $GRAPHICS_LOOKUP_TABLE ||= {}
 $AUDIO_LOOKUP_TABLE ||= {}
 $RESOLVE_AUDIO_MEMO_CACHE ||= {}
 $RESOLVED_BITMAP_CACHE ||= {}
 
-if File.exist?("Data/switch_assets_index.rb")
+if File.exist?("Data/switch_assets_index.dat")
+  begin
+    raw = File.open("Data/switch_assets_index.dat", "rb") { |f| f.read }
+    if raw && !raw.empty?
+      t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
+      $GRAPHICS_LOOKUP_TABLE, $AUDIO_LOOKUP_TABLE = Marshal.load(raw)
+      t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
+      log_compat(sprintf("[Switch Assets] Cargados %d graficos y %d audios desde .dat en %.3fs (Arranque Instantaneo).", ($GRAPHICS_LOOKUP_TABLE.length rescue 0), ($AUDIO_LOOKUP_TABLE.length rescue 0), (t1 - t0))) rescue nil
+    end
+  rescue Exception => e
+    log_compat("[Warning Switch Assets DAT] #{e.message}") rescue nil
+  end
+elsif File.exist?("Data/switch_assets_index.rb")
   begin
     code = File.open("Data/switch_assets_index.rb", "rb") { |f| f.read }
     if code && !code.empty?
       TOPLEVEL_BINDING.eval(code, "Data/switch_assets_index.rb")
-      log_compat("[Switch Assets] Cargados #{$GRAPHICS_LOOKUP_TABLE.length rescue 0} graficos y #{$AUDIO_LOOKUP_TABLE.length rescue 0} audios pre-indexados en RAM con exito.") rescue nil
+      log_compat("[Switch Assets] Cargados #{$GRAPHICS_LOOKUP_TABLE.length rescue 0} graficos y #{$AUDIO_LOOKUP_TABLE.length rescue 0} audios pre-indexados en RAM desde .rb fallback.") rescue nil
     end
   rescue Exception => e
     log_compat("[Warning Switch Assets Index] #{e.message}") rescue nil
@@ -366,6 +378,132 @@ end
 module ::MessageTypes
   Zlib = ::Zlib
 end
+
+# 1.8 Clases de compatibilidad para animaciones de combate
+class AnimFrame
+  X          = 0
+  Y          = 1
+  ZOOMX      = 2
+  ANGLE      = 3
+  MIRROR     = 4
+  BLENDTYPE  = 5
+  VISIBLE    = 6
+  PATTERN    = 7
+  OPACITY    = 8
+  ZOOMY      = 11
+  COLORRED   = 12
+  COLORGREEN = 13
+  COLORBLUE  = 14
+  COLORALPHA = 15
+  TONERED    = 16
+  TONEGREEN  = 17
+  TONEBLUE   = 18
+  TONEGRAY   = 19
+  LOCKED     = 20
+  FLASHRED   = 21
+  FLASHGREEN = 22
+  FLASHBLUE  = 23
+  FLASHALPHA = 24
+  PRIORITY   = 25
+  FOCUS      = 26
+end unless defined?(AnimFrame)
+
+class PBAnimTiming
+  attr_accessor :frame, :timingType, :name, :volume, :pitch
+  attr_accessor :bgX, :bgY, :opacity, :colorRed, :colorGreen, :colorBlue, :colorAlpha
+  attr_accessor :duration, :flashScope, :flashColor, :flashDuration
+
+  def initialize(type = 0)
+    @frame = 0; @timingType = type; @name = ""; @volume = 80; @pitch = 100
+    @bgX = nil; @bgY = nil; @opacity = nil; @colorRed = nil; @colorGreen = nil; @colorBlue = nil; @colorAlpha = nil
+    @duration = 5; @flashScope = 0; @flashColor = Color.new(255, 255, 255); @flashDuration = 5
+  end
+
+  def timingType; @timingType || 0; end
+  def duration; @duration || 5; end
+end unless defined?(PBAnimTiming)
+
+class PBAnimation < Array
+  attr_accessor :id, :name, :graphic, :hue, :position, :speed, :array, :timing, :scope
+
+  def speed; @speed || 20; end
+  def timing; @timing ||= []; end
+
+  def initialize(size = 1)
+    @id = -1; @name = ""; @graphic = ""; @hue = 0; @position = 4; @array = []; @timing = []; @scope = 0
+  end
+
+  def length
+    return @array.length if @array
+    return super rescue 0
+  end
+
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def [](i)
+    return @array[i] if @array
+    return super(i) rescue nil
+  end
+
+  def []=(i, v)
+    if @array
+      @array[i] = v
+    else
+      super(i, v) rescue nil
+    end
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
+  end
+end unless defined?(PBAnimation)
+
+class PBAnimations < Array
+  attr_accessor :array, :selected
+
+  def initialize(size = 1)
+    @array = []; @selected = 0
+  end
+
+  def length
+    return @array.length if @array
+    return super rescue 0
+  end
+
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def [](i)
+    return @array[i] if @array
+    return super(i) rescue nil
+  end
+
+  def []=(i, v)
+    if @array
+      @array[i] = v
+    else
+      super(i, v) rescue nil
+    end
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
+  end
+
+  def get_from_name(name)
+    list = @array || self
+    list.each { |i| return i if i&.name == name }
+    return nil
+  end
+end unless defined?(PBAnimations)
+
 
 # 1.8 Módulo Game
 module ::Game
@@ -1237,21 +1375,20 @@ module ::Audio
           $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
           return found
         end
-      end
 
-      # Fallback: buscar con .ogg / .wav
-      clean_p = p.sub(/\.[^.]+$/, "")
-      cand = p.start_with?("Audio/") ? clean_p : "#{default_dir}/#{clean_p}"
-      [cand + ".ogg", cand + ".wav", cand + ".mp3", p].each do |test_f|
-        if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && $AUDIO_LOOKUP_TABLE[test_f.downcase]
-          found = $AUDIO_LOOKUP_TABLE[test_f.downcase]
-          $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
-          return found
+        # Probar extensiones .wav y .ogg prioritarias
+        clean_p = p.sub(/\.[^.]+$/, "")
+        cand = p.start_with?("Audio/") ? clean_p : "#{default_dir}/#{clean_p}"
+        [cand + ".wav", cand + ".ogg", cand + ".mp3", p].each do |test_f|
+          if $AUDIO_LOOKUP_TABLE[test_f.downcase]
+            found = $AUDIO_LOOKUP_TABLE[test_f.downcase]
+            $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
+            return found
+          end
         end
       end
 
-      # Si tiene extensión válida (.ogg/.wav), permitir intentar; si no, devolver vacío para evitar bloqueos de disco
-      res = (p.end_with?(".ogg") || p.end_with?(".wav") || p.end_with?(".mp3")) ? (p.start_with?("Audio/") ? p : "#{default_dir}/#{p}") : ""
+      res = (p.end_with?(".wav") || p.end_with?(".ogg") || p.end_with?(".mp3")) ? (p.start_with?("Audio/") ? p : "#{default_dir}/#{p}") : ""
       $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = res
       return res
     end
@@ -1263,10 +1400,11 @@ module ::Audio
       if file.empty?
         file = ["Audio/BGM/Title.ogg", "Audio/BGM/title_frlg.ogg", "Audio/BGM/title_origin.ogg", "Audio/BGM/title_bw.ogg"].find { |f| File.exist?(f) } || "Audio/BGM/Title.ogg"
       end
+      vol = [(volume || 100).to_i, 1].max # Asegurar que volumen nunca quede en 0
       if track
-        __switch_native_bgm_play(file, (volume || 100).to_i, (pitch || 100).to_i, (pos || 0.0).to_f, track) rescue (__switch_native_bgm_play(file, (volume || 100).to_i, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil)
+        __switch_native_bgm_play(file, vol, (pitch || 100).to_i, (pos || 0.0).to_f, track) rescue (__switch_native_bgm_play(file, vol, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil)
       else
-        __switch_native_bgm_play(file, (volume || 100).to_i, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil
+        __switch_native_bgm_play(file, vol, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil
       end
     rescue Exception
     end
@@ -1303,9 +1441,9 @@ module ::Audio
 
       now = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0)
 
-      # Debounce de 25ms para evitar saturación de llamadas idénticas en el mismo cuadro
+      # Debounce de 15ms para evitar saturación de llamadas idénticas en el mismo cuadro
       last = $LAST_SE_TIME[file]
-      if last && (now - last) < 0.025
+      if last && (now - last) < 0.015 && volume.to_i > 0
         return
       end
       $LAST_SE_TIME[file] = now
@@ -1316,6 +1454,38 @@ module ::Audio
     end
   end
 end
+
+def warmup_audio_buffers!
+  return if $CORE_AUDIO_BUFFERS_WARMED
+  $CORE_AUDIO_BUFFERS_WARMED = true
+
+  common_ses = [
+    "GUI menu open", "GUI menu close", "GUI sel cursor", "GUI sel decision",
+    "GUI sel cancel", "GUI sel buzzer", "GUI naming tab swap start", "GUI naming tab swap end",
+    "GUI storage show party panel", "GUI storage hide party panel", "GUI summary change page",
+    "GUI party switch", "GUI trainer card open", "GUI trainer card flip", "GUI bag cursor",
+    "Player jump", "jump", "Player bump", "Door enter", "Door exit", "Door open", "Door close",
+    "Ledge jump", "Bicycle", "Cut", "Rock Smash", "Headbutt", "Fly", "Surf",
+    "pkmn_ball", "Recall", "Battle throw", "Battle ball drop", "Battle ball hit",
+    "Battle ball shake", "Battle recall", "Battle damage normal", "Battle damage super",
+    "Battle damage weak", "Battle flee", "Pkmn faint", "Battle exp full", "Battle stat up",
+    "Battle stat down", "Item get", "Key item get", "Item obtain", "Mining item get",
+    "Voltorb Flip point", "Voltorb Flip mark", "Voltorb Flip win"
+  ]
+
+  common_ses.each do |se_name|
+    begin
+      resolved = ::Audio.resolve_audio_file(se_name, nil, "Audio/SE")
+      if resolved && !resolved.empty?
+        ::Audio.__switch_native_se_play(resolved, 0, 100) rescue nil
+      end
+    rescue Exception
+    end
+  end
+  ::Audio.se_stop rescue nil
+end
+
+warmup_audio_buffers! rescue nil
 
 class AnimFrame
   X          = 0
@@ -1455,22 +1625,8 @@ def prewarm_pause_menu_graphics!
 rescue Exception
 end
 
-def verify_and_preload_battle_animations!
-  if File.exist?("Data/PkmnAnimations.rxdata")
-    begin
-      File.open("Data/PkmnAnimations.rxdata", "rb") do |f|
-        $PokemonBattleAnimations = Marshal.load(f)
-      end
-      log_compat("[Switch Animations] Cargadas #{$PokemonBattleAnimations.length rescue 0} animaciones de combate desde PkmnAnimations.rxdata.") rescue nil
-    rescue Exception => e
-      log_compat("[Warning PkmnAnimations] #{e.class}: #{e.message}") rescue nil
-    end
-  end
-end
-
 warmup_core_switch_audio!
 prewarm_pause_menu_graphics!
-verify_and_preload_battle_animations!
 
 module TrainerSensor
   BAR_OPACITY = 32 unless defined?(BAR_OPACITY)
@@ -1481,10 +1637,16 @@ end
 
 class PokemonSystem
   def battlescene
-    0 # 0 = Siempre activar animaciones de combate
+    0
   end
   def battlescene=(val)
     @battlescene = 0
+  end
+  def battlestyle
+    @battlestyle || 0
+  end
+  def battlestyle=(val)
+    @battlestyle = (val || 0).to_i
   end
 end
 
@@ -1501,6 +1663,39 @@ module FileTest
   def self.audio_exist?(filename)
     return true if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
     exist?(filename)
+  end
+end
+
+class << Dir
+  unless method_defined?(:__switch_orig_mkdir)
+    alias __switch_orig_mkdir mkdir rescue nil
+  end
+
+  def mkdir(path, *args)
+    __switch_orig_mkdir(path, *args)
+  rescue Errno::EEXIST, Errno::EACCES
+    0
+  rescue Exception => e
+    0
+  end
+end
+
+module Kernel
+  unless method_defined?(:__switch_orig_exit)
+    alias __switch_orig_exit exit rescue nil
+    alias __switch_orig_exit_bang exit! rescue nil
+  end
+
+  def exit(*args)
+    log_compat("[Kernel.exit] Salida limpia...") rescue nil
+    $scene = nil if defined?($scene)
+    __switch_orig_exit(*args) rescue nil
+  end
+
+  def exit!(*args)
+    log_compat("[Kernel.exit!] Salida limpia...") rescue nil
+    $scene = nil if defined?($scene)
+    __switch_orig_exit_bang(*args) rescue nil
   end
 end
 
@@ -1817,12 +2012,24 @@ module ::FileTest
                      $AUDIO_LOOKUP_TABLE.has_key?(base_clean.delete("-")) ||
                      $AUDIO_LOOKUP_TABLE.has_key?(base_clean.delete(" _-"))
     end
-    return ::File.exist?(filename) || [".ogg", ".mid", ".midi", ".wav", ".mp3"].any? { |e| ::File.exist?(filename.to_s + e) }
+    return false
   end
 
   def self.image_exist?(filename)
     return false if filename.nil? || filename.to_s.empty?
-    return ::File.exist?(filename) || [".png", ".gif", ".jpg", ".jpeg", ".bmp"].any? { |e| ::File.exist?(filename.to_s + e) }
+    fn = filename.to_s.gsub("\\", "/").downcase
+    base_fn = File.basename(fn)
+    base_clean = base_fn.sub(/\.[^.]+$/, "")
+    if defined?($GRAPHICS_LOOKUP_TABLE) && $GRAPHICS_LOOKUP_TABLE && !$GRAPHICS_LOOKUP_TABLE.empty?
+      return true if $GRAPHICS_LOOKUP_TABLE.has_key?(fn) ||
+                     $GRAPHICS_LOOKUP_TABLE.has_key?(fn.sub(/\.[^.]+$/, "")) ||
+                     $GRAPHICS_LOOKUP_TABLE.has_key?("graphics/" + fn) ||
+                     $GRAPHICS_LOOKUP_TABLE.has_key?("graphics/characters/" + fn) ||
+                     $GRAPHICS_LOOKUP_TABLE.has_key?("graphics/pictures/" + fn) ||
+                     $GRAPHICS_LOOKUP_TABLE.has_key?(base_fn) ||
+                     $GRAPHICS_LOOKUP_TABLE.has_key?(base_clean)
+    end
+    return false
   end
 
   def directory?(path); ::Dir.exist?(path); end
@@ -2017,15 +2224,14 @@ module Kernel
 end
 
 module ::ModularTitle
-  BGM             = "Title"
-  MODIFIERS       = ["background0", "logo:sparkle", "overlay:static001", "effect1"]
-  START_POS       = [:center, 320]
-  SPECIES         = :CHARIZARD
-  SPECIES_FEMALE  = false
-  SPECIES_FORM    = 0
-  SPECIES_SHINY   = false
-  SPECIES_BACK    = false
-  MOSTRAR_GRITO   = true
+  MODIFIERS       = ["intro:2", "logoY:280", "logo:shine", "effect8", "logo:glow", "bgm:Titulo"] unless defined?(MODIFIERS)
+  MOSTRAR_GRITO   = false unless defined?(MOSTRAR_GRITO)
+  SPECIES         = :PIKACHU unless defined?(SPECIES)
+  SPECIES_FORM    = 0 unless defined?(SPECIES_FORM)
+  SPECIES_FEMALE  = false unless defined?(SPECIES_FEMALE)
+  SPECIES_SHINY   = false unless defined?(SPECIES_SHINY)
+  SPECIES_BACK    = false unless defined?(SPECIES_BACK)
+  START_POS       = [nil, nil] unless defined?(START_POS)
 end
 ::MOSTRAR_PANEL_REP_EXP = true unless defined?(::MOSTRAR_PANEL_REP_EXP)
 
@@ -2963,13 +3169,42 @@ def pbGetAnimation(name, hue = 0)
 end
 
 def pbLoadBattleAnimations
-  if !$PokemonBattleAnimations
-    $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil)
-  end
+  return $PokemonBattleAnimations if $PokemonBattleAnimations && !$PokemonBattleAnimations.empty?
+  $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
+                             (load_data("Data/battle_animations.dat") rescue nil) ||
+                             (load_data("Data/Animations.rxdata") rescue nil)
   if defined?($game_temp) && $game_temp
     $game_temp.battle_animations_data = $PokemonBattleAnimations
   end
   return $PokemonBattleAnimations
+end
+
+def pbLoadMoveToAnim
+  return $game_temp.move_to_battle_animation_data if defined?($game_temp) && $game_temp&.move_to_battle_animation_data && !$game_temp.move_to_battle_animation_data.empty?
+  data = (load_data("Data/move2anim.dat") rescue nil) || []
+  $game_temp.move_to_battle_animation_data = data if defined?($game_temp) && $game_temp
+  return data
+end
+
+# In-RAM Map Cache for instantaneous overworld transitions on Switch
+$MAP_RXDATA_CACHE ||= {}
+$MAP_RXDATA_CACHE_MAX = 50
+
+def pbGetCachedMap(map_id)
+  key = map_id.is_a?(Numeric) ? sprintf("Data/Map%03d.rxdata", map_id) : map_id.to_s
+  key = key.sub(/^data\//i, "Data/")
+  cached = $MAP_RXDATA_CACHE[key]
+  return Marshal.load(Marshal.dump(cached)) if cached
+  map = (load_data(key) rescue nil)
+  if map
+    $MAP_RXDATA_CACHE[key] = map
+    if $MAP_RXDATA_CACHE.size > $MAP_RXDATA_CACHE_MAX
+      first_k = $MAP_RXDATA_CACHE.keys.first
+      $MAP_RXDATA_CACHE.delete(first_k)
+    end
+    return Marshal.load(Marshal.dump(map))
+  end
+  return nil
 end
 
 Graphics.resize_screen(512, 384) rescue nil

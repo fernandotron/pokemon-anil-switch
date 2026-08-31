@@ -35,7 +35,7 @@ module FollowingPkmn
   CYCLE_PARTY_KEY           = nil
 
   # Tonos de estado a utilizar, si esto es verdadero (Rojo, Verde, Azul)
-  APPLY_STATUS_TONES        = true
+  APPLY_STATUS_TONES        = false
   TONE_BURN                 = [206, 73, 43]
   TONE_POISON               = [109, 55, 130]
   TONE_PARALYSIS            = [204, 152, 44]

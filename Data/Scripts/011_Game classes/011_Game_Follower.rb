@@ -31,6 +31,10 @@ class Game_Follower < Game_Event
     return @map.map_id
   end
 
+  def should_update?(recalc = false)
+    return true
+  end
+
   #-----------------------------------------------------------------------------
 
   def move_through(direction)

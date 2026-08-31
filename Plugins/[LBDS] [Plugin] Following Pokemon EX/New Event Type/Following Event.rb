@@ -21,6 +21,10 @@ end
 # to make it more robust as a Following Pokemon
 #-------------------------------------------------------------------------------
 class Game_FollowingPkmn < Game_Follower
+  def should_update?(recalc = false)
+    true
+  end
+
   def initialize(*args)
     super(*args)
     @last_leader_x = nil

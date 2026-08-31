@@ -70,8 +70,7 @@ class PartyPicture
   DIRECTORY = "Fotos"
 
   def self.get_directory
-    folder_path = File.join(System.data_directory, DIRECTORY)
-    folder_path = folder_path.gsub("\\", "/")
+    "Fotos"
   end
 
   def initialize(ev1, ev2, ev3, ev4, ev5, ev6, keep_npcs_visible = true)
@@ -83,8 +82,8 @@ class PartyPicture
     @ev6 = ev6
     @visible_npcs = keep_npcs_visible
     # Checks if the map has Snap Edges on, if so, locks the camera movement.
-    isSnapEdges = GameData::MapMetadata.try_get($game_map.map_id).snap_edges
-    @can_move_camera = true #(isSnapEdges ? false : true)
+    isSnapEdges = GameData::MapMetadata.try_get($game_map.map_id).snap_edges rescue false
+    @can_move_camera = true
 
     # Gets the names and effects of filters and overlays defined previously
     @filters_names   = self.class.filters.map { |filter| filter[0] }
@@ -112,7 +111,7 @@ class PartyPicture
     # Starts the commands such as movement, buttons being pressed...
     main
   end
-  
+
   def main
     # defines some variables
     currentY = 0
@@ -128,7 +127,7 @@ class PartyPicture
       Input.update
       if Input.press?(Input::UP) && @can_move_camera
         if currentY == maxY
-          pbSEPlay("Player bump")
+          pbSEPlay("Player bump") rescue nil
           pbWait(0.25)
         else
           pbScrollMap(8,1)
@@ -136,7 +135,7 @@ class PartyPicture
         end
       elsif Input.press?(Input::DOWN) && @can_move_camera
         if currentY == minY
-          pbSEPlay("Player bump")
+          pbSEPlay("Player bump") rescue nil
           pbWait(0.25)
         else
           pbScrollMap(2,1)
@@ -144,7 +143,7 @@ class PartyPicture
         end
       elsif Input.press?(Input::RIGHT) && @can_move_camera
         if currentX == maxX
-          pbSEPlay("Player bump")
+          pbSEPlay("Player bump") rescue nil
           pbWait(0.25)
         else
           pbScrollMap(6,1)
@@ -152,44 +151,33 @@ class PartyPicture
         end
       elsif Input.press?(Input::LEFT) && @can_move_camera
         if currentX == minX
-          pbSEPlay("Player bump")
+          pbSEPlay("Player bump") rescue nil
           pbWait(0.25)
         else
           pbScrollMap(4,1)
           currentX -= 1
         end
-      # elsif Input.trigger?(Input::ACTION)
-
       elsif Input.trigger?(Input::USE)
-
         choice = pbMessage(_INTL("\\l[2]¿Qué quieres hacer?"), [
           _INTL("Tomar foto"),
           _INTL("Efectos"),
           _INTL("Información"),
           _INTL("Nada")
         ])
-        ############################
-        #   TOMAR FOTO
-        ############################
         if choice == 0    
-                  # Displays a choice message if you want to take a picture or not
           choice = pbMessage(_INTL("\\l[2]¿Quieres hacer ya la foto?"), [
             _INTL("Sí"),
             _INTL("No")
           ])
-          if choice == 0 #if Yes
+          if choice == 0
             pbTakePicture
             $actualizarCacheAlbum = true
             return true
-          else # if No
+          else
             pbMessage(_INTL("\\l[2]No te preocupes, tómate tu tiempo."))
           end
-
-        ############################
-        #   EFECTOS
-        ############################
         elsif choice == 1
-            choice = pbMessage(_INTL("\\l[2]¿Quieres usar algún filtro o marco?"), [
+          choice = pbMessage(_INTL("\\l[2]¿Quieres usar algún filtro o marco?"), [
             _INTL("Filtros"),
             _INTL("Marcos"),
             _INTL("Nada")
@@ -216,107 +204,72 @@ class PartyPicture
               else
                 @sprites["filter_overlay"].visible = false
               end
-              pbSEPlay("GUI naming tab swap start")
+              pbSEPlay("GUI naming tab swap start") rescue nil
             end    
           end
-
-        ############################
-        #   INFORMACIÓN
-        ############################
         elsif choice == 2 
           pbMessage(_INTL("\\l[2]Tienes varias opciones y controles que puedes usar a la hora de tomarte la foto."))
           pbMessage(_INTL("\\l[2]Si pulsas las flechas de dirección podrás desplazar el objetivo y enfocar a lo que más te interese."))
           pbMessage(_INTL("\\l[2]Tienes además la opción de añadir tanto efectos como filtros. Puedes combinar ambos para tomar tu foto."))
           pbMessage(_INTL("\\l[2]Cuando tengas claro cómo quieres la foto, elige la opción de tomar foto."))
         end  
-        
-      #elsif Input.trigger?(Input::BACK)
-      #  # Displays a choice message if you want to stop or not
-      #  choice = pbMessage("\\l[2]¿Quieres dejarlo?", [
-      #    _INTL("Sí"),
-      #    _INTL("No")
-      #  ])
-      #  if choice == 0 # if yes
-      #    pbMessage("¡Ok!")
-      #    pbEndPictureScene
-	    #    return false
-      #  end
       end
-
       break if @picture_taken
     end
   end
   
   def pbTakePicture
     # Picture taken effects
-    @sprites["overlay"].visible = false
-    pbSEPlay("Battle catch click")
-    pbFlash(Color.new(255, 255, 255, 255), 10)
+    @sprites["overlay"].visible = false rescue nil
+    pbSEPlay("Battle catch click") rescue nil
+    pbFlash(Color.new(255, 255, 255, 255), 10) rescue nil
     pbWait(11.0/20)
 
-    # Specify the folder path where you want to save the images
     folder_path = self.class.get_directory
-    create_folder_if_not_exist(folder_path)
+    Dir.mkdir(folder_path) unless Dir.exist?(folder_path) rescue nil
     
-    # Checks if an image of the same name already exists, if so adds a (x) to its name
-    counter = 0
-
-    tiempo_actual = pbGetTimeNow
+    tiempo_actual = pbGetTimeNow rescue Time.now
     dia  = tiempo_actual.day
     mes  = tiempo_actual.month
     anyo = tiempo_actual.year
 
-    # Buscamos el primer archivo.
-    file_pattern = File.join(folder_path, "capture000*.png")
-    matching_files = Dir.glob(file_pattern)
-    while !matching_files.empty?
+    existing_count = (Dir.glob(File.join(folder_path, "capture*.png")).size rescue 0)
+    counter = existing_count
+    exporter_filename = sprintf("capture%03d_%d_%d_%d.png", counter, dia, mes, anyo)
+    while File.exist?(File.join(folder_path, exporter_filename))
       counter += 1
-      num_captura_base = sprintf("%03d",counter)
-      # Buscamos el archivo que se llame así.
-      file_pattern = File.join(folder_path, "capture#{num_captura_base}*.png")
-      matching_files = Dir.glob(file_pattern)
+      exporter_filename = sprintf("capture%03d_%d_%d_%d.png", counter, dia, mes, anyo)
     end
 
-    # Hemos encontrado un counter que no tiene imagen.
-    num_captura_base = sprintf("%03d",counter)
-    exporter_filename = "capture#{num_captura_base}_#{dia}_#{mes}_#{anyo}.png"
-
-    # Take a screenshot and save it
+    # Take a screenshot and save it directly and instantly
     bmp = Graphics.snap_to_bitmap
-    bmp.save_to_png(File.join(folder_path, exporter_filename))
-    bmp.dispose
-    #@sprites["overlay"].visible = true
+    bmp.save_to_png(File.join(folder_path, exporter_filename)) rescue nil
+    bmp.dispose rescue nil
+
     pbWait(6.0/20)
     pbEndPictureScene
-    # Hago esto de nuevo para volver a copiar las fotos y así tener la última en la carpeta del juego.
-    create_folder_if_not_exist(folder_path)
   end
   
   def pbStartPictureScene(ev1, ev2, ev3, ev4, ev5, ev6)
     # Fades the screen and runs the code
     pbFadeOutIn do
-      # Loop through the Player Party to change event's character sprites
-      # Stores the events sprites and then make every event in the map invisible
-      #if !@visible_npcs
-      #  $game_map.store_event_character_names
-      #  $game_map.clear_event_character_names
-      #end
       party = $player.party
+      events = [ev1, ev2, ev3, ev4, ev5, ev6]
       party.each_with_index do |pkmn, i|
         next if pkmn.egg?
         shiny = pkmn.shiny?
-        ev_id = eval("ev#{i+1}")
+        ev_id = events[i]
         next unless ev_id
-        file = GameData::Species.ow_sprite_filename(pkmn.species, pkmn.form, pkmn.gender, shiny, pkmn.shadow)
-        file.gsub!("Graphics/Characters/", "")
-        $game_map.events[ev_id].character_name = file
-        pbMoveRoute($game_map.events[ev_id], [PBMoveRoute::STEP_ANIME_ON], false)
+        file = GameData::Species.ow_sprite_filename(pkmn.species, pkmn.form, pkmn.gender, shiny, pkmn.shadow) rescue ""
+        file = file.to_s.sub(/^Graphics\/Characters\//i, "")
+        $game_map.events[ev_id].character_name = file if $game_map.events[ev_id]
+        pbMoveRoute($game_map.events[ev_id], [PBMoveRoute::STEP_ANIME_ON], false) if $game_map.events[ev_id]
       end
       
       # Toggles Following Pokémon if it's currently active
       if FollowingPkmn.active?
         @toggle = true
-        FollowingPkmn.toggle_off(false)
+        FollowingPkmn.toggle_off(false) rescue nil
       else
         @toggle = false
       end
@@ -328,52 +281,26 @@ class PartyPicture
       # Refreshes the map before Fading In
       $game_map.need_refresh = true
       pbWait(0.5)
-      $scene.miniupdate
+      $scene.miniupdate if defined?($scene) && $scene.respond_to?(:miniupdate)
       pbWait(0.5)
     end
   end
   
   def pbEndPictureScene
-=begin
-    pbScrollMapToPlayer(4) if @can_move_camera
-    pbFadeOutIn do
-      # Returns the camera back to the player in case it's not currently there
-      # Restore all events previously made invisible
-      #$game_map.restore_event_character_names if !@visible_npcs
-      # Make all events characters invisible again
-
-      [@ev1, @ev2, @ev3, @ev4, @ev5, @ev6].each do |i|
-        $game_map.events[i].character_name = '' if $game_map.events[i] # Reset character name to make it invisible
-        pbMoveRoute($game_map.events[i], [PBMoveRoute::STEP_ANIME_OFF], false)
-      end
-          
-      # Returns Following Pokémon in case it was active before
-      if @toggle
-        FollowingPkmn.toggle_on#(false)
-      end
-=end
       # Removes any active filters
-      pbToneChangeAll(Tone.new(0, 0, 0, 0), 4)
+      pbToneChangeAll(Tone.new(0, 0, 0, 0), 4) rescue nil
       # Disposes all sprites and viewports
-      pbDisposeSpriteHash(@sprites)
-      @viewport.dispose
+      pbDisposeSpriteHash(@sprites) rescue nil
+      @viewport.dispose rescue nil
       # Refreshes the map before fading in
-      $game_map.need_refresh = true
+      $game_map.need_refresh = true if $game_map
       pbWait(0.5)
-      $scene.miniupdate
+      $scene.miniupdate if defined?($scene) && $scene.respond_to?(:miniupdate)
       @picture_taken = true # breaks the loop
-#    end
   end
 
   def create_folder_if_not_exist(folder_path)
-    # Check if the folder already exists
-    unless FileTest.exist?(folder_path)
-        Dir.mkdir(folder_path)
-    end
-    # Copiamos las fotos de la carpeta del save a la del juego
-    # (hago esto porque soy incapaz de leer las fotos directamente de la carpeta del save)
-    copiar_fotos_de_carpeta_sistema_a_juego
-    echoln "Copia de Fotos hecha en la carepeta Fotos."
+    Dir.mkdir(folder_path) unless Dir.exist?(folder_path) || FileTest.exist?(folder_path) rescue nil
   end  
 
   def pbUpdateSceneMap
@@ -381,23 +308,31 @@ class PartyPicture
   end
 end
 
-
-
 def terminarFoto(ev1, ev2, ev3, ev4, ev5, ev6)
   [ev1, ev2, ev3, ev4, ev5, ev6].each do |i|
-    $game_map.events[i].character_name = '' if $game_map.events[i] # Reset character name to make it invisible
-    pbMoveRoute($game_map.events[i], [PBMoveRoute::STEP_ANIME_OFF], false)
+    if $game_map && $game_map.events && $game_map.events[i]
+      $game_map.events[i].character_name = ''
+      pbMoveRoute($game_map.events[i], [PBMoveRoute::STEP_ANIME_OFF], false) rescue nil
+    end
   end
       
   # Returns Following Pokémon in case it was active before
-  if true #@toggle
-    FollowingPkmn.toggle_on#(false)
+  if defined?(FollowingPkmn)
+    $PokemonGlobal.follower_toggle_locked = false if defined?($PokemonGlobal) && $PokemonGlobal
+    $PokemonGlobal.follower_toggled = true if defined?($PokemonGlobal) && $PokemonGlobal
+    FollowingPkmn.toggle_on(false) rescue nil
+    FollowingPkmn.refresh(false) rescue nil
+    ev = FollowingPkmn.get_event rescue nil
+    if ev
+      ev.transparent = false if ev.respond_to?(:transparent=)
+      ev.opacity = 255 if ev.respond_to?(:opacity=)
+    end
   end
   
   # Refreshes the map before fading in
-  $game_map.need_refresh = true
-  pbWait(0.5)
-  $scene.miniupdate
+  $game_map.need_refresh = true if $game_map
+  pbWait(0.2)
+  $scene.miniupdate if defined?($scene) && $scene.respond_to?(:miniupdate)
 end
 
 

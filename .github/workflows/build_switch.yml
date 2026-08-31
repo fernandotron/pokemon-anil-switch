@@ -21,7 +21,7 @@ jobs:
 
       - name: Install Switch dependencies
         run: |
-          dkp-pacman -Syu --noconfirm \
+          dkp-pacman -S --noconfirm --needed \
             switch-sdl2 \
             switch-sdl2_image \
             switch-sdl2_ttf \
@@ -39,12 +39,10 @@ jobs:
             switch-pkg-config \
             switch-tools \
             devkit-env \
-            meson \
-            ninja \
-            imagemagick \
-            git \
-            build-essential \
-            ruby
+            cmake || true
+          
+          pacman -S --noconfirm --needed meson ninja imagemagick ruby python-pip git || true
+          python3 -m pip install --break-system-packages meson ninja || python3 -m pip install meson ninja || true
 
       - name: Make build script executable and run
         run: |

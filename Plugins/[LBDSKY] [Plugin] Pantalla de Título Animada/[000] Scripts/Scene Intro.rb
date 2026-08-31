@@ -15,108 +15,119 @@ class Scene_Intro
   # load the title screen
   #-----------------------------------------------------------------------------
   def main
-    Graphics.transition(0)
-    # refresh input
+    Graphics.transition(10) rescue nil
     Input.update
-    $DiscordRPC&.start_rich_presence if $DiscordRPC && !$joiplay
-    # Loads up a species cry for the title screen
-    species = ModularTitle::SPECIES
+    species = ModularTitle::SPECIES rescue :PIKACHU
     species = species.upcase.to_sym if species.is_a?(String)
-    species = GameData::Species.get(species).id
-    @cry = species.nil? ? nil : GameData::Species.cry_filename(species, ModularTitle::SPECIES_FORM)
-    # Cycles through the intro pictures
+    species = GameData::Species.get(species).id rescue :PIKACHU
+    @cry = species.nil? ? nil : (GameData::Species.cry_filename(species, ModularTitle::SPECIES_FORM) rescue nil)
     @skip = false
     self.cyclePics
-    # loads the modular title screen
     @screen = ModularTitleScreen.new
-    # Plays defined title screen BGM
-    @screen.playBGM
-    # Plays the title screen intro (is skippable)
-    @screen.intro
-    # Creates/updates the main title screen loop
+    @screen.playBGM rescue nil
+    @screen.intro rescue nil
     self.update
-    Graphics.freeze
+  ensure
+    disposeTitle rescue nil
+    Graphics.freeze rescue nil
   end
+
   #-----------------------------------------------------------------------------
   # main update loop
   #-----------------------------------------------------------------------------
   def update
     ret = 0
+    Input.update
     loop do
-      @screen.update
+      @screen.update if @screen
       Graphics.update
       Input.update
       if Input.press?(Input::DOWN) && Input.press?(Input::B) && Input.press?(Input::CTRL)
         ret = 1
         break
       end
-      if Input.trigger?(Input::C) || (defined?($mouse) && $mouse.leftClick?)
+      if Input.trigger?(Input::USE) || Input.trigger?(Input::C) || Input.trigger?(Input::ACTION) || Input.trigger?(Input::A) || Input.trigger?(Input::START) || (defined?($mouse) && $mouse.leftClick?)
         ret = 2
         break
       end
     end
     case ret
     when 1
-      RandomizedChallenge.resume_random_species if @screen.random? && defined?(RandomizedChallenge)
       closeTitleDelete
     when 2
-      RandomizedChallenge.resume_random_species if @screen.random? && defined?(RandomizedChallenge)
       closeTitle
     end
   end
+
   #-----------------------------------------------------------------------------
   # close title screen and dispose of elements
   #-----------------------------------------------------------------------------
   def closeTitle
-    # Play Pokemon cry
-    pbSEPlay(@cry, 100, 100) if @cry && ModularTitle::MOSTRAR_GRITO
-    # disposes current title screen
+    pbSEPlay(@cry, 100, 100) if @cry && (ModularTitle::MOSTRAR_GRITO rescue false) rescue nil
     disposeTitle
-    # initializes load screen
     sscene = PokemonLoad_Scene.new
     sscreen = PokemonLoadScreen.new(sscene)
     sscreen.pbStartLoadScreen
   end
+
   #-----------------------------------------------------------------------------
   # close title screen when save delete
   #-----------------------------------------------------------------------------
   def closeTitleDelete
-    # disposes current title screen
     disposeTitle
-    # initializes delete screen
     sscene = PokemonLoad_Scene.new
     sscreen = PokemonLoadScreen.new(sscene)
-    sscreen.pbStartLoadScreen
+    sscreen.pbStartDeleteScreen rescue sscreen.pbStartLoadScreen
   end
+
   #-----------------------------------------------------------------------------
   # cycle splash images
   #-----------------------------------------------------------------------------
   def cyclePics
-    pics = IntroEventScene::SPLASH_IMAGES
-    frames = (Graphics.frame_rate * (IntroEventScene::FADE_TICKS/20.0)).ceil
+    pics = (IntroEventScene::SPLASH_IMAGES rescue ["splash2"])
+    return if !pics || pics.empty?
+    frames = 10
     sprite = Sprite.new
+    sprite.z = 999999
     sprite.opacity = 0
     for i in 0...pics.length
-      bitmap = pbBitmap("Graphics/Titles/#{pics[i]}")
+      bitmap = (pbBitmap("Graphics/Titles/#{pics[i]}") rescue nil)
+      next if !bitmap
       sprite.bitmap = bitmap
       frames.times do
         sprite.opacity += 255.0/frames
-        pbWait(0.05)
+        Graphics.update
+        Input.update
+        break if Input.trigger?(Input::C) || Input.trigger?(Input::USE) || Input.trigger?(Input::A) || Input.trigger?(Input::ACTION)
       end
-      pbWait((IntroEventScene::SECONDS_PER_SPLASH * Graphics.frame_rate / 100).ceil)
+      15.times do
+        Graphics.update
+        Input.update
+        break if Input.trigger?(Input::C) || Input.trigger?(Input::USE) || Input.trigger?(Input::A) || Input.trigger?(Input::ACTION)
+      end
       frames.times do
         sprite.opacity -= 255.0/frames
-        pbWait(0.05)
+        Graphics.update
+        Input.update
+        break if Input.trigger?(Input::C) || Input.trigger?(Input::USE) || Input.trigger?(Input::A) || Input.trigger?(Input::ACTION)
       end
     end
-    sprite.dispose
+    sprite.dispose rescue nil
+    10.times do
+      Graphics.update
+      Input.update
+    end
   end
+
   #-----------------------------------------------------------------------------
   # dispose of title screen
   #-----------------------------------------------------------------------------
   def disposeTitle
-    @screen.dispose
+    return if !@screen
+    @screen.dispose rescue nil
+    @screen = nil
   end
+
   #-----------------------------------------------------------------------------
   # wait command (skippable)
   #-----------------------------------------------------------------------------
@@ -125,18 +136,23 @@ class Scene_Intro
     frames.times do
       Graphics.update
       Input.update
-      @skip = true if Input.trigger?(Input::C)
+      @skip = true if Input.trigger?(Input::C) || Input.trigger?(Input::USE) || Input.trigger?(Input::A)
     end
     return true
   end
-  #-----------------------------------------------------------------------------
 end
+
 #===============================================================================
 #  sprite compatibility
 #===============================================================================
 class Sprite
   attr_accessor :id
+  def id?(val = nil)
+    return (@id == val) if @id
+    return false
+  end
 end
+
 #===============================================================================
 #  title call override
 #===============================================================================

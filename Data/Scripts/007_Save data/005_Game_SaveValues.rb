@@ -133,15 +133,16 @@ module SaveData
       opts = {
         :screensize => $PokemonSystem.screensize,
         :textspeed => $PokemonSystem.textspeed,
-        :volume => ($PokemonSystem.volume rescue 100),
-        :sevolume => ($PokemonSystem.sevolume rescue 100),
-        :bgmvolume => ($PokemonSystem.bgmvolume rescue 100),
+        :volume => ($PokemonSystem.volume rescue 80),
+        :sevolume => ($PokemonSystem.sevolume rescue 80),
+        :bgmvolume => ($PokemonSystem.bgmvolume rescue 80),
         :textskin => $PokemonSystem.textskin,
         :salvajes_visibles_en_ow => ($PokemonSystem.salvajes_visibles_en_ow rescue 0),
         :vsync => $PokemonSystem.vsync,
         :autotile_animations => $PokemonSystem.autotile_animations,
         :battlescene => ($PokemonSystem.battlescene rescue 0),
-        :battlestyle => ($PokemonSystem.battlestyle rescue 0)
+        :battlestyle => ($PokemonSystem.battlestyle rescue 0),
+        :show_pokemon_on_change => ($PokemonSystem.show_pokemon_on_change rescue 0)
       }
       File.open("Data/options.dat", "wb") do |f|
         Marshal.dump(opts, f)
@@ -166,6 +167,7 @@ module SaveData
         $PokemonSystem.autotile_animations = opts[:autotile_animations] if opts.key?(:autotile_animations)
         $PokemonSystem.battlescene = opts[:battlescene] if opts.key?(:battlescene) && $PokemonSystem.respond_to?(:battlescene=)
         $PokemonSystem.battlestyle = opts[:battlestyle] if opts.key?(:battlestyle) && $PokemonSystem.respond_to?(:battlestyle=)
+        $PokemonSystem.show_pokemon_on_change = opts[:show_pokemon_on_change] if opts.key?(:show_pokemon_on_change) && $PokemonSystem.respond_to?(:show_pokemon_on_change=)
         pbSetResizeFactor($PokemonSystem.screensize) rescue nil
       end
     rescue Exception => e

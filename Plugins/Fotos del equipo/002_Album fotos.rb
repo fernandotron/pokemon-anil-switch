@@ -21,12 +21,13 @@ class AlbumFotos_Scene
 
 	def pbStartScene
 		#Si la carpeta de capturas no existe, la creamos.
-		if !FileTest.exist?(ALBUM_DIR)
-            Dir.mkdir(ALBUM_DIR) if !$joiplay
-        end
+		begin
+			Dir.mkdir(ALBUM_DIR) unless FileTest.exist?(ALBUM_DIR) || Dir.exist?(ALBUM_DIR)
+		rescue Exception
+		end
         
         # Copiar fotos desde AppData antes de cargar el álbum
-        copiar_fotos_de_carpeta_sistema_a_juego
+        copiar_fotos_de_carpeta_sistema_a_juego rescue nil
 
         # Posible implementación: renombrar las imágenes para que no haya huecos
         @page     = 0     # Página del álbum
@@ -425,38 +426,30 @@ end
 
 def copiar_fotos_de_carpeta_sistema_a_juego
     return if $joiplay
-    # Define las rutas de origen y destino
-    appdata_folder = File.join(System.data_directory, "Fotos/")
-    game_folder = File.join(Dir.pwd, 'Fotos')
+    begin
+      appdata_folder = File.join(System.data_directory, "Fotos/") rescue "Fotos/"
+      game_folder = File.join(Dir.pwd, 'Fotos') rescue "Fotos"
 
-    # Crea el directorio de destino si no existe
-    Dir.mkdir(game_folder) unless Dir.exist?(game_folder)
+      Dir.mkdir(game_folder) unless Dir.exist?(game_folder) || FileTest.exist?(game_folder)
 
-    # Verifica que la carpeta de origen exista
-    unless Dir.exist?(appdata_folder)
-        echoln "La carpeta de origen no existe: #{appdata_folder}"
-        return
+      return unless Dir.exist?(appdata_folder)
+
+      Dir.foreach(appdata_folder) do |file|
+          next if file == '.' or file == '..'
+          src_file = File.join(appdata_folder, file)
+          dest_file = File.join(game_folder, file)
+
+          if File.file?(src_file) && (!File.exist?(dest_file) || (File.mtime(src_file) > File.mtime(dest_file) rescue false))
+              File.open(src_file, 'rb') do |source|
+                  File.open(dest_file, 'wb') do |destination|
+                      IO.copy_stream(source, destination)
+                  end
+              end
+          end
+      end
+    rescue Exception => e
+      echoln "Aviso copiar fotos: #{e.message}"
     end
-
-    # Copia todos los archivos del directorio de origen al directorio de destino
-    Dir.foreach(appdata_folder) do |file|
-        next if file == '.' or file == '..'
-        
-        # Define la ruta del archivo de origen y destino
-        src_file = File.join(appdata_folder, file)
-        dest_file = File.join(game_folder, file)
-
-        # Solo copia si el archivo no existe o es más reciente
-        if File.file?(src_file) && (!File.exist?(dest_file) || File.mtime(src_file) > File.mtime(dest_file))
-            File.open(src_file, 'rb') do |source|
-                File.open(dest_file, 'wb') do |destination|
-                    IO.copy_stream(source, destination)
-                end
-            end
-            echoln "Archivo copiado: #{File.basename(dest_file)}"
-        end
-    end
-    echoln "Copia completada."
 end
 
 # ITEMS EXTRA

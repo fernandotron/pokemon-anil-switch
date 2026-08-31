@@ -161,7 +161,7 @@ root.elements.forEach(pluginNode => {
     const mappedDir = explicitPluginDirMap[pluginName] || pluginName;
     const pluginBaseDir = path.join('Plugins', mappedDir);
 
-    if (pluginName.includes('Discord') || pluginName.includes('Game Updater') || pluginName.includes('Stream Overlay') || pluginName.includes('Pantalla de Título') || pluginName.includes('Pantalla de Titulo')) {
+    if (pluginName.includes('Discord') || pluginName.includes('Game Updater') || pluginName.includes('Stream Overlay')) {
       console.log('Neutering incompatible plugin for Switch:', pluginName);
       filesArray.elements.forEach(fileNode => {
         const fileName = getStringValue(fileNode.elements[0]);
@@ -210,39 +210,8 @@ root.elements.forEach(pluginNode => {
         code = code.replace(/Kernel\.exit!\s*true/g, 'puts "[Plugin exit intercepted]"');
         
         if (fileName.includes('Scene Intro') || code.includes('class Scene_Intro')) {
-          console.log('  -> Patching Scene_Intro in plugin:', pluginName, fileName);
+          console.log('  -> Using updated Scene_Intro from disk in plugin:', pluginName, fileName);
           code = code.replace(/Graphics\.transition\(0\)/g, 'Graphics.transition(10) rescue nil');
-          code = code.replace(/def\s+cyclePics[\s\S]*?def\s+disposeTitle/m, `def cyclePics
-    pics = IntroEventScene::SPLASH_IMAGES rescue ["splash2"]
-    return if !pics || pics.empty?
-    frames = 12
-    sprite = Sprite.new
-    sprite.opacity = 0
-    for i in 0...pics.length
-      bitmap = pbBitmap("Graphics/Titles/#{pics[i]}") rescue nil
-      next if !bitmap
-      sprite.bitmap = bitmap
-      frames.times do
-        sprite.opacity += 255.0/frames
-        Graphics.update
-        Input.update
-        break if Input.trigger?(Input::C) || Input.trigger?(Input::USE)
-      end
-      20.times do
-        Graphics.update
-        Input.update
-        break if Input.trigger?(Input::C) || Input.trigger?(Input::USE)
-      end
-      frames.times do
-        sprite.opacity -= 255.0/frames
-        Graphics.update
-        Input.update
-        break if Input.trigger?(Input::C) || Input.trigger?(Input::USE)
-      end
-    end
-    sprite.dispose
-  end
-  def disposeTitle`);
         }
         const codeBuf = Buffer.from(code, 'utf-8');
         fileNode.elements[1] = {
