@@ -21,6 +21,10 @@ jobs:
 
       - name: Install Switch dependencies
         run: |
+          set -eux
+
+          # Paquetes de devkitPro. Sin switch-pixman ni switch-libphysfs:
+          # no existen en los repos y build_switch.sh compila Pixman desde fuente.
           dkp-pacman -S --noconfirm --needed \
             switch-sdl2 \
             switch-sdl2_image \
@@ -31,18 +35,29 @@ jobs:
             switch-flac \
             switch-libtheora \
             switch-freetype \
-            switch-pixman \
-            switch-libphysfs \
             switch-mbedtls \
             switch-zlib \
             switch-bzip2 \
             switch-pkg-config \
             switch-tools \
-            devkit-env \
-            cmake || true
-          
-          pacman -S --noconfirm --needed meson ninja imagemagick ruby python-pip git || true
-          python3 -m pip install --break-system-packages meson ninja || python3 -m pip install meson ninja || true
+            devkit-env
+
+          # Herramientas del anfitrion. La imagen es Debian/Ubuntu: apt-get, no pacman.
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            cmake \
+            meson \
+            ninja-build \
+            python3-pip \
+            imagemagick \
+            ruby \
+            git \
+            ca-certificates
+
+          # Falla aqui y no 30 segundos despues, en un sitio que no lo explica.
+          cmake --version
+          meson --version
+          ninja --version
 
       - name: Make build script executable and run
         run: |
