@@ -41,7 +41,7 @@ if false
     end
 
     class << self
-        alias endspeech_compile_trainer_events compile_trainer_events
+        alias endspeech_compile_trainer_events compile_trainer_events unless method_defined?(:endspeech_compile_trainer_events)
         def compile_trainer_events(mustcompile)
         endspeech_compile_trainer_events(mustcompile)
 

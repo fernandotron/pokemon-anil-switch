@@ -157,14 +157,14 @@ class Battle::Scene
   FOEBATTLERD2_Y    = Battle::Scene::FOE_BASE_Y - 16
 
   # Initialize damage number sprites array
-  alias dmgnum_pbInitSprites pbInitSprites
+  alias dmgnum_pbInitSprites pbInitSprites unless method_defined?(:dmgnum_pbInitSprites)
   def pbInitSprites
     dmgnum_pbInitSprites
     @damage_number_sprites = []
   end
 
   # Update damage number sprites each frame
-  alias dmgnum_pbGraphicsUpdate pbGraphicsUpdate
+  alias dmgnum_pbGraphicsUpdate pbGraphicsUpdate unless method_defined?(:dmgnum_pbGraphicsUpdate)
   def pbGraphicsUpdate
     dmgnum_pbGraphicsUpdate
     update_damage_number_sprites
@@ -183,14 +183,14 @@ class Battle::Scene
   end
 
   # Clean up damage sprites when battle ends
-  alias dmgnum_pbDisposeSprites pbDisposeSprites
+  alias dmgnum_pbDisposeSprites pbDisposeSprites unless method_defined?(:dmgnum_pbDisposeSprites)
   def pbDisposeSprites
     dispose_damage_number_sprites
     dmgnum_pbDisposeSprites
   end
 
   # Hook into pbHitAndHPLossAnimation instead of pbHPChanged for battle damage
-  alias dmgnum_pbHitAndHPLossAnimation pbHitAndHPLossAnimation
+  alias dmgnum_pbHitAndHPLossAnimation pbHitAndHPLossAnimation unless method_defined?(:dmgnum_pbHitAndHPLossAnimation)
   def pbHitAndHPLossAnimation(targets)
     # Always call original for sound effects and normal behavior
     dmgnum_pbHitAndHPLossAnimation(targets)
@@ -211,7 +211,7 @@ class Battle::Scene
   end
 
   # Keep the pbHPChanged override for non-battle HP changes (like healing items)
-  alias dmgnum_pbHPChanged pbHPChanged
+  alias dmgnum_pbHPChanged pbHPChanged unless method_defined?(:dmgnum_pbHPChanged)
   def pbHPChanged(battler, oldHP, showAnim = false)
     # Always call original for normal behavior
     dmgnum_pbHPChanged(battler, oldHP, showAnim)

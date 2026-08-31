@@ -1,7 +1,7 @@
 
 class Battle 
 
-    alias pbGainExp_evo_en_combate pbGainExp
+    alias pbGainExp_evo_en_combate pbGainExp unless method_defined?(:pbGainExp_evo_en_combate)
 
     def pbGainExp
 

@@ -1,6 +1,6 @@
 # Agrega encuentros del Añil modo Clásico 
 class PokemonEncounters
-  alias original_encounter_type encounter_type
+  alias original_encounter_type encounter_type unless method_defined?(:original_encounter_type)
   def encounter_type
       time = pbGetTimeNow
       ret = original_encounter_type
@@ -21,7 +21,7 @@ class PokemonEncounters
       return ret
   end
   
-  alias find_valid_encounter_type_for_time_classic find_valid_encounter_type_for_time
+  alias find_valid_encounter_type_for_time_classic find_valid_encounter_type_for_time unless method_defined?(:find_valid_encounter_type_for_time_classic)
   def find_valid_encounter_type_for_time(base_type, time)
     ret = find_valid_encounter_type_for_time_classic(base_type, time)
     if $game_switches[MODO_CLASICO] && ret && !ret.to_s.end_with?("Classic") 
@@ -65,7 +65,7 @@ ItemHandlers::UseInField.add(:SUPERROD, proc { |item|
 
 
 class BugContestState
-  alias original_pbJudge pbJudge 
+  alias original_pbJudge pbJudge unless method_defined?(:original_pbJudge)
   def pbJudge
     if $game_switches[MODO_CLASICO]
       judgearray = []

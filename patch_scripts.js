@@ -2572,36 +2572,6 @@ def mainFunctionDebug
       log_compat("[Warning Splash] #{e_splash.message}") rescue nil
     end
 
-    log_compat("[Main] 1. Cargando mensajes...") rescue puts("[Main] 1. Cargando mensajes...")
-    MessageTypes.load_default_messages if FileTest.exist?("Data/messages_core.dat") rescue nil
-    log_compat("[Main] 2. Ejecutando Plugins...") rescue puts("[Main] 2. Ejecutando Plugins...")
-    PluginManager.runPlugins rescue nil
-    log_compat("[Main] 3. Inicializando Game...") rescue puts("[Main] 3. Inicializando Game...")
-    begin
-      $data_system ||= load_data("Data/System.rxdata") rescue nil
-      Game.initialize
-    rescue Exception => eg
-      log_compat("[Error Game.initialize] #{eg.class}: #{eg.message}") rescue nil
-      if eg.backtrace
-        eg.backtrace.each { |line| log_compat("  #{line}") rescue nil }
-      end
-    end
-    log_compat("[Main] 4. Configurando sistema...") rescue puts("[Main] 4. Configurando sistema...")
-    begin
-      SaveData.initialize_bootup_values rescue nil
-      Game.set_up_system
-    rescue Exception => e
-      log_compat("[Error set_up_system] #{e.class}: #{e.message}") rescue nil
-      if e.backtrace
-        e.backtrace.each { |line| log_compat("  #{line}") rescue nil }
-      end
-    end
-    log_compat("[Main] 5. Variables globales...") rescue nil
-    $data_system ||= load_data("Data/System.rxdata") rescue nil
-    $PokemonSystem ||= PokemonSystem.new rescue nil
-    $game_system ||= Game_System.new rescue nil
-    $game_temp ||= Game_Temp.new rescue nil
-
     # Descartar pantalla de carga visual antes del título
     begin
       if $loading_sprite
@@ -2645,9 +2615,6 @@ def mainFunctionDebug
       end
       log_compat("[Main Loop] Escena #{current_scene.class} terminada. Siguiente: #{$scene ? $scene.class : 'nil'}") rescue nil
       if $scene.nil?
-        if defined?($game_temp) && $game_temp && $game_temp.respond_to?(:game_quitting) && $game_temp.game_quitting
-          break
-        end
         break
       end
     end
@@ -2665,6 +2632,42 @@ def mainFunctionDebug
   end
 end
 
+# Inicialización única del sistema fuera del bucle de escenas
+log_compat("[Main] 1. Cargando mensajes...") rescue puts("[Main] 1. Cargando mensajes...")
+MessageTypes.load_default_messages if FileTest.exist?("Data/messages_core.dat") rescue nil
+
+log_compat("[Main] 2. Ejecutando Plugins...") rescue puts("[Main] 2. Ejecutando Plugins...")
+PluginManager.runPlugins rescue nil
+
+log_compat("[Main] 3. Inicializando Game...") rescue puts("[Main] 3. Inicializando Game...")
+begin
+  $data_system ||= load_data("Data/System.rxdata") rescue nil
+  Game.initialize
+rescue Exception => eg
+  log_compat("[Error Game.initialize] #{eg.class}: #{eg.message}") rescue nil
+  if eg.backtrace
+    eg.backtrace.each { |line| log_compat("  #{line}") rescue nil }
+  end
+end
+
+log_compat("[Main] 4. Configurando sistema...") rescue puts("[Main] 4. Configurando sistema...")
+begin
+  SaveData.initialize_bootup_values rescue nil
+  Game.set_up_system
+  # [ANCLA FASE 4.15]: SwitchAssetOptimizer prewarm hook aqui
+rescue Exception => e
+  log_compat("[Error set_up_system] #{e.class}: #{e.message}") rescue nil
+  if e.backtrace
+    e.backtrace.each { |line| log_compat("  #{line}") rescue nil }
+  end
+end
+
+log_compat("[Main] 5. Variables globales...") rescue nil
+$data_system ||= load_data("Data/System.rxdata") rescue nil
+$PokemonSystem ||= PokemonSystem.new rescue nil
+$game_system ||= Game_System.new rescue nil
+$game_temp ||= Game_Temp.new rescue nil
+
 loop do
   retval = mainFunction
   case retval
@@ -2673,10 +2676,9 @@ loop do
       Graphics.update
     end
   when 1
-    if defined?($game_temp) && $game_temp && $game_temp.respond_to?(:game_quitting) && $game_temp.game_quitting
-      break
-    end
-    $scene = pbCallTitle if !$scene
+    break
+  else
+    break
   end
 end
 `;

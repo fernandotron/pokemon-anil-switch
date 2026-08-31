@@ -19,7 +19,7 @@ SPECIAL_TRAINERS = {
 }
 
 class Battle::Scene
-    alias pbTrainerBattleSuccessPoints pbTrainerBattleSuccess
+    alias pbTrainerBattleSuccessPoints pbTrainerBattleSuccess unless method_defined?(:pbTrainerBattleSuccessPoints)
     def pbTrainerBattleSuccess
         pbTrainerBattleSuccessPoints
         pts=pbGet(POKEBATTLE_POINTS_VARIABLE)+POKEBATTLE_POINTS_DEFEAT_TRAINER
@@ -31,7 +31,7 @@ class Battle::Scene
 end
 
 class Battle::Battler
-    alias pbFaintPoints pbFaint
+    alias pbFaintPoints pbFaint unless method_defined?(:pbFaintPoints)
     def pbFaint(showMessage = true)
         fainted = @fainted
         done=pbFaintPoints(showMessage)

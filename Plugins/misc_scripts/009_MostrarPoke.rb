@@ -144,7 +144,7 @@ end
 
 module Graphics
   class << self
-    alias _update_poke_animado update
+    alias _update_poke_animado update unless method_defined?(:_update_poke_animado)
     def update
       _update_poke_animado
       $poke_animado.update if defined?($poke_animado) && $poke_animado
