@@ -658,7 +658,10 @@ class TilemapRenderer
       @need_refresh = false
       @autotiles.changed = false
     rescue Exception => e
-      log_compat("[TilemapRenderer update error] #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
+      if !@tilemap_error_logged
+        @tilemap_error_logged = true
+        log_compat("[TilemapRenderer] #{e.class}: #{e.message}") rescue nil
+      end
     end
   end
 end

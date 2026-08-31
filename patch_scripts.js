@@ -1354,7 +1354,10 @@ end
       @need_refresh = false
       @autotiles.changed = false
     rescue Exception => e
-      log_compat("[TilemapRenderer update handled] #{e.message}") rescue nil
+      if !@tilemap_error_logged
+        @tilemap_error_logged = true
+        log_compat("[TilemapRenderer] #{e.class}: #{e.message}") rescue nil
+      end
     end
   end
 end`
@@ -2652,7 +2655,13 @@ def mainFunctionDebug
     Graphics.transition rescue nil
     pbEmergencySave rescue nil
   rescue Exception => e
-    log_compat("[CRASH EN MAIN] #{e.class}: #{e.message}\n  #{e.backtrace&.join("\n  ")}") rescue nil
+    bt = (e.backtrace || []).take(12).join("\n  ")
+    report = "CRASH REPORT [#{Time.now rescue ''}]\nExcepcion: #{e.class}: #{e.message}\nBacktrace:\n  #{bt}\n"
+    log_compat("[CRASH EN MAIN] #{e.class}: #{e.message}\n  #{bt}") rescue nil
+    begin
+      File.open("crash_report.txt", "w") { |f| f.puts(report) }
+    rescue Exception
+    end
   end
 end
 
