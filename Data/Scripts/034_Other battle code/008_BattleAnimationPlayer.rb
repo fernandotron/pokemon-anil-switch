@@ -349,6 +349,10 @@ class PBAnimations < Array
     return @array.length
   end
 
+  def empty?
+    return (@array || []).empty?
+  end
+
   def each
     @array.each { |i| yield i }
   end

@@ -486,6 +486,10 @@ class PBAnimations < Array
     return super rescue 0
   end
 
+  def empty?
+    return (@array || []).empty?
+  end
+
   def size
     return @array.size if @array
     return super rescue 0
@@ -1585,6 +1589,7 @@ class PBAnimations < Array
     @array = []; @selected = 0
   end
   def length; (@array ? @array.length : super); end
+  def empty?; (@array ? @array.empty? : super rescue true); end
   def each; if @array then @array.each { |i| yield i } else super { |i| yield i } end; end
   def [](i); (@array ? @array[i] : super(i)); end
   def []=(i, value); if @array then @array[i] = value else super(i, value) end; end
@@ -2928,6 +2933,7 @@ class PBAnimations < Array
     @array = []; @selected = 0
   end
   def length; @array.length; end
+  def empty?; (@array || []).empty?; end
   def [](i); @array[i]; end
   def []=(i, v); @array[i] = v; end
   def get_from_name(name)
@@ -3268,7 +3274,7 @@ def pbGetAnimation(name, hue = 0)
 end
 
 def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations && !$PokemonBattleAnimations.empty?
+  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
   $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
                              (load_data("Data/battle_animations.dat") rescue nil) ||
                              (load_data("Data/Animations.rxdata") rescue nil)
