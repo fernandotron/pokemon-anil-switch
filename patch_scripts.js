@@ -2215,15 +2215,22 @@ end unless defined?(PBAnimations)`
       /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?return \$game_temp\.move_to_battle_animation_data\s*\nend/m,
 `def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
-  $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil) ||
-                             (load_data("Data/battle_animations.dat") rescue nil) ||
-                             (load_data("Data/Animations.rxdata") rescue nil)
+  begin
+    $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+  rescue Exception => e
+    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
+    $PokemonBattleAnimations = nil
+  end
+  if !$PokemonBattleAnimations.is_a?(PBAnimations)
+    log_compat("[Animaciones] Tipo inesperado: #{$PokemonBattleAnimations.class}")
+    $PokemonBattleAnimations = PBAnimations.new(0)
+  end
   if defined?($game_temp) && $game_temp
     $game_temp.battle_animations_data = $PokemonBattleAnimations
   end
   return $PokemonBattleAnimations
 end
-
+ 
 def pbLoadMoveToAnim
   return $game_temp.move_to_battle_animation_data if defined?($game_temp) && $game_temp&.move_to_battle_animation_data && !$game_temp.move_to_battle_animation_data.empty?
   data = (load_data("Data/move2anim.dat") rescue nil) || []
