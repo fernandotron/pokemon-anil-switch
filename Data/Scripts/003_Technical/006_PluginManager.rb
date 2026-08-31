@@ -621,6 +621,8 @@ module PluginManager
 
   # Cargar plugins directamente desde Data/PluginScripts.rxdata
   def self.runPlugins
+    return if @plugins_ran
+    @plugins_ran = true
     log_compat("[PluginManager] Cargando Data/PluginScripts.rxdata...") rescue puts("[PluginManager] Cargando Data/PluginScripts.rxdata...")
     scripts = load_data("Data/PluginScripts.rxdata") rescue []
     if !scripts || scripts.empty?
