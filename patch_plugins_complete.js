@@ -289,7 +289,6 @@ if (fs.existsSync('switch_release/switch/pokemon_anil/Data')) {
 if (fs.existsSync('release_ready/switch/pokemon_anil/Data')) {
   fs.writeFileSync('release_ready/switch/pokemon_anil/Data/PluginScripts.rxdata', finalBuf);
 }
-if (fs.existsSync('ARCHIVOS_PARA_SWITCH/Data')) {
-  fs.writeFileSync('ARCHIVOS_PARA_SWITCH/Data/PluginScripts.rxdata', finalBuf);
-}
+fs.mkdirSync('ARCHIVOS_PARA_SWITCH/Data', { recursive: true });
+fs.writeFileSync('ARCHIVOS_PARA_SWITCH/Data/PluginScripts.rxdata', finalBuf);
 console.log('Saved patched Data/PluginScripts.rxdata! Size:', finalBuf.length);

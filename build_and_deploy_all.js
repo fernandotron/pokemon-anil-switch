@@ -2,31 +2,43 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-console.log('=== 1. LIMPIANDO CARPETAS DE DISTRIBUCIÓN ===');
-function removeDir(dirPath) {
-  if (fs.existsSync(dirPath)) {
-    fs.rmSync(dirPath, { recursive: true, force: true });
-    console.log('Directorio eliminado:', dirPath);
+console.log('=== 1. CONVIRTIENDO AUDIOS (SE y ME) A PCM WAV SIN LATENCIA ===');
+if (fs.existsSync('convert_audio_to_wav.js')) {
+  try {
+    execSync('node convert_audio_to_wav.js', { stdio: 'inherit' });
+  } catch (e) {
+    console.error('[ERROR] Falló el paso: convert_audio_to_wav.js');
+    process.exit(1);
   }
+} else {
+  console.warn('[AVISO] convert_audio_to_wav.js no existe; los .wav ya estan versionados. Paso omitido.');
 }
 
-removeDir('ARCHIVOS_PARA_SWITCH');
-removeDir('switch_release/switch/pokemon_anil');
-removeDir('release_ready/switch/pokemon_anil');
+console.log('\n=== 2. GENERANDO ÍNDICE BINARIO (.dat) Y FALLBACK (.rb) DE ASSETS EN RAM ===');
+try {
+  execSync('node generate_asset_cache.js', { stdio: 'inherit' });
+} catch (e) {
+  console.error('[ERROR] Falló el paso: generate_asset_cache.js');
+  process.exit(1);
+}
 
-console.log('\n=== 2. CONVIRTIENDO AUDIOS (SE y ME) A PCM WAV SIN LATENCIA ===');
-execSync('node convert_audio_to_wav.js', { stdio: 'inherit' });
+console.log('\n=== 3. RECONSTRUYENDO Data/Scripts.rxdata CON OPTIMIZACIONES DE AUDIO ===');
+try {
+  execSync('node patch_scripts.js', { stdio: 'inherit' });
+} catch (e) {
+  console.error('[ERROR] Falló el paso: patch_scripts.js');
+  process.exit(1);
+}
 
-console.log('\n=== 3. GENERANDO ÍNDICE BINARIO (.dat) Y FALLBACK (.rb) DE ASSETS EN RAM ===');
-execSync('node generate_asset_cache.js', { stdio: 'inherit' });
+console.log('\n=== 4. RECONSTRUYENDO Data/PluginScripts.rxdata ===');
+try {
+  execSync('node patch_plugins_complete.js', { stdio: 'inherit' });
+} catch (e) {
+  console.error('[ERROR] Falló el paso: patch_plugins_complete.js');
+  process.exit(1);
+}
 
-console.log('\n=== 4. RECONSTRUYENDO Data/Scripts.rxdata CON OPTIMIZACIONES DE AUDIO ===');
-execSync('node patch_scripts.js', { stdio: 'inherit' });
-
-console.log('\n=== 5. RECONSTRUYENDO Data/PluginScripts.rxdata ===');
-execSync('node patch_plugins_complete.js', { stdio: 'inherit' });
-
-console.log('\n=== 6. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
+console.log('\n=== 5. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
 const now = new Date();
 
 function copyAndTouch(src, dest) {
@@ -99,7 +111,7 @@ targets.forEach(dir => {
   }
 });
 
-console.log('\n=== 7. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
+console.log('\n=== 6. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
 function list(dir, base = '') {
   for (const f of fs.readdirSync(dir)) {
     const p = path.join(dir, f);
@@ -114,3 +126,15 @@ function list(dir, base = '') {
 }
 list('ARCHIVOS_PARA_SWITCH');
 console.log('\n¡Todos los archivos han sido optimizados, regenerados y empaquetados con éxito!');
+
+const src = 'Data/Scripts.rxdata';
+const dst = 'ARCHIVOS_PARA_SWITCH/Data/Scripts.rxdata';
+if (!fs.existsSync(dst)) {
+  console.error('[ERROR] ' + dst + ' no existe tras el despliegue.');
+  process.exit(1);
+}
+if (fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) {
+  console.error('[ERROR] ' + dst + ' es mas viejo que ' + src + '. El despliegue no ocurrio.');
+  process.exit(1);
+}
+console.log('[OK] Despliegue verificado.');
