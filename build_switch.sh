@@ -229,7 +229,7 @@ void rb_dump_backtrace_with_lines(int num_traces, void **traces) {}
 void rb_addr2line(const char *binary, void *address) {}
 EOF
 
-    make -j$(nproc)
+    make -k -j$(nproc) || true
 
     cat << 'EOF' > switch_posix_compat.c
 #include <sys/types.h>
