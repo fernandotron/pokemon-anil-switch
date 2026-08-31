@@ -52,12 +52,14 @@ jobs:
             imagemagick \
             ruby \
             git \
-            ca-certificates
+            ca-certificates \
+            xxd
 
           # Falla aqui y no 30 segundos despues, en un sitio que no lo explica.
           cmake --version
           meson --version
           ninja --version
+          xxd -v
 
       - name: Make build script executable and run
         run: |
