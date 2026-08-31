@@ -2246,7 +2246,7 @@ end`,
     console.log('Patching BattleAnimationPlayer in:', s.name);
     s.code = sub(
       s.code,
-      /class PBAnimations(?:\s*<\s*Array)?[\s\S]*?#={10,}\s*\n# Animation player/m,
+      /class PBAnimations(?:\s*<\s*Array)?[\s\S]*?\nend\s*\n#={10,}\s*\n#\s*\n#={10,}\s*\nclass PBAnimation/m,
 `class PBAnimations < Array
   include Enumerable
   attr_accessor :array, :selected
@@ -2321,93 +2321,10 @@ end`,
   end
 end
 
-class PBAnimation < Array
-  include Enumerable
-  attr_accessor :id, :name, :graphic, :hue, :position, :speed, :array, :timing, :scope
-
-  MAX_SPRITES = 60
-
-  def speed
-    return @speed || 20
-  end
-
-  def timing
-    @timing ||= []
-  end
-
-  def initialize(size = 1)
-    @id       = -1
-    @name     = ""
-    @graphic  = ""
-    @hue      = 0
-    @position = 4
-    @array    = []
-    size      = 1 if size < 1
-    size.times { addFrame }
-    @timing   = []
-    @scope    = 0
-  end
-
-  def length
-    return @array.length if @array
-    return super rescue 0
-  end
-
-  def size
-    return @array.size if @array
-    return super rescue 0
-  end
-
-  def each(&block)
-    return @array.each(&block) if @array
-    return super(&block) rescue nil
-  end
-
-  def [](i)
-    return @array[i] if @array
-    return super(i) rescue nil
-  end
-
-  def []=(i, value)
-    if @array
-      @array[i] = value
-    else
-      super(i, value) rescue nil
-    end
-  end
-
-  def insert(*arg)
-    @array ? @array.insert(*arg) : super(*arg)
-  end
-
-  def delete_at(*arg)
-    @array ? @array.delete_at(*arg) : super(*arg)
-  end
-
-  def resize(len)
-    arr = @array || self
-    if len < arr.length
-      arr[len, arr.length - len] = []
-    elsif len > arr.length
-      (len - arr.length).times { addFrame }
-    end
-  end
-
-  def addFrame
-    @array ||= []
-    pos = @array.length
-    @array[pos] = []
-    @array[pos][0] = pbCreateCel(Battle::Scene::FOCUSUSER_X, Battle::Scene::FOCUSUSER_Y, -1)
-    @array[pos][0][AnimFrame::FOCUS]  = 2
-    @array[pos][0][AnimFrame::LOCKED] = 1
-    @array[pos][1] = pbCreateCel(Battle::Scene::FOCUSTARGET_X, Battle::Scene::FOCUSTARGET_Y, -2)
-    @array[pos][1][AnimFrame::FOCUS]  = 1
-    @array[pos][1][AnimFrame::LOCKED] = 1
-    @array[pos]
-  end
-
 #===============================================================================
-# Animation player`,
+#
+#===============================================================================
+class PBAnimation`,
       'BattleAnimationPlayer_PBAnimations'
     );
     changed = true;

@@ -34,40 +34,68 @@ function scanDir(dir, isAudio = false) {
   }
 
   for (const fullPath of files) {
-    const cleanFull = fullPath.toLowerCase();
-    const cleanNoExt = cleanFull.replace(/\.[^.]+$/, '');
-    const baseWithExt = path.basename(fullPath).toLowerCase();
-    const baseNoExt = baseWithExt.replace(/\.[^.]+$/, '');
-
     if (isAudio) {
+      if (!fullPath.match(/\.(wav|ogg|mp3|mid|midi|wma)$/i)) {
+        continue;
+      }
+
+      const isSEorME = fullPath.toLowerCase().startsWith('audio/se') || fullPath.toLowerCase().startsWith('audio/me');
+      if (isSEorME && !fullPath.toLowerCase().endsWith('.wav')) {
+        continue;
+      }
+
+      const cleanFull = fullPath.toLowerCase();
+      const cleanNoExt = cleanFull.replace(/\.[^.]+$/, '');
+      const relAudio = cleanFull.replace(/^audio\//i, '');
+      const relAudioNoExt = relAudio.replace(/\.[^.]+$/, '');
+      const baseWithExt = path.basename(fullPath).toLowerCase();
+      const baseNoExt = baseWithExt.replace(/\.[^.]+$/, '');
+
+      // Qualified folder keys (highest priority)
       audioLookup[cleanFull] = fullPath;
       audioLookup[cleanNoExt] = fullPath;
-      audioLookup[baseWithExt] = fullPath;
-      audioLookup[baseNoExt] = fullPath;
-      audioLookup[baseNoExt.replace(/ /g, '')] = fullPath;
-      audioLookup[baseNoExt.replace(/_/g, '')] = fullPath;
-      audioLookup[baseNoExt.replace(/-/g, '')] = fullPath;
-      audioLookup[baseNoExt.replace(/[ _-]/g, '')] = fullPath;
+      audioLookup[relAudio] = fullPath;
+      audioLookup[relAudioNoExt] = fullPath;
+
+      // Base / naked keys (prevent SE/ME from overwriting BGM/BGS)
+      const setBaseIfAllowed = (k, v) => {
+        if (!audioLookup[k] || !audioLookup[k].toLowerCase().startsWith('audio/bgm')) {
+          audioLookup[k] = v;
+        }
+      };
+
+      setBaseIfAllowed(baseWithExt, fullPath);
+      setBaseIfAllowed(baseNoExt, fullPath);
+      setBaseIfAllowed(baseNoExt.replace(/ /g, ''), fullPath);
+      setBaseIfAllowed(baseNoExt.replace(/_/g, ''), fullPath);
+      setBaseIfAllowed(baseNoExt.replace(/-/g, ''), fullPath);
+      setBaseIfAllowed(baseNoExt.replace(/[ _-]/g, ''), fullPath);
 
       if (baseNoExt.startsWith('prsfx- ') || baseNoExt.startsWith('prsfx-')) {
         const stripped = baseNoExt.replace(/^prsfx-\s*/, '');
-        audioLookup[stripped] = fullPath;
         audioLookup['anim/' + stripped] = fullPath;
         audioLookup['audio/se/anim/' + stripped] = fullPath;
         audioLookup['audio/se/' + stripped] = fullPath;
-        audioLookup[stripped.replace(/ /g, '')] = fullPath;
-        audioLookup[stripped.replace(/_/g, '')] = fullPath;
-        audioLookup[stripped.replace(/-/g, '')] = fullPath;
-        audioLookup[stripped.replace(/[ _-]/g, '')] = fullPath;
+        audioLookup['se/' + stripped] = fullPath;
+        setBaseIfAllowed(stripped, fullPath);
+        setBaseIfAllowed(stripped.replace(/ /g, ''), fullPath);
+        setBaseIfAllowed(stripped.replace(/_/g, ''), fullPath);
+        setBaseIfAllowed(stripped.replace(/-/g, ''), fullPath);
+        setBaseIfAllowed(stripped.replace(/[ _-]/g, ''), fullPath);
       }
 
       if (cleanFull.includes('/cries/')) {
         audioLookup['cries/' + baseNoExt] = fullPath;
         audioLookup['audio/se/cries/' + baseNoExt] = fullPath;
         audioLookup['audio/cries/' + baseNoExt] = fullPath;
-        audioLookup[baseNoExt] = fullPath;
+        audioLookup['se/cries/' + baseNoExt] = fullPath;
+        setBaseIfAllowed(baseNoExt, fullPath);
       }
     } else {
+      const cleanFull = fullPath.toLowerCase();
+      const cleanNoExt = cleanFull.replace(/\.[^.]+$/, '');
+      const baseWithExt = path.basename(fullPath).toLowerCase();
+      const baseNoExt = baseWithExt.replace(/\.[^.]+$/, '');
       const relToGfx = fullPath.replace(/^Graphics\//i, '').toLowerCase();
       const relToGfxNoExt = relToGfx.replace(/\.[^.]+$/, '');
 
