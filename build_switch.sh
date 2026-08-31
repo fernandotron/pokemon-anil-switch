@@ -178,26 +178,23 @@ with open("cont.c", "r") as f:
 # Eliminar completamente el bloque mprotect / guard page en cont.c
 code = re.sub(r'if\s*\(\s*mprotect\s*\([^)]*\)\s*<\s*0\s*\)\s*\{[^}]*\}', '/* guard page bypassed on switch */', code)
 
-# Hacer fiber_pool_initialize lazy (no reservar memoria por adelantado al arrancar la VM)
-code = code.replace("fiber_pool_expand(fiber_pool, count);", "/* lazy pool */")
-
-# Predefinir rb_cFiber y rb_eFiberError al inicio de Init_Cont
-init_cont_pos = code.find("void\nInit_Cont(void)\n{")
-if init_cont_pos != -1:
-    insert_code = """
+    # Predefinir rb_cFiber y rb_eFiberError al inicio de Init_Cont
+    init_cont_pos = code.find("void\nInit_Cont(void)\n{")
+    if init_cont_pos != -1:
+        insert_code = """
     log_ruby_step("      [cont] Init_Cont start");
     rb_cFiber = rb_define_class("Fiber", rb_cObject);
     rb_define_alloc_func(rb_cFiber, fiber_alloc);
     rb_eFiberError = rb_define_class("FiberError", rb_eStandardError);
 """
-    code = code[:init_cont_pos + len("void\nInit_Cont(void)\n{")] + insert_code + code[init_cont_pos + len("void\nInit_Cont(void)\n{"):]
+        code = code[:init_cont_pos + len("void\nInit_Cont(void)\n{")] + insert_code + code[init_cont_pos + len("void\nInit_Cont(void)\n{"):]
 
-with open("cont.c", "w") as f:
-    f.write(code)
-print(">>> Parche cont.c aplicado exitosamente con Python")
+    with open("cont.c", "w") as f:
+        f.write(code)
+    print(">>> Parche cont.c aplicado exitosamente con Python")
 PYEOF
     sed -i 's/rb_provide("fiber.so");/rb_provide("fiber.so"); log_ruby_step("      [cont] Init_Cont complete");/g' cont.c || true
-    CFLAGS="-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
+    CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
     LDFLAGS="-specs=$DEVKITPRO/libnx/switch.specs -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -L$DEVKITPRO/libnx/lib -L$DEVKITPRO/portlibs/switch/lib -lnx" \
     ./configure \
         --host=aarch64-none-elf \
@@ -232,7 +229,7 @@ void rb_dump_backtrace_with_lines(int num_traces, void **traces) {}
 void rb_addr2line(const char *binary, void *address) {}
 EOF
 
-    make -k -j$(nproc) || true
+    make -j$(nproc)
 
     cat << 'EOF' > switch_posix_compat.c
 #include <sys/types.h>

@@ -12,9 +12,8 @@ class Interpreter
   def initialize(depth = 0, main = false)
     @depth = depth
     @main  = main
-    if depth > 100
-      print("La llamada al evento común ha superado el límite máximo.")
-      exit
+    if depth > 20
+      raise "Limite de profundidad de evento comun alcanzado (#{depth})."
     end
     clear
   end

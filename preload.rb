@@ -334,7 +334,8 @@ module ::SaveData
     end
 
     def method_missing(m, *a, &b)
-      nil
+      log_compat("[SaveData] metodo no implementado: #{m}") rescue nil
+      super
     end
   end
 end
@@ -1721,24 +1722,7 @@ class << Dir
   end
 end
 
-module Kernel
-  unless method_defined?(:__switch_orig_exit)
-    alias __switch_orig_exit exit rescue nil
-    alias __switch_orig_exit_bang exit! rescue nil
-  end
 
-  def exit(*args)
-    log_compat("[Kernel.exit] Salida limpia...") rescue nil
-    $scene = nil if defined?($scene)
-    __switch_orig_exit(*args) rescue nil
-  end
-
-  def exit!(*args)
-    log_compat("[Kernel.exit!] Salida limpia...") rescue nil
-    $scene = nil if defined?($scene)
-    __switch_orig_exit_bang(*args) rescue nil
-  end
-end
 
 def getPlayTime(filename)
   120.0
@@ -2313,8 +2297,10 @@ end
 ::MOSTRAR_PANEL_REP_EXP = true unless defined?(::MOSTRAR_PANEL_REP_EXP)
 
 # 1.17 Interceptor de resolución de constantes (Module#const_missing)
+$SWITCH_CONST_MISSING_SEEN ||= {}
+
 class Module
-  unless method_defined?(:__switch_orig_mod_const_missing)
+  unless private_method_defined?(:__switch_orig_mod_const_missing) || method_defined?(:__switch_orig_mod_const_missing)
     alias __switch_orig_mod_const_missing const_missing rescue nil
   end
 
@@ -2334,11 +2320,12 @@ class Module
         return ::Input.const_get(name)
       end
     end
-    # Resilient fallback dummy class for Marshal.load
-    dummy = Class.new
-    const_set(name, dummy) rescue nil
-    log_compat("[const_missing] Definida clase fallback para: #{self}::#{name}") rescue nil
-    return dummy
+    # Resilient fallback dummy class for Marshal.load (Fase A: sin const_set contaminante)
+    if !$SWITCH_CONST_MISSING_SEEN[name]
+      $SWITCH_CONST_MISSING_SEEN[name] = true
+      log_compat("[const_missing] #{self}::#{name}") rescue nil
+    end
+    return Class.new
   end
 end
 
@@ -2627,13 +2614,21 @@ end
 # 1.22 Interceptores de salida del sistema
 module Kernel
   def exit(code = 0)
-    log_compat("[Kernel.exit interceptado] Código: #{code}\n  #{caller[0..5]&.join("\n  ")}")
+    log_compat("[Kernel.exit] Salida del sistema (#{code})...") rescue nil
+    $scene = nil if defined?($scene)
+    raise SystemExit.new(code.is_a?(Integer) ? code : 0)
   end
+
   def abort(msg = nil)
-    log_compat("[Kernel.abort interceptado] #{msg}\n  #{caller[0..5]&.join("\n  ")}")
+    log_compat("[Kernel.abort] Abortando: #{msg}") rescue nil
+    $scene = nil if defined?($scene)
+    raise SystemExit.new(1)
   end
+
   def exit!(code = 0)
-    log_compat("[Kernel.exit! interceptado] Código: #{code}\n  #{caller[0..5]&.join("\n  ")}")
+    log_compat("[Kernel.exit!] Salida inmediata (#{code})...") rescue nil
+    $scene = nil if defined?($scene)
+    raise SystemExit.new(code.is_a?(Integer) ? code : 1)
   end
   module_function :exit, :abort, :exit! rescue nil
 end
@@ -2643,15 +2638,9 @@ def abort(msg = nil); Kernel.abort(msg); end
 def exit!(code = 0); Kernel.exit!(code); end
 
 module Process
-  def self.exit(code = 0)
-    log_compat("[Process.exit interceptado] Código: #{code}")
-  end
-  def self.exit!(code = 0)
-    log_compat("[Process.exit! interceptado] Código: #{code}")
-  end
-  def self.abort(msg = nil)
-    log_compat("[Process.abort interceptado] #{msg}")
-  end
+  def self.exit(code = 0); Kernel.exit(code); end
+  def self.exit!(code = 0); Kernel.exit!(code); end
+  def self.abort(msg = nil); Kernel.abort(msg); end
 end
 
 def getKnownFolder(*args)
