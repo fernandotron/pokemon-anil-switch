@@ -1,0 +1,1216 @@
+diff --git a/assets/meson.build b/assets/meson.build
+index b746281..7c741f9 100644
+--- a/assets/meson.build
++++ b/assets/meson.build
+@@ -9,18 +9,14 @@ else
+     embedded_assets += 'liberation.ttf'
+ endif
+ 
+-embedded_assets_f = files(embedded_assets)
+-
+-count = 0
+-foreach file : embedded_assets_f
+-    global_sources += custom_target(embedded_assets[count],
++foreach file : embedded_assets
++    global_sources += custom_target(file,
+     input: file,
+-    output: '@0@.xxd'.format(embedded_assets[count]),
++    output: '@0@.xxd'.format(file),
+     command: [
+-        xxd, '-i', '@INPUT@'
++        'sh', '-c', 'xxd -i "@INPUT@" | sed -e "s/[a-zA-Z0-9_]*assets_/___assets_/g"'
+     ],
+     capture: true,
+-    depend_files: embedded_assets_f[count]
++    depend_files: files(file)
+     )
+-    count += 1
+ endforeach
+diff --git a/binding/binding-mri.cpp b/binding/binding-mri.cpp
+index 3c54842..b60cc1a 100644
+--- a/binding/binding-mri.cpp
++++ b/binding/binding-mri.cpp
+@@ -157,7 +157,116 @@ json5pp::value rb2json(VALUE v);
+ 
+ RB_METHOD(mkxpParseCSV);
+ 
++static VALUE zlib_inflate_inflate(int argc, VALUE *argv, VALUE self) {
++    VALUE str;
++    rb_scan_args(argc, argv, "1", &str);
++    StringValue(str);
++    const char *src = RSTRING_PTR(str);
++    long srcLen = RSTRING_LEN(str);
++    if (srcLen == 0) return rb_str_new("", 0);
++
++    z_stream zs;
++    memset(&zs, 0, sizeof(zs));
++    if (inflateInit2(&zs, 15 + 32) != Z_OK) {
++        if (inflateInit2(&zs, -15) != Z_OK) {
++            rb_raise(rb_eRuntimeError, "Failed to initialize zlib inflate");
++        }
++    }
++
++    zs.next_in = (Bytef*)src;
++    zs.avail_in = srcLen;
++
++    VALUE out = rb_str_buf_new(srcLen * 2 + 1024);
++    char buf[16384];
++    int ret;
++    do {
++        zs.next_out = (Bytef*)buf;
++        zs.avail_out = sizeof(buf);
++        ret = inflate(&zs, Z_NO_FLUSH);
++        if (ret != Z_OK && ret != Z_STREAM_END && ret != Z_BUF_ERROR) {
++            inflateEnd(&zs);
++            rb_raise(rb_eRuntimeError, "zlib inflate error %d", ret);
++        }
++        long have = sizeof(buf) - zs.avail_out;
++        if (have > 0) {
++            rb_str_buf_cat(out, buf, have);
++        }
++    } while (ret != Z_STREAM_END && zs.avail_out == 0);
++
++    inflateEnd(&zs);
++    return out;
++}
++
++static VALUE zlib_deflate_deflate(int argc, VALUE *argv, VALUE self) {
++    VALUE str;
++    VALUE level_v;
++    int level = Z_DEFAULT_COMPRESSION;
++    if (rb_scan_args(argc, argv, "11", &str, &level_v) == 2) {
++        level = NUM2INT(level_v);
++    }
++    StringValue(str);
++    const char *src = RSTRING_PTR(str);
++    long srcLen = RSTRING_LEN(str);
++
++    uLongf destLen = compressBound(srcLen);
++    VALUE out = rb_str_buf_new(destLen);
++    rb_str_set_len(out, destLen);
++    if (compress((Bytef*)RSTRING_PTR(out), &destLen, (const Bytef*)src, srcLen) != Z_OK) {
++        rb_raise(rb_eRuntimeError, "zlib deflate error");
++    }
++    rb_str_set_len(out, destLen);
++    return out;
++}
++
++static VALUE zlib_crc32(int argc, VALUE *argv, VALUE self) {
++    VALUE str, crc_v;
++    uLong crc = 0;
++    if (rb_scan_args(argc, argv, "11", &str, &crc_v) == 2) {
++        crc = (uLong)NUM2ULONG(crc_v);
++    }
++    if (NIL_P(str)) return ULONG2NUM(crc32(crc, Z_NULL, 0));
++    StringValue(str);
++    crc = crc32(crc, (const Bytef*)RSTRING_PTR(str), RSTRING_LEN(str));
++    return ULONG2NUM(crc);
++}
++
++static void init_zlib_module() {
++    VALUE mZlib = rb_define_module("Zlib");
++    VALUE cInflate = rb_define_class_under(mZlib, "Inflate", rb_cObject);
++    VALUE cDeflate = rb_define_class_under(mZlib, "Deflate", rb_cObject);
++
++    rb_define_singleton_method(cInflate, "inflate", (VALUE(*)(...))zlib_inflate_inflate, -1);
++    rb_define_method(cInflate, "inflate", (VALUE(*)(...))zlib_inflate_inflate, -1);
++    rb_define_singleton_method(cDeflate, "deflate", (VALUE(*)(...))zlib_deflate_deflate, -1);
++    rb_define_method(cDeflate, "deflate", (VALUE(*)(...))zlib_deflate_deflate, -1);
++    rb_define_singleton_method(mZlib, "crc32", (VALUE(*)(...))zlib_crc32, -1);
++    rb_define_module_function(mZlib, "crc32", (VALUE(*)(...))zlib_crc32, -1);
++    rb_define_singleton_method(mZlib, "inflate", (VALUE(*)(...))zlib_inflate_inflate, -1);
++    rb_define_module_function(mZlib, "inflate", (VALUE(*)(...))zlib_inflate_inflate, -1);
++    rb_define_singleton_method(mZlib, "deflate", (VALUE(*)(...))zlib_deflate_deflate, -1);
++    rb_define_module_function(mZlib, "deflate", (VALUE(*)(...))zlib_deflate_deflate, -1);
++
++    rb_eval_string(
++        "module Zlib\n"
++        "  class Error < StandardError; end\n"
++        "  class GzipReader\n"
++        "    def self.open(filename, &block)\n"
++        "      content = File.binread(filename)\n"
++        "      inflated = Zlib::Inflate.inflate(content)\n"
++        "      io = StringIO.new(inflated)\n"
++        "      if block_given?\n"
++        "        yield io\n"
++        "      else\n"
++        "        io\n"
++        "      end\n"
++        "    end\n"
++        "  end\n"
++        "end\n"
++    );
++}
++
+ static void mriBindingInit() {
++    init_zlib_module();
+     tableBindingInit();
+     etcBindingInit();
+     fontBindingInit();
+@@ -284,17 +393,7 @@ static void mriBindingInit() {
+     rb_str_freeze(vers);
+     rb_define_const(mod, "VERSION", vers);
+     
+-    // Automatically load zlib if it's present -- the correct way this time
+-    int state;
+-    rb_eval_string_protect("require('zlib') if !Kernel.const_defined?(:Zlib)", &state);
+-    if (state) {
+-        Debug() << "Could not load Zlib. If this is important, make sure Ruby was built with static extensions, or that"
+-        << ((MKXPZ_PLATFORM == MKXPZ_PLATFORM_MACOS) ? "zlib.bundle" : "zlib.so")
+-        << "is present and reachable by Ruby's loadpath.";
+-    }
+-    
+     // Set $stdout and its ilk accordingly on Windows
+-    // I regret teaching you that word
+ #ifdef __WIN32__
+     if (shState->config().winConsole)
+         configureWindowsStreams();
+@@ -840,12 +939,24 @@ static void runCustomScript(const std::string &filename) {
+     std::string scriptData;
+     
+     if (!readFileSDL(filename.c_str(), scriptData)) {
++        Debug() << "[ERROR] No se pudo abrir script preload:" << filename;
+         showMsg(std::string("Unable to open '") + filename + "'");
+         return;
+     }
+     
++    Debug() << "[Ruby] Cargando script preload:" << filename;
++    int state = 0;
+     evalString(newStringUTF8(scriptData.c_str(), scriptData.size()),
+-               newStringUTF8(filename.c_str(), filename.size()), NULL);
++               newStringUTF8(filename.c_str(), filename.size()), &state);
++    if (state) {
++        VALUE exc = rb_errinfo();
++        if (!NIL_P(exc)) {
++            VALUE msg = rb_funcall2(exc, rb_intern("message"), 0, NULL);
++            Debug() << "[Ruby ERROR en preload]" << filename << ":" << (NIL_P(msg) ? "" : RSTRING_PTR(msg));
++        }
++    } else {
++        Debug() << "[Ruby] Preload ejecutado con éxito:" << filename;
++    }
+ }
+ 
+ RB_METHOD_GUARD(mriRgssMain) {
+@@ -868,17 +979,19 @@ RB_METHOD_GUARD(mriRgssMain) {
+                    (VALUE(*)(ANYARGS))rgssMainRescue, (VALUE)&exc, rb_eException,
+                    (VALUE)0);
+ #else
+-        rb_rescue2(rgssMainCb, rb_block_proc(), rgssMainRescue, (VALUE)&exc,
+-                   rb_eException, (VALUE)0);
++        rb_rescue2((VALUE(*)(...))rgssMainCb, rb_block_proc(),
++                   (VALUE(*)(...))rgssMainRescue, (VALUE)&exc, rb_eException,
++                   (VALUE)0);
+ #endif
+         
+-        if (NIL_P(exc))
++        if (exc == Qnil)
+             break;
+         
+-        if (rb_obj_class(exc) == getRbData()->exc[Reset])
+-            processReset(true);
+-        else
+-            rb_exc_raise(exc);
++        if (rb_obj_class(exc) != getRbData()->exc[Reset])
++            break;
++        
++        if (processReset(true))
++            break;
+     }
+     
+     return Qnil;
+@@ -978,6 +1091,7 @@ static void runRMXPScripts(BacktraceData &btData) {
+     rb_gv_set("$RGSS_SCRIPTS", scriptArray);
+     
+     long scriptCount = RARRAY_LEN(scriptArray);
++    Debug() << "[Ruby] Decodificando" << scriptCount << "secciones de" << scriptPack;
+     
+     std::string decodeBuffer;
+     decodeBuffer.resize(0x1000);
+@@ -1027,6 +1141,36 @@ static void runRMXPScripts(BacktraceData &btData) {
+     }
+     
+     /* Execute preloaded scripts */
++    rb_eval_string(
++        "if defined?(Encoding)\n"
++        "  Encoding.const_set(:UTF_8, Encoding.find('UTF-8')) unless Encoding.const_defined?(:UTF_8) rescue nil\n"
++        "  Encoding.const_set(:ASCII_8BIT, Encoding.find('ASCII-8BIT')) unless Encoding.const_defined?(:ASCII_8BIT) rescue nil\n"
++        "  Encoding.const_set(:US_ASCII, Encoding.find('US-ASCII')) unless Encoding.const_defined?(:US_ASCII) rescue nil\n"
++        "  Encoding.const_set(:BINARY, Encoding.find('ASCII-8BIT')) unless Encoding.const_defined?(:BINARY) rescue nil\n"
++        "  Encoding.const_set(:UTF8, Encoding.find('UTF-8')) unless Encoding.const_defined?(:UTF8) rescue nil\n"
++        "end\n"
++        "module Kernel\n"
++        "  alias __switch_native_require require rescue nil\n"
++        "  def require(path)\n"
++        "    p = path.to_s.downcase\n"
++        "    return true if p == 'zlib' || p == 'zlib.so'\n"
++        "    begin; __switch_native_require(path); rescue LoadError; false; end\n"
++        "  end\n"
++        "end\n"
++    );
++
++    std::string preloadData;
++    if (readFileSDL("preload.rb", preloadData)) {
++        Debug() << "[Ruby] Cargando automáticamente preload.rb...";
++        int state = 0;
++        evalString(newStringUTF8(preloadData.c_str(), preloadData.size()),
++                   newStringUTF8("preload.rb", 10), &state);
++        if (!state) {
++            Debug() << "[Ruby] preload.rb ejecutado con éxito!";
++        }
++    }
++
++    Debug() << "[Ruby] Ejecutando preloaded scripts:" << conf.preloadScripts.size();
+     for (std::vector<std::string>::const_iterator i = conf.preloadScripts.begin();
+          i != conf.preloadScripts.end(); ++i)
+     {
+@@ -1036,9 +1180,12 @@ static void runRMXPScripts(BacktraceData &btData) {
+     }
+     
+     VALUE exc = rb_gv_get("$!");
+-    if (exc != Qnil)
++    if (exc != Qnil) {
++        Debug() << "[Ruby ERROR tras preloadScripts]";
+         return;
++    }
+     
++    Debug() << "[Ruby] Iniciando evaluación de scripts del juego...";
+     while (true) {
+         for (long i = 0; i < scriptCount; ++i) {
+             if (shState->rtData().rqTerm)
+@@ -1087,13 +1234,25 @@ static void runRMXPScripts(BacktraceData &btData) {
+              }
+              */
+             
+-            int state;
+-            
++            int state = 0;
++            if (i >= scriptCount - 10 || i % 50 == 0) {
++                Debug() << "[Ruby Script]" << buf;
++            }
++            if (i >= scriptCount - 2) {
++                Debug() << "[Ruby Script Code " << buf << "]:\n" << RSTRING_PTR(string);
++            }
+             evalString(string, fname, &state);
+-            if (state)
++            if (state) {
++                VALUE exc = rb_errinfo();
++                if (!NIL_P(exc)) {
++                    VALUE msg = rb_funcall2(exc, rb_intern("message"), 0, NULL);
++                    Debug() << "[Ruby Script ERROR en" << buf << "]" << (NIL_P(msg) ? "" : RSTRING_PTR(msg));
++                }
+                 break;
++            }
+         }
+         
++        Debug() << "[Ruby Loop] Iteración completada. Comprobando reinicio...";
+         VALUE exc = rb_gv_get("$!");
+         if (rb_obj_class(exc) != getRbData()->exc[Reset])
+             break;
+@@ -1174,140 +1333,102 @@ static void showExc(VALUE exc, const BacktraceData &btData) {
+ static void mriBindingExecute() {
+     Config &conf = shState->rtData().config;
+     
++    Debug() << "[MRI 1] Iniciando ruby_sysinit...";
+ #if RAPI_MAJOR >= 2
+-    /* Normally only a ruby executable would do a sysinit,
+-     * but not doing it will lead to crashes due to closed
+-     * stdio streams on some platforms (eg. Windows) */
+     int argc = 0;
+     char **argv = 0;
+     ruby_sysinit(&argc, &argv);
+     
++    Debug() << "[MRI 2.0] Antes de RUBY_INIT_STACK...";
+     RUBY_INIT_STACK;
+-    ruby_init();
+-    
+-    std::vector<const char*> rubyArgsC{"mkxp-z"};
+-    rubyArgsC.push_back("-e ");
+-    void *node;
+-    if (conf.jit.enabled) {
+-#if RAPI_FULL >= 310
+-        // Ruby v3.1.0 renamed the --jit options to --mjit.
+-        std::string verboseLevel("--mjit-verbose=");
+-        std::string maxCache("--mjit-max-cache=");
+-        std::string minCalls("--mjit-min-calls=");
+-        rubyArgsC.push_back("--mjit");
+-#else
+-        std::string verboseLevel("--jit-verbose=");
+-        std::string maxCache("--jit-max-cache=");
+-        std::string minCalls("--jit-min-calls=");
+-        rubyArgsC.push_back("--jit");
+-#endif
+-        verboseLevel += std::to_string(conf.jit.verboseLevel);
+-        maxCache += std::to_string(conf.jit.maxCache);
+-        minCalls += std::to_string(conf.jit.minCalls);
+-
+-        rubyArgsC.push_back(verboseLevel.c_str());
+-        rubyArgsC.push_back(maxCache.c_str());
+-        rubyArgsC.push_back(minCalls.c_str());
+-        node = ruby_options(rubyArgsC.size(), const_cast<char**>(rubyArgsC.data()));
+-    } else if (conf.yjit.enabled) {
+-        rubyArgsC.push_back("--yjit");
+-        // TODO: Maybe support --yjit-exec-mem-size, --yjit-call-threshold
+-        node = ruby_options(rubyArgsC.size(), const_cast<char**>(rubyArgsC.data()));
+-    } else {
+-        node = ruby_options(rubyArgsC.size(), const_cast<char**>(rubyArgsC.data()));
++    Debug() << "[MRI 2.1] Llamando a ruby_setup()...";
++    int setup_state = ruby_setup();
++    Debug() << "[MRI 2.2] ruby_setup() finalizado con código:" << setup_state;
++    if (setup_state) {
++        VALUE err = rb_errinfo();
++        if (!NIL_P(err)) {
++            VALUE str = rb_inspect(err);
++            Debug() << "[ERROR ruby_setup] Excepción Ruby:" << StringValueCStr(str);
++        }
++        Debug() << "[ERROR] ruby_setup() falló con código:" << setup_state;
++        return;
+     }
+     
+-    int state;
++    Debug() << "[MRI 3] Configurando ruby_options con argv estándar...";
++    char *rubyArgsC[] = { (char*)"mkxp-z", (char*)"-e", (char*)"" };
++    void *node = ruby_options(3, rubyArgsC);
++    Debug() << "[MRI 3.1] ruby_options finalizado. node:" << (node ? "OK" : "NULL");
++    
++    Debug() << "[MRI 4] Ejecutando ruby_executable_node / ruby_exec_node...";
++    int state = 0;
+     bool valid = ruby_executable_node(node, &state);
+     if (valid)
+         state = ruby_exec_node(node);
+     if (state || !valid) {
+-        // The message is formatted for and automatically spits
+-        // out to the terminal, so let's leave it that way for now
+-        /*
+-         VALUE exc = rb_errinfo();
+-         #if RAPI_FULL >= 250
+-         VALUE msg = rb_funcall(exc, rb_intern("full_message"), 0);
+-         #else
+-         VALUE msg = rb_funcall(exc, rb_intern("message"), 0);
+-         #endif
+-         */
+-        showMsg("An error occurred while initializing Ruby. (Invalid JIT settings?)");
++        Debug() << "[ERROR] Error inicializando nodo de Ruby, state:" << state << "valid:" << valid;
++        showMsg("An error occurred while initializing Ruby.");
+         ruby_cleanup(state);
+         shState->rtData().rqTermAck.set();
+         return;
+     }
++    Debug() << "[MRI 5] Configurando codificación UTF-8...";
+     rb_enc_set_default_internal(rb_enc_from_encoding(rb_utf8_encoding()));
+     rb_enc_set_default_external(rb_enc_from_encoding(rb_utf8_encoding()));
+ #else
+     ruby_init();
+     rb_eval_string("$KCODE='U'");
+-#ifdef __WIN32__
+-    if (!conf.winConsole) {
+-        VALUE iostr = rb_str_new2("NUL");
+-        // Sysinit isn't a thing yet, so send io to /dev/null instead
+-        rb_funcall(rb_gv_get("$stderr"), rb_intern("reopen"), 1, iostr);
+-        rb_funcall(rb_gv_get("$stdout"), rb_intern("reopen"), 1, iostr);
+-    }
+-#endif
+ #endif
+     
++    Debug() << "[MRI 6] Configurando topSelf y argv...";
+     topSelf = rgssVer == 1 ? Qnil : rb_eval_string("self");
+     
+     VALUE rbArgv = rb_get_argv();
+     for (const auto &str : conf.launchArgs)
+         rb_ary_push(rbArgv, rb_utf8_str_new_cstr(str.c_str()));
+     
+-    // Duplicates get pushed for some reason
+     rb_funcall(rbArgv, rb_intern("uniq!"), 0);
+     
+     VALUE lpaths = rb_gv_get(":");
+     rb_ary_clear(lpaths);
+     
+-#if defined(MKXPZ_BUILD_XCODE) && RAPI_MAJOR >= 2
+-    std::string resPath = mkxp_fs::getResourcePath();
+-    resPath += "/Ruby/" + std::to_string(RAPI_MAJOR) + "." + std::to_string(RAPI_MINOR) + ".0";
+-    rb_ary_push(lpaths, rb_str_new(resPath.c_str(), resPath.size()));
+-#endif
+-    
+     if (!conf.rubyLoadpaths.empty()) {
+-        /* Setup custom load paths */
+         for (size_t i = 0; i < conf.rubyLoadpaths.size(); ++i) {
+             std::string &path = conf.rubyLoadpaths[i];
+-            
+             VALUE pathv = rb_str_new(path.c_str(), path.size());
+             rb_ary_push(lpaths, pathv);
+         }
++    } else {
++        rb_ary_push(lpaths, rb_utf8_str_new_cstr("."));
+     }
+-#ifndef WORKDIR_CURRENT
+-    else {
+-        rb_ary_push(lpaths, rb_utf8_str_new_cstr(mkxp_fs::getCurrentDirectory().c_str()));
+-    }
+-#endif
+     
++    Debug() << "[MRI 7] Configurando RbData y mriBindingInit...";
+     RbData rbData;
+     shState->setBindingData(&rbData);
+     BacktraceData btData;
+     
+     mriBindingInit();
+     
++    Debug() << "[MRI 8] Iniciando runRMXPScripts...";
+     std::string &customScript = conf.customScript;
+     if (!customScript.empty())
+         runCustomScript(customScript);
+     else
+         runRMXPScripts(btData);
+     
++    Debug() << "[MRI 9] Scripts finalizados. Comprobando excepciones...";
+ #if RAPI_FULL > 187
+     VALUE exc = rb_errinfo();
+ #else
+     VALUE exc = rb_gv_get("$!");
+ #endif
+-    if (!NIL_P(exc) && !rb_obj_is_kind_of(exc, rb_eSystemExit))
++    if (!NIL_P(exc) && !rb_obj_is_kind_of(exc, rb_eSystemExit)) {
++        Debug() << "[MRI EXCEPCIÓN DETECTADA]";
+         showExc(exc, btData);
++    }
+     
+     ruby_cleanup(0);
+-    
+     shState->rtData().rqTermAck.set();
++    Debug() << "[MRI 10] mriBindingExecute completado.";
+ }
+ 
+ static void mriBindingTerminate() { throw Exception(Exception::SystemExit, " "); }
+diff --git a/binding/binding-util.cpp b/binding/binding-util.cpp
+index 9349f19..32d1eb6 100644
+--- a/binding/binding-util.cpp
++++ b/binding/binding-util.cpp
+@@ -108,6 +108,7 @@ int rb_get_args(int argc, VALUE *argv, const char *format, ...) {
+     while ((c = *format++)) {
+       switch (c) {
+       case '|':
++        opt = true;
+         break;
+       default:
+         // FIXME print num of needed args vs provided
+diff --git a/shader/meson.build b/shader/meson.build
+index 9a8cf6a..ee4ab4f 100644
+--- a/shader/meson.build
++++ b/shader/meson.build
+@@ -39,18 +39,14 @@ if get_option('enable-https') == true
+     embedded_shaders += 'xbrz.frag'
+ endif
+ 
+-embedded_shaders_f = files(embedded_shaders)
+-
+-count = 0
+-foreach file : embedded_shaders_f
+-    global_sources += custom_target(embedded_shaders[count],
++foreach file : embedded_shaders
++    global_sources += custom_target(file,
+         input: file,
+-        output: '@0@.xxd'.format(embedded_shaders[count]),
++        output: '@0@.xxd'.format(file),
+         command: [
+-            xxd, '-i', '@INPUT@'
++            'sh', '-c', 'xxd -i "@INPUT@" | sed -e "s/[a-zA-Z0-9_]*shader_/___shader_/g"'
+         ],
+         capture: true,
+-        depend_files: embedded_shaders_f[count]
+-        )
+-    count += 1
++        depend_files: files(file)
++    )
+ endforeach
+diff --git a/src/audio/fluid-fun.cpp b/src/audio/fluid-fun.cpp
+index 3d89733..98d8f41 100644
+--- a/src/audio/fluid-fun.cpp
++++ b/src/audio/fluid-fun.cpp
+@@ -6,7 +6,7 @@
+ 
+ #include "debugwriter.h"
+ 
+-#if __LINUX__ || __ANDROID__
++#if __LINUX__ || __ANDROID__ || defined(__SWITCH__) || defined(__NX__)
+ #define FLUID_LIB "libfluidsynth.so.3"
+ #elif MKXPZ_BUILD_XCODE
+ #define FLUID_LIB "@rpath/libfluidsynth.dylib"
+diff --git a/src/display/graphics.cpp b/src/display/graphics.cpp
+index 7ca41c4..b3b4d2d 100644
+--- a/src/display/graphics.cpp
++++ b/src/display/graphics.cpp
+@@ -841,7 +841,11 @@ struct GraphicsPrivate {
+     scRes(rtData->config.enableHires ? (int)lround(rtData->config.framebufferScalingFactor * DEF_SCREEN_W) : DEF_SCREEN_W,
+         rtData->config.enableHires ? (int)lround(rtData->config.framebufferScalingFactor * DEF_SCREEN_H) : DEF_SCREEN_H),
+     scSize(scRes),
++#if defined(__SWITCH__) || defined(__NX__)
++    winSize(1280, 720),
++#else
+     winSize(rtData->config.defScreenW, rtData->config.defScreenH),
++#endif
+     screen(scRes.x, scRes.y), threadData(rtData),
+     glCtx(SDL_GL_GetCurrentContext()), multithreadedMode(true),
+     frameRate(DEF_FRAMERATE), frameCount(0), brightness(255),
+@@ -858,6 +862,9 @@ struct GraphicsPrivate {
+             rebuildIntegerScaleBuffer();
+         }
+         
++#if defined(__SWITCH__) || defined(__NX__)
++        winSize = Vec2i(1280, 720);
++#endif
+         recalculateScreenSize(rtData->config.fixedAspectRatio);
+         updateScreenResoRatio(rtData);
+         
+@@ -1519,7 +1526,13 @@ void Graphics::resizeScreen(int width, int height) {
+     
+     glState.scissorBox.set(IntRect(0, 0, p->scRes.x, p->scRes.y));
+     
++#if defined(__SWITCH__) || defined(__NX__)
++    p->winSize = Vec2i(1280, 720);
++    p->recalculateScreenSize(p->threadData->config.fixedAspectRatio);
++    p->updateScreenResoRatio(p->threadData);
++#else
+     shState->eThread().requestWindowResize(width, height);
++#endif
+ }
+ 
+ void Graphics::resizeWindow(int width, int height, bool center) {
+@@ -1656,9 +1669,10 @@ bool Graphics::getFixedAspectRatio() const
+ void Graphics::setFixedAspectRatio(bool value)
+ {
+     shState->config().fixedAspectRatio = value;
+-    p->recalculateScreenSize(p->threadData->config.fixedAspectRatio);
++    p->threadData->config.fixedAspectRatio = value;
++    p->recalculateScreenSize(value);
+     p->findHighestIntegerScale();
+-    p->recalculateScreenSize(p->threadData->config.fixedAspectRatio);
++    p->recalculateScreenSize(value);
+     p->updateScreenResoRatio(p->threadData);
+ }
+ 
+diff --git a/src/eventthread.cpp b/src/eventthread.cpp
+index 0cba9bd..ceb5536 100644
+--- a/src/eventthread.cpp
++++ b/src/eventthread.cpp
+@@ -799,7 +799,7 @@ void EventThread::showMessageBox(const char *body, int flags)
+     
+     SDL_Event event;
+     event.user.code = flags;
+-    event.user.data1 = strdup(body);
++    event.user.data1 = SDL_strdup(body);
+     event.type = usrIdStart + REQUEST_MESSAGEBOX;
+     SDL_PushEvent(&event);
+     
+diff --git a/src/filesystem/filesystemImpl.cpp b/src/filesystem/filesystemImpl.cpp
+index 1d79dee..52365bc 100644
+--- a/src/filesystem/filesystemImpl.cpp
++++ b/src/filesystem/filesystemImpl.cpp
+@@ -11,6 +11,56 @@
+ #include "util/exception.h"
+ #include "util/debugwriter.h"
+ 
++#if defined(__SWITCH__) || defined(__NX__)
++#include <unistd.h>
++#include <sys/stat.h>
++#include <fstream>
++
++bool filesystemImpl::fileExists(const char *path) {
++    struct stat st;
++    if (stat(path, &st) == 0) {
++        return !S_ISDIR(st.st_mode);
++    }
++    return false;
++}
++
++std::string filesystemImpl::contentsOfFileAsString(const char *path) {
++    std::string ret;
++    try {
++        std::ifstream ifs(path);
++        ret = std::string ( (std::istreambuf_iterator<char>(ifs) ),
++                       (std::istreambuf_iterator<char>()    ) );
++    } catch (...) {
++        throw Exception(Exception::NoFileError, "Failed to read file at %s", path);
++    }
++    return ret;
++}
++
++bool filesystemImpl::setCurrentDirectory(const char *path) {
++    return (chdir(path) == 0);
++}
++
++std::string filesystemImpl::getCurrentDirectory() {
++    char buf[1024];
++    if (getcwd(buf, sizeof(buf))) {
++        return std::string(buf);
++    }
++    return std::string(".");
++}
++
++std::string filesystemImpl::normalizePath(const char *path, bool preferred, bool absolute) {
++    std::string ret(path);
++    for (size_t i = 0; i < ret.length(); i++) {
++        if (ret[i] == '\\')
++            ret[i] = '/';
++    }
++    return ret;
++}
++
++std::string filesystemImpl::getDefaultGameRoot() {
++    return std::string("sdmc:/switch/pokemon_anil/");
++}
++#else
+ #ifdef MKXPZ_EXP_FS
+ #include <experimental/filesystem>
+ namespace fs = std::experimental::filesystem;
+@@ -103,3 +153,4 @@ std::string filesystemImpl::getDefaultGameRoot() {
+     SDL_free(p);
+     return ret;
+ }
++#endif
+diff --git a/src/main.cpp b/src/main.cpp
+index 6e09d71..a25406f 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -49,6 +49,24 @@
+ 
+ #include "system/system.h"
+ 
++#if defined(__SWITCH__) || defined(__NX__)
++#include <stdarg.h>
++static void log_info(const char *fmt, ...) {
++    va_list args;
++    va_start(args, fmt);
++    FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "a");
++    if (f) {
++        vfprintf(f, fmt, args);
++        fprintf(f, "\n");
++        fflush(f);
++        fclose(f);
++    }
++    va_end(args);
++}
++#else
++#define log_info(...)
++#endif
++
+ #if defined(__WIN32__)
+ #include "resource.h"
+ #include <Winsock2.h>
+@@ -120,49 +138,64 @@ static SDL_GLContext initGL(SDL_Window *win, Config &conf,
+ int rgssThreadFun(void *userdata) {
+   RGSSThreadData *threadData = static_cast<RGSSThreadData *>(userdata);
+ 
++  log_info("[RGSS 1] Hilo RGSS iniciado.");
+ #ifdef MKXPZ_INIT_GL_LATER
++  log_info("[RGSS 2] Inicializando contexto GL...");
+   threadData->glContext =
+       initGL(threadData->window, threadData->config, threadData);
+-  if (!threadData->glContext)
++  if (!threadData->glContext) {
++    log_info("[ERROR] initGL falló.");
+     return 0;
++  }
++  log_info("[RGSS 3] initGL completado con éxito.");
+ #else
+   SDL_GL_MakeCurrent(threadData->window, threadData->glContext);
+ #endif
+ 
+   /* Setup AL context */
+   static const ALCint attrs[] = {
+-    /* HRTF is explicitly disabled here because it results in poor-quality audio
+-     * when enabled (see https://github.com/mkxp-z/mkxp-z/issues/341). By
+-     * default, it's enabled when OpenAL Soft detects that the user is using
+-     * headphones for audio drivers that support detecting if the user is using
+-     * headphones, and disabled regardless of whether or not the user is using
+-     * headphones if the audio driver does not support this detection. The HRTF
+-     * is required for positional audio support, so we'll need to find a way
+-     * around the audio quality issues and inconsistent detection of whether or
+-     * not the user is using headphones once we have positional audio support. */
+     ALC_HRTF_SOFT, ALC_FALSE,
+     0
+   };
++  log_info("[RGSS 4] Creando contexto OpenAL...");
+   ALCcontext *alcCtx = alcCreateContext(threadData->alcDev, attrs);
+ 
+   if (!alcCtx) {
++    log_info("[ERROR] Error creando contexto OpenAL");
+     rgssThreadError(threadData, "Error creating OpenAL context");
+     return 0;
+   }
+ 
+   alcMakeContextCurrent(alcCtx);
++  log_info("[RGSS 5] Contexto OpenAL activo.");
+ 
+   try {
++    log_info("[RGSS 6] Inicializando SharedState...");
+     SharedState::initInstance(threadData);
++    log_info("[RGSS 7] SharedState inicializado.");
+   } catch (const Exception &exc) {
++    log_info("[ERROR] Excepción en SharedState: %s", exc.msg.c_str());
+     rgssThreadError(threadData, exc.msg);
+     alcDestroyContext(alcCtx);
+-
++    return 0;
++  } catch (const std::exception &exc) {
++    log_info("[ERROR] std::exception en SharedState: %s", exc.what());
++    alcDestroyContext(alcCtx);
+     return 0;
+   }
+ 
+   /* Start script execution */
+-  scriptBinding->execute();
++  log_info("[RGSS 8] Ejecutando scripts de Ruby...");
++  try {
++    scriptBinding->execute();
++    log_info("[RGSS 9] Scripts de Ruby finalizados.");
++  } catch (const Exception &exc) {
++    log_info("[ERROR] Excepción en Ruby execute: %s", exc.msg.c_str());
++  } catch (const std::exception &exc) {
++    log_info("[ERROR] std::exception en Ruby execute: %s", exc.what());
++  } catch (...) {
++    log_info("[ERROR] Excepción no controlada en Ruby execute.");
++  }
+ 
+   threadData->rqTermAck.set();
+   threadData->ethread->requestTerminate();
+@@ -196,26 +229,29 @@ static void showInitError(const std::string &msg) {
+ }
+ 
+ static void setupWindowIcon(const Config &conf, SDL_Window *win) {
+-  SDL_RWops *iconSrc;
++#if !defined(__SWITCH__) && !defined(__NX__)
++  SDL_RWops *iconSrc = 0;
+ 
+-  if (conf.iconPath.empty())
+-#ifndef MKXPZ_BUILD_XCODE
+-    iconSrc = SDL_RWFromConstMem(___assets_icon_png, ___assets_icon_png_len);
+-#else
+-    iconSrc = SDL_RWFromFile(mkxp_fs::getPathForAsset("icon", "png").c_str(), "rb");
+-#endif
+-  else
++  if (!conf.iconPath.empty())
+     iconSrc = SDL_RWFromFile(conf.iconPath.c_str(), "rb");
+ 
+-  SDL_Surface *iconImg = IMG_Load_RW(iconSrc, SDL_TRUE);
++  if (iconSrc) {
++    SDL_Surface *iconImg = IMG_Load_RW(iconSrc, SDL_TRUE);
+ 
+-  if (iconImg) {
+-    SDL_SetWindowIcon(win, iconImg);
+-    SDL_FreeSurface(iconImg);
++    if (iconImg) {
++      SDL_SetWindowIcon(win, iconImg);
++      SDL_FreeSurface(iconImg);
++    }
+   }
++#endif
+ }
+ 
+ int main(int argc, char *argv[]) {
++#if defined(__SWITCH__) || defined(__NX__)
++    chdir("sdmc:/switch/pokemon_anil");
++    log_info("=== MKXP-Z Nintendo Switch Log Iniciado ===");
++    log_info("[1] Directorio actual fijado a sdmc:/switch/pokemon_anil");
++#endif
+     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+ 
+@@ -225,16 +261,21 @@ int main(int argc, char *argv[]) {
+ 
+     SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+ 
+-    /* initialize SDL first */
+-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER) < 0) {
++    log_info("[2] Inicializando SDL...");
++    /* initialize SDL first (including AUDIO for OpenAL/audren on Switch) */
++    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER) < 0) {
++      log_info("[ERROR] Error initializing SDL: %s", SDL_GetError());
+       showInitError(std::string("Error initializing SDL: ") + SDL_GetError());
+       return 0;
+     }
++    log_info("[3] SDL_Init completado con éxito.");
+ 
+     if (!EventThread::allocUserEvents()) {
++      log_info("[ERROR] Error allocating SDL user events");
+       showInitError("Error allocating SDL user events");
+       return 0;
+     }
++    log_info("[4] EventThread allocUserEvents completado.");
+ 
+ #ifndef WORKDIR_CURRENT
+     char dataDir[512]{};
+@@ -251,9 +292,19 @@ int main(int argc, char *argv[]) {
+     mkxp_fs::setCurrentDirectory(dataDir);
+ #endif
+     
++    log_info("[5] Leyendo configuración (mkxp.json / Game.ini)...");
+     /* now we load the config */
+     Config conf;
+-    conf.read(argc, argv);
++    try {
++        conf.read(argc, argv);
++        log_info("[6] Config::read completado. Título: %s, RGSS: %d", conf.game.title.c_str(), conf.rgssVersion);
++    } catch (const Exception &e) {
++        log_info("[ERROR] Excepción leyendo config: %s", e.msg.c_str());
++    } catch (const std::exception &e) {
++        log_info("[ERROR] std::exception leyendo config: %s", e.what());
++    } catch (...) {
++        log_info("[ERROR] Excepción desconocida leyendo config.");
++    }
+ 
+ #if defined(__WIN32__)
+     // Create a debug console in debug mode
+@@ -267,6 +318,10 @@ int main(int argc, char *argv[]) {
+         showInitError(std::string(buf));
+       }
+     }
++#elif defined(MKXPZ_BUILD_XCODE)
++    if (conf.game.title.empty()) {
++        conf.game.title = conf.windowTitle;
++    }
+ #endif
+ 
+ #ifdef MKXPZ_STEAM
+@@ -284,8 +339,10 @@ int main(int argc, char *argv[]) {
+     assert(conf.rgssVersion >= 1 && conf.rgssVersion <= 3);
+     printRgssVersion(conf.rgssVersion);
+ 
++    log_info("[7] Inicializando IMG...");
+     int imgFlags = IMG_INIT_PNG | IMG_INIT_JPG;
+     if (IMG_Init(imgFlags) != imgFlags) {
++      log_info("[ERROR] Error initializing SDL_image: %s", SDL_GetError());
+       showInitError(std::string("Error initializing SDL_image: ") +
+                     SDL_GetError());
+       SDL_Quit();
+@@ -296,8 +353,10 @@ int main(int argc, char *argv[]) {
+ 
+       return 0;
+     }
++    log_info("[8] IMG_Init OK. Inicializando TTF...");
+ 
+     if (TTF_Init() < 0) {
++      log_info("[ERROR] Error initializing SDL_ttf: %s", SDL_GetError());
+       showInitError(std::string("Error initializing SDL_ttf: ") +
+                     SDL_GetError());
+       IMG_Quit();
+@@ -309,8 +368,10 @@ int main(int argc, char *argv[]) {
+ 
+       return 0;
+     }
++    log_info("[9] TTF_Init OK. Inicializando Sound...");
+ 
+-    if (Sound_Init() == 0) {
++    if (!Sound_Init()) {
++      log_info("[ERROR] Error initializing SDL_sound: %s", Sound_GetError());
+       showInitError(std::string("Error initializing SDL_sound: ") +
+                     Sound_GetError());
+       TTF_Quit();
+@@ -323,108 +384,59 @@ int main(int argc, char *argv[]) {
+ 
+       return 0;
+     }
+-#if defined(__WIN32__)
+-    WSAData wsadata = {0};
+-    if (WSAStartup(0x101, &wsadata) || wsadata.wVersion != 0x101) {
+-      char buf[200];
+-      snprintf(buf, sizeof(buf), "Error initializing winsock: %08X",
+-               WSAGetLastError());
+-      showInitError(
+-          std::string(buf)); // Not an error worth ending the program over
+-    }
+-#endif
++    log_info("[10] Sound_Init OK.");
+ 
+     SDL_Window *win;
+-    Uint32 winFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_ALLOW_HIGHDPI;
++    Uint32 winFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS;
+ 
++#if !defined(__SWITCH__) && !defined(__NX__)
++    winFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+     if (conf.winResizable)
+       winFlags |= SDL_WINDOW_RESIZABLE;
+     if (conf.fullscreen)
+       winFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
++#endif
+     
+ #ifdef GLES2_HEADER
+   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+-
+-    // LoadLibrary properly initializes EGL, it won't work otherwise.
+-    // Doesn't completely do it though, needs a small patch to SDL
+-#ifdef MKXPZ_BUILD_XCODE
+-    SDL_setenv("ANGLE_DEFAULT_PLATFORM", (conf.preferMetalRenderer) ? "metal" : "opengl", true);
+-    SDL_GL_LoadLibrary("@rpath/libEGL.dylib");
+-#endif
+ #endif
+     
++    log_info("[11] Creando ventana SDL...");
++#if defined(__SWITCH__) || defined(__NX__)
++    win = SDL_CreateWindow(conf.windowTitle.c_str(), SDL_WINDOWPOS_CENTERED,
++                           SDL_WINDOWPOS_CENTERED, 1280, 720, winFlags);
++#else
+     win = SDL_CreateWindow(conf.windowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
+                            SDL_WINDOWPOS_UNDEFINED, conf.defScreenW,
+                            conf.defScreenH, winFlags);
++#endif
+ 
+     if (!win) {
++      log_info("[ERROR] Error creando ventana: %s", SDL_GetError());
+       showInitError(std::string("Error creating window: ") + SDL_GetError());
+-
+-#ifdef MKXPZ_STEAM
+-      STEAMSHIM_deinit();
+-#endif
+       return 0;
+     }
+-    
+-#ifdef MKXPZ_BUILD_XCODE
+-    {
+-        std::string downloadsPath = "/Users/" + mkxp_sys::getUserName() + "/Downloads";
+-        
+-        if (mkxp_fs::getCurrentDirectory().find(downloadsPath) == 0) {
+-            showInitError(conf.game.title +
+-                          " cannot run from the Downloads directory.\n\n" +
+-                          "Please move the application to the Applications folder (or anywhere else) " +
+-                          "and try again.");
+-#ifdef MKXPZ_STEAM
+-            STEAMSHIM_deinit();
+-#endif
+-            return 0;
+-        }
+-    }
+-#endif
+-    
+-#if defined(MKXPZ_BUILD_XCODE)
+-#define DEBUG_FSELECT_MSG "Select the folder from which to load game files. This is the folder containing the game's INI."
+-#define DEBUG_FSELECT_PROMPT "Load Game"
+-    if (conf.manualFolderSelect) {
+-        std::string dataDirStr = mkxp_fs::selectPath(win, DEBUG_FSELECT_MSG, DEBUG_FSELECT_PROMPT);
+-        if (!dataDirStr.empty()) {
+-            conf.gameFolder = dataDirStr;
+-            mkxp_fs::setCurrentDirectory(dataDirStr.c_str());
+-            Debug() << "Current directory set to" << dataDirStr;
+-            conf.read(argc, argv);
+-            conf.readGameINI();
+-        }
+-    }
+-#endif
+-
+-    /* OSX and Windows have their own native ways of
+-     * dealing with icons; don't interfere with them */
+-#ifdef __LINUX__
+-    setupWindowIcon(conf, win);
+-#else
+-    (void)setupWindowIcon;
+-#endif
++    SDL_ShowWindow(win);
++    log_info("[12] Ventana creada. Abriendo OpenAL...");
+ 
+     ALCdevice *alcDev = alcOpenDevice(0);
+ 
+     if (!alcDev) {
++      log_info("[ERROR] No se pudo abrir dispositivo de audio OpenAL.");
+       showInitError("Could not detect an available audio device.");
+       SDL_DestroyWindow(win);
+       TTF_Quit();
+       IMG_Quit();
+       SDL_Quit();
+-
+-#ifdef MKXPZ_STEAM
+-      STEAMSHIM_deinit();
+-#endif
+       return 0;
+     }
++    log_info("[13] Dispositivo OpenAL abierto.");
+ 
+     SDL_DisplayMode mode;
+     SDL_GetDisplayMode(0, 0, &mode);
++    log_info("[14] Modo de pantalla: %dx%d @ %dHz", mode.w, mode.h, mode.refresh_rate);
+ 
+     /* Can't sync to display refresh rate if its value is unknown */
+     if (!mode.refresh_rate)
+@@ -450,17 +462,18 @@ int main(int argc, char *argv[]) {
+ 
+     /* Load and post key bindings */
+     rtData.bindingUpdateMsg.post(loadBindings(conf));
+-    
+-#ifdef MKXPZ_BUILD_XCODE
+-    // Create Touch Bar
+-    initTouchBar(win, conf);
+-#endif
+ 
+-    /* Start RGSS thread */
+-    SDL_Thread *rgssThread = SDL_CreateThread(rgssThreadFun, "rgss", &rtData);
++    log_info("[15] Creando hilo RGSS con 8MB de stack...");
++    /* Start RGSS thread with 8MB stack for Ruby VM */
++    SDL_Thread *rgssThread = SDL_CreateThreadWithStackSize(rgssThreadFun, "rgss", 8 * 1024 * 1024, &rtData);
++    if (!rgssThread) {
++        rgssThread = SDL_CreateThread(rgssThreadFun, "rgss", &rtData);
++    }
+ 
++    log_info("[16] Iniciando bucle de eventos (EventThread)...");
+     /* Start event processing */
+     eventThread.process(rtData);
++    log_info("[17] EventThread finalizado.");
+ 
+     /* Request RGSS thread to stop */
+     rtData.rqTerm.set();
+diff --git a/src/meson.build b/src/meson.build
+old mode 100755
+new mode 100644
+diff --git a/src/net/net.cpp b/src/net/net.cpp
+index f51ac03..a953dd0 100644
+--- a/src/net/net.cpp
++++ b/src/net/net.cpp
+@@ -5,6 +5,29 @@
+ //  Created by ゾロアーク on 12/29/20.
+ //
+ 
++#if defined(__SWITCH__) || defined(__NX__)
++#include "net.h"
++
++namespace mkxp_net {
++
++HTTPResponse::HTTPResponse() : _status(0), _body("") {}
++HTTPResponse::~HTTPResponse() {}
++int HTTPResponse::status() { return _status; }
++std::string &HTTPResponse::body() { return _body; }
++StringMap &HTTPResponse::headers() { return _headers; }
++
++HTTPRequest::HTTPRequest(const char *dest, bool follow_redirects)
++    : destination(dest ? dest : ""), follow_location(follow_redirects) {}
++HTTPRequest::~HTTPRequest() {}
++StringMap &HTTPRequest::headers() { return _headers; }
++HTTPResponse HTTPRequest::get() { return HTTPResponse(); }
++HTTPResponse HTTPRequest::post(StringMap &postData) { return HTTPResponse(); }
++HTTPResponse HTTPRequest::post(const char *body, const char *content_type) { return HTTPResponse(); }
++
++}
++
++#else
++
+ #include <stdio.h>
+ 
+ #if defined(MKXPZ_SSL)
+@@ -242,3 +265,4 @@ HTTPResponse HTTPRequest::post(const char *body, const char *content_type) {
+     delete client;
+     return ret;
+ }
++#endif
+diff --git a/src/system/system.h b/src/system/system.h
+index 4ef8738..a7dd091 100644
+--- a/src/system/system.h
++++ b/src/system/system.h
+@@ -18,7 +18,7 @@
+ #define MKXPZ_PLATFORM MKXPZ_PLATFORM_WINDOWS
+ #elif defined __APPLE__
+ #define MKXPZ_PLATFORM MKXPZ_PLATFORM_MACOS
+-#elif defined __linux__
++#elif defined __linux__ || defined __SWITCH__ || defined __NX__
+ #define MKXPZ_PLATFORM MKXPZ_PLATFORM_LINUX
+ #else
+ #error "Can't identify platform."
+diff --git a/src/system/systemImpl.cpp b/src/system/systemImpl.cpp
+index 41fda3d..5cac6d0 100644
+--- a/src/system/systemImpl.cpp
++++ b/src/system/systemImpl.cpp
+@@ -19,33 +19,42 @@
+ #include <string>
+ 
+ std::string systemImpl::getSystemLanguage() {
++#if defined(__SWITCH__) || defined(__NX__)
++    return std::string("es_ES");
++#elif defined(__WIN32__)
+     static char buf[50] = {0};
+-#if defined(__WIN32__)
+     wchar_t wbuf[50] = {0};
+     LANGID lid = GetUserDefaultLangID();
+     LCIDToLocaleName(lid, wbuf, sizeof(wbuf), 0);
+     wcstombs(buf, wbuf, sizeof(buf));
+-#else
+-    strncpy(buf, std::locale("").name().c_str(), sizeof(buf));
+-#endif
+-    
+     for (int i = 0; (size_t)i < strlen(buf); i++) {
+-#ifdef __WIN32__
+         if (buf[i] == '-') {
+             buf[i] = '_';
++            break;
++        }
++    }
++    return std::string(buf);
+ #else
++    static char buf[50] = {0};
++    try {
++        strncpy(buf, std::locale("").name().c_str(), sizeof(buf));
++    } catch (...) {
++        strncpy(buf, "en_US", sizeof(buf));
++    }
++    for (int i = 0; (size_t)i < strlen(buf); i++) {
+         if (buf[i] == '.') {
+             buf[i] = 0;
+-#endif
+             break;
+         }
+     }
+     return std::string(buf);
++#endif
+ }
+ 
+ std::string systemImpl::getUserName() {
+-    
+-#ifdef __WIN32__
++#if defined(__SWITCH__) || defined(__NX__)
++    return std::string("Switch");
++#elif defined(__WIN32__)
+     // The Ruby binding gets the username from the environment loaded
+     // with Ruby instead, should fix getting it from WinAPI at some point
+     return std::string("unused");
+@@ -56,7 +65,6 @@ std::string systemImpl::getUserName() {
+         strncpy(ret, username, sizeof(ret));
+     return std::string(ret);
+ #endif
+-    
+ }
+     
+ bool systemImpl::isWine() {
+diff --git a/src/util/debugwriter.h b/src/util/debugwriter.h
+index da12825..aa6fb63 100644
+--- a/src/util/debugwriter.h
++++ b/src/util/debugwriter.h
+@@ -61,10 +61,19 @@ public:
+ 
+ 	~Debug()
+ 	{
++		std::string str = buf.str();
+ #ifdef __ANDROID__
+-		__android_log_write(ANDROID_LOG_DEBUG, "mkxp", buf.str().c_str());
++		__android_log_write(ANDROID_LOG_DEBUG, "mkxp", str.c_str());
+ #else
+-		std::cerr << buf.str() << std::endl;
++		std::cerr << str << std::endl;
++#endif
++#if defined(__SWITCH__) || defined(__NX__)
++		FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "a");
++		if (f) {
++			fprintf(f, "%s\n", str.c_str());
++			fflush(f);
++			fclose(f);
++		}
+ #endif
+ 	}
+ 
+diff --git a/src/util/rapidcsv.h b/src/util/rapidcsv.h
+index cad4cf8..b1fd055 100644
+--- a/src/util/rapidcsv.h
++++ b/src/util/rapidcsv.h
+@@ -232,7 +232,7 @@ namespace rapidcsv
+           }
+           else if (typeid(T) == typeid(long double))
+           {
+-            pVal = static_cast<T>(std::stold(pStr));
++            pVal = static_cast<T>(strtold(pStr.c_str(), nullptr));
+             return;
+           }
+         }
