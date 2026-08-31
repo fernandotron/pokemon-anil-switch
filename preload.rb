@@ -26,6 +26,12 @@ rescue
   nil
 end
 
+def switch_define_unless(mod, sym, singleton = false)
+  target = singleton ? mod.singleton_class : mod
+  return if target.method_defined?(sym) || target.private_method_defined?(sym)
+  yield
+end
+
 log_compat("=================================================================")
 log_compat("[Switch Compatibility] *** PRELOAD BUILD 2026-PERFECT-60FPS-STABLE ***")
 log_compat("[Switch Compatibility] Iniciando preload.rb en Nintendo Switch...")
@@ -135,12 +141,7 @@ module Kernel
   end
 end
 
-class ::Bitmap
-  def raw_data
-    ""
-  end
-  def raw_data=(val); end
-end
+
 
 
 
@@ -719,9 +720,7 @@ class ::Sprite
   attr_accessor :z, :x, :y, :ox, :oy, :zoom_x, :zoom_y, :angle, :mirror, :bush_depth, :opacity, :blend_type, :color, :tone, :visible, :bitmap, :viewport, :src_rect unless method_defined?(:z=)
 end
 
-class ::Plane
-  def disposed?; false; end
-end
+
 
 # 1.107 Graphics resolucion fija para Essentials
 module ::Graphics
@@ -1841,22 +1840,6 @@ end
 # 1.13 Graphics
 module ::Graphics
   class << self
-    def frame_rate
-      @frame_rate ||= 40
-    end
-
-    def frame_rate=(val)
-      @frame_rate = val
-    end unless respond_to?(:frame_rate=)
-
-    def frame_count
-      @frame_count ||= 0
-    end
-
-    def frame_count=(val)
-      @frame_count = val
-    end unless respond_to?(:frame_count=)
-
     def show_cursor; false; end
     
     def fullscreen; true; end
@@ -3027,40 +3010,6 @@ module ::SwitchAssetOptimizer
       if $PokemonBattleAnimations
         log_compat("[SwitchAssetOptimizer] PkmnAnimations.rxdata (#{$PokemonBattleAnimations.length rescue 0} animaciones) precargado en RAM.")
       end
-
-      # Preload all Pokéball burst and battle particle graphics
-      Dir.glob("Graphics/Battle animations/*.{png,bmp,PNG,BMP}").each do |f|
-        begin
-          base = f.sub(/\.[^.]+$/, "")
-          bmp = Bitmap.new(f) rescue nil
-          if bmp && defined?($BITMAP_CACHE) && $BITMAP_CACHE
-            $BITMAP_CACHE[f.downcase] = bmp
-            $BITMAP_CACHE[base.downcase] = bmp
-            $BITMAP_CACHE[File.basename(f).downcase] = bmp
-            $BITMAP_CACHE[File.basename(base).downcase] = bmp
-          end
-        rescue Exception
-        end
-      end rescue nil
-
-      # Pre-warm common animation bitmaps in RAM
-      [
-        "Blow1", "Blow3", "Blow4", "Blow5", "Blow6", "Blow7",
-        "Damage1", "Hit1", "Hit2", "Hit3", "Crash", "Collapse1",
-        "Battle1", "Explosion1", "Explosion2", "Fire1", "Fire2",
-        "Earth1", "Ice2", "Flash2", "Slash", "Tackle_B", "PRAS- Bite",
-        "PRAS- Fire", "PRAS- Water", "PRAS- Grass", "PRAS- Electric",
-        "PRAS- Ice", "PRAS- Rock", "PRAS- Poison", "anim sheet", "animsheet",
-        "animsheet.2", "efftest4", "003-Attack01", "004-Attack02"
-      ].each do |anim_name|
-        pbGetAnimation(anim_name, 0) rescue nil
-      end
-
-      # Preload move animation spritesheets from Graphics/Animations
-      Dir.glob("Graphics/Animations/*.{png,bmp,PNG,BMP}").first(100).each do |f|
-        name = File.basename(f).sub(/\.[^.]+$/, "")
-        pbGetAnimation(name, 0) rescue nil
-      end rescue nil
     rescue Exception => e
       log_compat("[SwitchAssetOptimizer Error Anims] #{e.class}: #{e.message}")
     end
@@ -3331,21 +3280,29 @@ end
 
 # In-RAM Map Cache for instantaneous overworld transitions on Switch
 $MAP_RXDATA_CACHE ||= {}
-$MAP_RXDATA_CACHE_MAX = 50
+$MAP_RXDATA_CACHE_MAX = 6
 
 def pbGetCachedMap(map_id)
   key = map_id.is_a?(Numeric) ? sprintf("Data/Map%03d.rxdata", map_id) : map_id.to_s
   key = key.sub(/^data\//i, "Data/")
   cached = $MAP_RXDATA_CACHE[key]
-  return Marshal.load(Marshal.dump(cached)) if cached
+  if cached
+    $MAP_RXDATA_CACHE.delete(key)
+    $MAP_RXDATA_CACHE[key] = cached
+    deserialized = (Marshal.load(cached) rescue nil)
+    return deserialized if deserialized
+  end
   map = (load_data(key) rescue nil)
   if map
-    $MAP_RXDATA_CACHE[key] = map
-    if $MAP_RXDATA_CACHE.size > $MAP_RXDATA_CACHE_MAX
-      first_k = $MAP_RXDATA_CACHE.keys.first
-      $MAP_RXDATA_CACHE.delete(first_k)
+    dumped = (Marshal.dump(map) rescue nil)
+    if dumped
+      $MAP_RXDATA_CACHE[key] = dumped
+      if $MAP_RXDATA_CACHE.size > $MAP_RXDATA_CACHE_MAX
+        first_k = $MAP_RXDATA_CACHE.keys.first
+        $MAP_RXDATA_CACHE.delete(first_k)
+      end
     end
-    return Marshal.load(Marshal.dump(map))
+    return map
   end
   return nil
 end
