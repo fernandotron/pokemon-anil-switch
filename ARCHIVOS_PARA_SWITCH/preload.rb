@@ -4,10 +4,21 @@
 
 # 1.0 Inicialización del Logging Eficiente
 $mkxp_log_file ||= (File.open("mkxp_ruby.log", "a") rescue nil)
+$LOG_COMPAT_DEDUP ||= {}
+$LOG_COMPAT_COUNT ||= 0
+$LOG_COMPAT_MAX_LINES ||= 5000
+
 def log_compat(msg)
-  puts msg rescue nil
+  return if $LOG_COMPAT_COUNT >= $LOG_COMPAT_MAX_LINES
+  msg_str = msg.to_s
+  dedup_key = msg_str[0, 120]
+  return if $LOG_COMPAT_DEDUP[dedup_key]
+  $LOG_COMPAT_DEDUP[dedup_key] = true
+  $LOG_COMPAT_COUNT += 1
+
+  puts msg_str rescue nil if $SWITCH_VERBOSE
   if $mkxp_log_file
-    $mkxp_log_file.puts(msg) rescue nil
+    $mkxp_log_file.puts(msg_str) rescue nil
     $mkxp_log_file.flush rescue nil
   end
 rescue
@@ -2758,7 +2769,8 @@ end
 # 1.25 Captura global de excepciones no controladas
 at_exit do
   if $!
-    err_msg = "CRASH EN RUBY DETECTADO:\nExcepción: #{$!.class}: #{$!.message}\nBacktrace:\n#{$!.backtrace&.join("\n")}"
+    bt = ($!.backtrace || []).take(12).join("\n")
+    err_msg = "CRASH EN RUBY DETECTADO [#{Time.now rescue ''}]:\nExcepción: #{$!.class}: #{$!.message}\nBacktrace:\n#{bt}"
     log_compat(err_msg)
     begin
       File.open("crash_report.txt", "w") { |f| f.puts(err_msg) }
