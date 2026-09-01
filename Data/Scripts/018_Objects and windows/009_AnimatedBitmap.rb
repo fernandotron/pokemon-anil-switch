@@ -240,6 +240,12 @@ def pbClearAnimationCache
     end
     $ANIMATION_BITMAP_CACHE.clear
   end
+  if defined?($ANIMATION_EVICTED_BITMAPS) && $ANIMATION_EVICTED_BITMAPS
+    $ANIMATION_EVICTED_BITMAPS.each do |bm|
+      bm.dispose if bm && !bm.disposed?
+    end
+    $ANIMATION_EVICTED_BITMAPS.clear
+  end
   $ANIMATION_BITMAP_SIZES&.clear
   $ANIMATION_BITMAP_BYTES = 0
 end
@@ -249,7 +255,8 @@ def pbGetAnimation(name, hue = 0)
   key = "#{name}_#{hue}"
   if $ANIMATION_BITMAP_CACHE.has_key?(key)
     bm = $ANIMATION_BITMAP_CACHE[key]
-    if bm && !bm.disposed?
+    return nil if bm.nil?
+    if !bm.disposed?
       $ANIMATION_BITMAP_CACHE.delete(key)
       $ANIMATION_BITMAP_CACHE[key] = bm
       return bm
@@ -303,7 +310,10 @@ def pbGetAnimation(name, hue = 0)
          (AnimatedBitmap.new(clean_name, hue || 0).deanimate rescue nil)
   end
 
-  return nil if !bm || bm.disposed?
+  if !bm || bm.disposed?
+    $ANIMATION_BITMAP_CACHE[key] = nil
+    return nil
+  end
 
   size = (bm.width * bm.height * 4) rescue 0
   if $ANIMATION_BITMAP_CACHE.has_key?(key)
@@ -315,12 +325,13 @@ def pbGetAnimation(name, hue = 0)
   $ANIMATION_BITMAP_SIZES[key] = size
   $ANIMATION_BITMAP_BYTES += size
 
+  $ANIMATION_EVICTED_BITMAPS ||= []
   while $ANIMATION_BITMAP_BYTES > $ANIMATION_BITMAP_MAX_BYTES && !$ANIMATION_BITMAP_CACHE.empty?
     oldest_key = $ANIMATION_BITMAP_CACHE.keys.first
     old_bm = $ANIMATION_BITMAP_CACHE.delete(oldest_key)
     old_sz = $ANIMATION_BITMAP_SIZES.delete(oldest_key) || 0
     $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_sz, 0].max
-    old_bm.dispose if old_bm && !old_bm.disposed?
+    $ANIMATION_EVICTED_BITMAPS << old_bm if old_bm && !old_bm.disposed?
   end
 
   return bm
