@@ -146,12 +146,14 @@ if (fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) {
   console.error('[ERROR] ' + dst + ' es mas viejo que ' + src + '. El despliegue no ocurrio.');
   process.exit(1);
 }
-console.log('[OK] Despliegue verificado.');
 
-console.log('\n=== 8. VERIFICACIÓN DEL ARTEFACTO FINAL (verify_artifact.js) ===');
+console.log('\n=== 8. VERIFICACIÓN DEL ARTEFACTO FINAL (verify_artifact.js & verify_assets_regression.js) ===');
 try {
   execSync('node verify_artifact.js', { stdio: 'inherit' });
+  execSync('node verify_assets_regression.js', { stdio: 'inherit' });
 } catch (e) {
-  console.error('[ERROR] Falló la verificación del artefacto Scripts.rxdata.');
+  console.error('[ERROR] Falló la verificación de artefactos o regresión de assets.');
   process.exit(1);
 }
+
+console.log('\n[OK] Despliegue verificado con éxito tras validación de artefactos.');

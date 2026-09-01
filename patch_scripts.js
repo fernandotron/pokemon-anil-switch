@@ -2474,7 +2474,11 @@ def mainFunctionDebug
       begin
         current_scene.main
       rescue Exception => e
-        log_compat("[SCENE CRASH] #{current_scene.class}: #{e.class} - #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
+        if defined?(write_crash_report)
+          write_crash_report(e, "Scene: #{current_scene.class}")
+        else
+          log_compat("[SCENE CRASH] #{current_scene.class}: #{e.class} - #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
+        end
         if current_scene.is_a?(Scene_Intro)
           log_compat("[Fallback directo a PokemonLoadScreen]") rescue nil
           $scene = nil
@@ -2501,12 +2505,16 @@ def mainFunctionDebug
     Graphics.transition rescue nil
     pbEmergencySave rescue nil
   rescue Exception => e
-    bt = (e.backtrace || []).take(12).join("\n  ")
-    report = "CRASH REPORT [#{Time.now rescue ''}]\nExcepcion: #{e.class}: #{e.message}\nBacktrace:\n  #{bt}\n"
-    log_compat("[CRASH EN MAIN] #{e.class}: #{e.message}\n  #{bt}") rescue nil
-    begin
-      File.open("crash_report.txt", "w") { |f| f.puts(report) }
-    rescue Exception
+    if defined?(write_crash_report)
+      write_crash_report(e, "Main Outer")
+    else
+      bt = (e.backtrace || []).take(12).join("\n  ")
+      report = "CRASH REPORT [#{Time.now rescue ''}]\nExcepcion: #{e.class}: #{e.message}\nBacktrace:\n  #{bt}\n"
+      log_compat("[CRASH EN MAIN] #{e.class}: #{e.message}\n  #{bt}") rescue nil
+      begin
+        File.open("crash_report.txt", "w") { |f| f.puts(report) }
+      rescue Exception
+      end
     end
   end
 end

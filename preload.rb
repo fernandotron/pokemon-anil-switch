@@ -9,17 +9,36 @@ $LOG_COMPAT_COUNT ||= 0
 $LOG_COMPAT_MAX_LINES ||= 5000
 $SWITCH_STRICT_EVENTS ||= false
 
+def write_crash_report(e, context = "Global")
+  return if e.nil? || (defined?(SystemExit) && e.is_a?(SystemExit))
+  bt = (e.backtrace || []).take(15).join("\n  ")
+  report = "CRASH REPORT [#{Time.now rescue ''}] - Contexto: #{context}\nExcepcion: #{e.class}: #{e.message}\nBacktrace:\n  #{bt}\n"
+  log_compat("[CRASH REPORT - #{context}] #{e.class}: #{e.message}\n  #{bt}") rescue nil
+  begin
+    File.open("crash_report.txt", "w") do |f|
+      f.puts(report)
+      f.flush rescue nil
+    end
+  rescue Exception
+  end
+end
+
 def log_compat(msg)
   return if $LOG_COMPAT_COUNT >= $LOG_COMPAT_MAX_LINES
   msg_str = msg.to_s
   dedup_key = msg_str[0, 120]
   return if $LOG_COMPAT_DEDUP[dedup_key]
   $LOG_COMPAT_DEDUP[dedup_key] = true
-  $LOG_COMPAT_COUNT += 1
+
+  lines = msg_str.split("\n")
+  if lines.length > 20
+    lines = lines.take(20) + ["  ... [traza truncada en log]"]
+  end
+  $LOG_COMPAT_COUNT += lines.length
 
   puts msg_str rescue nil if $SWITCH_VERBOSE
   if $mkxp_log_file
-    $mkxp_log_file.puts(msg_str) rescue nil
+    lines.each { |l| $mkxp_log_file.puts(l) rescue nil }
     $mkxp_log_file.flush rescue nil
   end
 rescue
@@ -1361,39 +1380,53 @@ module ::Audio
       def_clean = def_down.sub(/^audio\//i, "")
 
       if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
+        # 1. Búsqueda calificada con el default_dir
         found = $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_down}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_clean}/#{base_down}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_clean}/#{base_clean}"] ||
-                $AUDIO_LOOKUP_TABLE[p_down] ||
-                $AUDIO_LOOKUP_TABLE[p_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/" + p_down] ||
-                $AUDIO_LOOKUP_TABLE["audio/" + p_clean] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' ')}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete('_')}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete('-')}"] ||
-                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' _-')}"] ||
-                $AUDIO_LOOKUP_TABLE[base_clean] ||
-                $AUDIO_LOOKUP_TABLE[base_down] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete(" ")] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete("_")] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete("-")] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete(" _-")]
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' _-')}"]
+
+        # 2. Si la ruta original ya especificaba una carpeta o prefijo Audio/
+        if !found && (p.start_with?("Audio/") || p.start_with?("audio/") || p.include?("/"))
+          found = $AUDIO_LOOKUP_TABLE[p_down] ||
+                  $AUDIO_LOOKUP_TABLE[p_clean] ||
+                  $AUDIO_LOOKUP_TABLE["audio/" + p_down] ||
+                  $AUDIO_LOOKUP_TABLE["audio/" + p_clean]
+        end
+
+        # 3. Probar extensiones .wav y .ogg prioritarias bajo default_dir
+        if !found
+          clean_p = p.sub(/\.[^.]+$/, "")
+          cand = p.start_with?("Audio/") ? clean_p : (default_dir + "/" + clean_p)
+          [cand + ".wav", cand + ".ogg", cand + ".mp3", (default_dir + "/" + p)].each do |test_f|
+            t_down = test_f.downcase
+            if $AUDIO_LOOKUP_TABLE[t_down]
+              found = $AUDIO_LOOKUP_TABLE[t_down]
+              break
+            end
+          end
+        end
+
+        # 4. Respaldo por nombre base SOLO si pertenece al default_dir solicitado
+        if !found
+          cand_base = $AUDIO_LOOKUP_TABLE[base_clean] ||
+                      $AUDIO_LOOKUP_TABLE[base_down] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete(" ")] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete("_")] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete("-")] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete(" _-")]
+          if cand_base && (default_dir.to_s.empty? || cand_base.downcase.start_with?(def_down) || cand_base.downcase.start_with?("audio/" + def_clean))
+            found = cand_base
+          end
+        end
 
         if found && !found.empty?
           $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
           return found
-        end
-
-        # Probar extensiones .wav y .ogg prioritarias bajo default_dir
-        clean_p = p.sub(/\.[^.]+$/, "")
-        cand = p.start_with?("Audio/") ? clean_p : "#{default_dir}/#{clean_p}"
-        [cand + ".wav", cand + ".ogg", cand + ".mp3", p].each do |test_f|
-          if $AUDIO_LOOKUP_TABLE[test_f.downcase]
-            found = $AUDIO_LOOKUP_TABLE[test_f.downcase]
-            $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
-            return found
-          end
         end
       end
 
@@ -2817,14 +2850,8 @@ end
 
 # 1.25 Captura global de excepciones no controladas
 at_exit do
-  if $!
-    bt = ($!.backtrace || []).take(12).join("\n")
-    err_msg = "CRASH EN RUBY DETECTADO [#{Time.now rescue ''}]:\nExcepción: #{$!.class}: #{$!.message}\nBacktrace:\n#{bt}"
-    log_compat(err_msg)
-    begin
-      File.open("crash_report.txt", "w") { |f| f.puts(err_msg) }
-    rescue Exception
-    end
+  if $! && !(defined?(SystemExit) && $!.is_a?(SystemExit))
+    write_crash_report($!, "at_exit")
   end
 end
 
