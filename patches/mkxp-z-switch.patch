@@ -1056,9 +1056,6 @@ index 6e09d71..a25406f 100644
  
      /* Request RGSS thread to stop */
      rtData.rqTerm.set();
-diff --git a/src/meson.build b/src/meson.build
-old mode 100755
-new mode 100644
 diff --git a/src/net/net.cpp b/src/net/net.cpp
 index f51ac03..a953dd0 100644
 --- a/src/net/net.cpp
