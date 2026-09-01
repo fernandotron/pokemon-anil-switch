@@ -249,33 +249,63 @@ def pbGetAnimation(name, hue = 0)
   key = "#{name}_#{hue}"
   if $ANIMATION_BITMAP_CACHE.has_key?(key)
     bm = $ANIMATION_BITMAP_CACHE[key]
-    if bm.nil?
-      return nil
-    elsif !bm.disposed?
+    if bm && !bm.disposed?
       $ANIMATION_BITMAP_CACHE.delete(key)
       $ANIMATION_BITMAP_CACHE[key] = bm
       return bm
     end
   end
 
-  clean_name = name.to_s.sub(/^Graphics\/Animations\//i, "").sub(/^Animations\//i, "").sub(/^Graphics\/Battle animations\//i, "").sub(/^Battle animations\//i, "")
-  real_path = pbResolveBitmap("Graphics/Animations/" + clean_name) ||
-              pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
-              pbResolveBitmap(clean_name)
-  if real_path
-    if (hue || 0) == 0
-      bm = (Bitmap.new(real_path) rescue nil) ||
-           (AnimatedBitmap.new(real_path, 0).deanimate rescue nil)
-    else
-      bm = (AnimatedBitmap.new(real_path, hue).deanimate rescue nil) ||
-           (Bitmap.new(real_path) rescue nil)
+  clean_name = name.to_s.sub(/\A(Graphics\/)?(Battle\s*)?animations\//i, "")
+  base_no_ext = clean_name.sub(/\.(bmp|png|gif|jpg|jpeg)\z/i, "")
+  base_lower = base_no_ext.downcase
+
+  real_path = nil
+  if defined?($GRAPHICS_LOOKUP_TABLE) && $GRAPHICS_LOOKUP_TABLE
+    real_path = $GRAPHICS_LOOKUP_TABLE["graphics/animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["graphics/battle animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["battle animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE[clean_name.downcase] ||
+                $GRAPHICS_LOOKUP_TABLE["graphics/animations/#{clean_name.downcase}"]
+  end
+
+  real_path ||= pbResolveBitmap("Graphics/Animations/" + clean_name) ||
+                pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
+                pbResolveBitmap(clean_name)
+
+  if !real_path
+    cands = [
+      "Graphics/Animations/#{clean_name}.png",
+      "Graphics/Animations/#{base_no_ext}.png",
+      "Graphics/Animations/#{clean_name}",
+      "Graphics/Battle animations/#{clean_name}.png",
+      "Graphics/Battle animations/#{base_no_ext}.png",
+      "Graphics/Battle animations/#{clean_name}"
+    ]
+    for cand in cands
+      if File.exist?(cand) || FileTest.exist?(cand)
+        real_path = cand
+        break
+      end
     end
-  else
+  end
+
+  bm = nil
+  if real_path
+    bm = Bitmap.new(real_path) rescue nil
+    bm.hue_change(hue) rescue nil if bm && (hue || 0) != 0
+  end
+
+  if !bm || bm.disposed?
     bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue || 0).deanimate rescue nil) ||
          (AnimatedBitmap.new(clean_name, hue || 0).deanimate rescue nil)
   end
 
-  size = (bm && !bm.disposed?) ? (bm.width * bm.height * 4) : 0
+  return nil if !bm || bm.disposed?
+
+  size = (bm.width * bm.height * 4) rescue 0
   if $ANIMATION_BITMAP_CACHE.has_key?(key)
     old_size = $ANIMATION_BITMAP_SIZES.delete(key) || 0
     $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_size, 0].max
@@ -295,4 +325,5 @@ def pbGetAnimation(name, hue = 0)
 
   return bm
 end
+
 
