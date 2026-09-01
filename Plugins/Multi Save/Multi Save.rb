@@ -235,10 +235,16 @@ module SaveData
   def self.delete_file(file_path=nil)
     if file_path
       (File.delete(file_path) rescue nil) if File.file?(file_path)
+      (File.delete(file_path + ".bak") rescue nil) if File.file?(file_path + ".bak")
+      $SWITCH_FILE_EXIST_CACHE&.delete(file_path)
+      $SWITCH_FILE_EXIST_CACHE&.delete(file_path + ".bak")
     else
       self.each_slot do |slot|
         full_path = self.get_full_path(slot)
         (File.delete(full_path) rescue nil) if File.file?(full_path)
+        (File.delete(full_path + ".bak") rescue nil) if File.file?(full_path + ".bak")
+        $SWITCH_FILE_EXIST_CACHE&.delete(full_path)
+        $SWITCH_FILE_EXIST_CACHE&.delete(full_path + ".bak")
       end
     end
   end
@@ -251,7 +257,7 @@ module SaveData
     validate save_data => Hash
     conversions_to_run = self.get_conversions(save_data)
     return false if conversions_to_run.none?
-    File.open(SaveData.get_backup_file_path, 'wb') { |f| Marshal.dump(save_data, f) }
+    SaveData.dump_to_file(SaveData.get_backup_file_path, save_data)
     Console.echo_h1 "Backed up save to #{SaveData.get_backup_file_path}"
     Console.echo_h1 "Running #{conversions_to_run.length} conversions..."
     conversions_to_run.each do |conversion|
@@ -453,7 +459,7 @@ class PokemonLoadScreen
           MessageTypes.load_message_files(Settings::LANGUAGES[$PokemonSystem.language][1])
           if show_continue
             @save_data[:pokemon_system] = $PokemonSystem
-            File.open(SaveData.get_full_path(@selected_file), "wb") { |file| Marshal.dump(@save_data, file) }
+            SaveData.dump_to_file(SaveData.get_full_path(@selected_file), @save_data)
           end
           $scene = pbCallTitle
           return

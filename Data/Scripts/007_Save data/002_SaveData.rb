@@ -11,23 +11,63 @@ module SaveData
     return File.file?(FILE_PATH)
   end
 
+  # Escribe de forma atómica y segura los datos a disco (.tmp -> .bak -> archivo final)
+  # para prevenir corrupción de datos en caso de corte de energía o crash en Nintendo Switch.
+  def self.dump_to_file(file_path, data)
+    validate file_path => String
+    tmp_path = file_path + ".tmp"
+    bak_path = file_path + ".bak"
+    File.open(tmp_path, "wb") { |file| Marshal.dump(data, file) }
+    if File.size(tmp_path) > 0
+      if File.exist?(file_path)
+        (File.delete(bak_path) rescue nil) if File.exist?(bak_path)
+        (File.rename(file_path, bak_path) rescue nil)
+      end
+      File.rename(tmp_path, file_path)
+      $SWITCH_FILE_EXIST_CACHE&.delete(file_path)
+      $SWITCH_FILE_EXIST_CACHE&.delete(tmp_path)
+      $SWITCH_FILE_EXIST_CACHE&.delete(bak_path)
+    else
+      (File.delete(tmp_path) rescue nil) if File.exist?(tmp_path)
+      raise IOError, "Error al guardar: archivo generado con 0 bytes"
+    end
+  end
+
   # Obtiene los datos de guardado del archivo proporcionado.
   # Devuelve un Array en el caso de un archivo de guardado anterior a la 
-  # versión 19.
+  # versión 19. Cuenta con fallback automático al archivo de respaldo (.bak).
   # @param file_path [String] ruta del archivo desde el que cargar
   # @return [Hash, Array] datos de guardado cargados
   # @raise [IOError, SystemCallError] si falla la apertura del archivo
   def self.get_data_from_file(file_path)
     validate file_path => String
     save_data = nil
-    File.open(file_path) do |file|
-      data = Marshal.load(file)
-      if data.is_a?(Hash)
-        save_data = data
-        next
+    begin
+      File.open(file_path) do |file|
+        data = Marshal.load(file)
+        if data.is_a?(Hash)
+          save_data = data
+          next
+        end
+        save_data = [data]
+        save_data << Marshal.load(file) until file.eof?
       end
-      save_data = [data]
-      save_data << Marshal.load(file) until file.eof?
+    rescue Exception => e
+      bak_path = file_path + ".bak"
+      if File.file?(bak_path)
+        log_compat("[SaveData] Archivo #{file_path} corrupto (#{e.message}). Recuperando desde backup #{bak_path}...") rescue nil
+        File.open(bak_path) do |file|
+          data = Marshal.load(file)
+          if data.is_a?(Hash)
+            save_data = data
+            next
+          end
+          save_data = [data]
+          save_data << Marshal.load(file) until file.eof?
+        end
+      else
+        raise e
+      end
     end
     return save_data
   end
@@ -42,27 +82,29 @@ module SaveData
     save_data = get_data_from_file(file_path)
     save_data = to_hash_format(save_data) if save_data.is_a?(Array)
     if !save_data.empty? && run_conversions(save_data)
-      File.open(file_path, "wb") { |file| Marshal.dump(save_data, file) }
+      self.dump_to_file(file_path, save_data)
     end
     return save_data
   end
 
   # Compila los datos de guardado y guarda una versión marshaled de ellos en
-  # el archivo proporcionado.
+  # el archivo proporcionado mediante escritura atómica.
   # @param file_path [String] ruta del archivo donde guardar
   # @raise [InvalidValueError] si se está guardando un valor no válido
   def self.save_to_file(file_path)
     validate file_path => String
     save_data = self.compile_save_hash
-    File.open(file_path, "wb") { |file| Marshal.dump(save_data, file) }
+    self.dump_to_file(file_path, save_data)
   end
 
   # Elimina el archivo de guardado (y un posible archivo de respaldo .bak 
   # si existe)
   # @raise [Error::ENOENT]
   def self.delete_file
-    File.delete(FILE_PATH)
+    File.delete(FILE_PATH) if File.exist?(FILE_PATH)
     File.delete(FILE_PATH + ".bak") if File.file?(FILE_PATH + ".bak")
+    $SWITCH_FILE_EXIST_CACHE&.delete(FILE_PATH)
+    $SWITCH_FILE_EXIST_CACHE&.delete(FILE_PATH + ".bak")
   end
 
   # Convierte los datos de formato anterior a la versión 19 al nuevo formato.

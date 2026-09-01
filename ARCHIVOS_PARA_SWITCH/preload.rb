@@ -9,17 +9,36 @@ $LOG_COMPAT_COUNT ||= 0
 $LOG_COMPAT_MAX_LINES ||= 5000
 $SWITCH_STRICT_EVENTS ||= false
 
+def write_crash_report(e, context = "Global")
+  return if e.nil? || (defined?(SystemExit) && e.is_a?(SystemExit))
+  bt = (e.backtrace || []).take(15).join("\n  ")
+  report = "CRASH REPORT [#{Time.now rescue ''}] - Contexto: #{context}\nExcepcion: #{e.class}: #{e.message}\nBacktrace:\n  #{bt}\n"
+  log_compat("[CRASH REPORT - #{context}] #{e.class}: #{e.message}\n  #{bt}") rescue nil
+  begin
+    File.open("crash_report.txt", "w") do |f|
+      f.puts(report)
+      f.flush rescue nil
+    end
+  rescue Exception
+  end
+end
+
 def log_compat(msg)
   return if $LOG_COMPAT_COUNT >= $LOG_COMPAT_MAX_LINES
   msg_str = msg.to_s
   dedup_key = msg_str[0, 120]
   return if $LOG_COMPAT_DEDUP[dedup_key]
   $LOG_COMPAT_DEDUP[dedup_key] = true
-  $LOG_COMPAT_COUNT += 1
+
+  lines = msg_str.split("\n")
+  if lines.length > 20
+    lines = lines.take(20) + ["  ... [traza truncada en log]"]
+  end
+  $LOG_COMPAT_COUNT += lines.length
 
   puts msg_str rescue nil if $SWITCH_VERBOSE
   if $mkxp_log_file
-    $mkxp_log_file.puts(msg_str) rescue nil
+    lines.each { |l| $mkxp_log_file.puts(l) rescue nil }
     $mkxp_log_file.flush rescue nil
   end
 rescue
@@ -43,9 +62,10 @@ $AUDIO_LOOKUP_TABLE ||= {}
 $RESOLVE_AUDIO_MEMO_CACHE ||= {}
 $RESOLVED_BITMAP_CACHE ||= {}
 
-if File.exist?("Data/switch_assets_index.dat")
+dat_file = ["Data/switch_assets_index.dat", "./Data/switch_assets_index.dat"].find { |p| File.exist?(p) }
+if dat_file
   begin
-    raw = File.open("Data/switch_assets_index.dat", "rb") { |f| f.read }
+    raw = File.open(dat_file, "rb") { |f| f.read }
     if raw && !raw.empty?
       t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
       $GRAPHICS_LOOKUP_TABLE, $AUDIO_LOOKUP_TABLE = Marshal.load(raw)
@@ -54,16 +74,6 @@ if File.exist?("Data/switch_assets_index.dat")
     end
   rescue Exception => e
     log_compat("[Warning Switch Assets DAT] #{e.message}") rescue nil
-  end
-elsif File.exist?("Data/switch_assets_index.rb")
-  begin
-    code = File.open("Data/switch_assets_index.rb", "rb") { |f| f.read }
-    if code && !code.empty?
-      TOPLEVEL_BINDING.eval(code, "Data/switch_assets_index.rb")
-      log_compat("[Switch Assets] Cargados #{$GRAPHICS_LOOKUP_TABLE.length rescue 0} graficos y #{$AUDIO_LOOKUP_TABLE.length rescue 0} audios pre-indexados en RAM desde .rb fallback.") rescue nil
-    end
-  rescue Exception => e
-    log_compat("[Warning Switch Assets Index] #{e.message}") rescue nil
   end
 end
 
@@ -1370,39 +1380,53 @@ module ::Audio
       def_clean = def_down.sub(/^audio\//i, "")
 
       if defined?($AUDIO_LOOKUP_TABLE) && $AUDIO_LOOKUP_TABLE && !$AUDIO_LOOKUP_TABLE.empty?
+        # 1. Búsqueda calificada con el default_dir
         found = $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_down}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_clean}/#{base_down}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_clean}/#{base_clean}"] ||
-                $AUDIO_LOOKUP_TABLE[p_down] ||
-                $AUDIO_LOOKUP_TABLE[p_clean] ||
-                $AUDIO_LOOKUP_TABLE["audio/" + p_down] ||
-                $AUDIO_LOOKUP_TABLE["audio/" + p_clean] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' ')}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete('_')}"] ||
                 $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete('-')}"] ||
-                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' _-')}"] ||
-                $AUDIO_LOOKUP_TABLE[base_clean] ||
-                $AUDIO_LOOKUP_TABLE[base_down] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete(" ")] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete("_")] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete("-")] ||
-                $AUDIO_LOOKUP_TABLE[base_clean.delete(" _-")]
+                $AUDIO_LOOKUP_TABLE["#{def_down}/#{base_clean.delete(' _-')}"]
+
+        # 2. Si la ruta original ya especificaba una carpeta o prefijo Audio/
+        if !found && (p.start_with?("Audio/") || p.start_with?("audio/") || p.include?("/"))
+          found = $AUDIO_LOOKUP_TABLE[p_down] ||
+                  $AUDIO_LOOKUP_TABLE[p_clean] ||
+                  $AUDIO_LOOKUP_TABLE["audio/" + p_down] ||
+                  $AUDIO_LOOKUP_TABLE["audio/" + p_clean]
+        end
+
+        # 3. Probar extensiones .wav y .ogg prioritarias bajo default_dir
+        if !found
+          clean_p = p.sub(/\.[^.]+$/, "")
+          cand = p.start_with?("Audio/") ? clean_p : (default_dir + "/" + clean_p)
+          [cand + ".wav", cand + ".ogg", cand + ".mp3", (default_dir + "/" + p)].each do |test_f|
+            t_down = test_f.downcase
+            if $AUDIO_LOOKUP_TABLE[t_down]
+              found = $AUDIO_LOOKUP_TABLE[t_down]
+              break
+            end
+          end
+        end
+
+        # 4. Respaldo por nombre base SOLO si pertenece al default_dir solicitado
+        if !found
+          cand_base = $AUDIO_LOOKUP_TABLE[base_clean] ||
+                      $AUDIO_LOOKUP_TABLE[base_down] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete(" ")] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete("_")] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete("-")] ||
+                      $AUDIO_LOOKUP_TABLE[base_clean.delete(" _-")]
+          if cand_base && (default_dir.to_s.empty? || cand_base.downcase.start_with?(def_down) || cand_base.downcase.start_with?("audio/" + def_clean))
+            found = cand_base
+          end
+        end
 
         if found && !found.empty?
           $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
           return found
-        end
-
-        # Probar extensiones .wav y .ogg prioritarias bajo default_dir
-        clean_p = p.sub(/\.[^.]+$/, "")
-        cand = p.start_with?("Audio/") ? clean_p : "#{default_dir}/#{clean_p}"
-        [cand + ".wav", cand + ".ogg", cand + ".mp3", p].each do |test_f|
-          if $AUDIO_LOOKUP_TABLE[test_f.downcase]
-            found = $AUDIO_LOOKUP_TABLE[test_f.downcase]
-            $RESOLVE_AUDIO_MEMO_CACHE[cache_key] = found
-            return found
-          end
         end
       end
 
@@ -1435,22 +1459,21 @@ module ::Audio
     rescue Exception
     end
 
-    # Canal ME nativo: silencia la BGM y reanuda al terminar.
-    # El motor C++ (meWatchFun en audio.cpp) limpia extPaused en BgmFadingOut para evitar silenciamiento permanente.
+    # Canal ME nativo redirigido a canal de efectos para nunca cortar ni perder la BGM
     def me_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/ME")
       file = filename.to_s if file.nil? || file.empty?
-      __switch_native_me_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
+      se_play(file, (volume || 100).to_i, (pitch || 100).to_i)
     rescue Exception
     end
 
     def me_stop
-      __switch_native_me_stop rescue nil
+      # No-op para asegurar que la musica de fondo continue sin cortes
     end
 
     def me_fade(time)
-      __switch_native_me_fade(time) rescue nil
+      # No-op para asegurar que la musica de fondo continue sin cortes
     end
 
     def se_play(filename, volume = 100, pitch = 100)
@@ -1835,6 +1858,9 @@ module ::Graphics
     def center; end
     def width; 512; end
     def height; 384; end
+    def frame_rate; @frame_rate || 40; end
+    def frame_rate=(val); @frame_rate = val; end
+    def average_frame_rate; 40.0; end
   end
 end
 
@@ -2411,7 +2437,6 @@ module Kernel
       src = src.gsub(/module\s+Graphics\b/, 'module ::Graphics')
       src = src.gsub(/module\s+Input\b/, 'module ::Input')
       src = src.gsub(/module\s+Audio\b/, 'module ::Audio')
-      src = src.gsub(/Graphics\.frame_rate\b/, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)')
       src = src.gsub(/class\s+(Rect|Color|Tone)\s*<\s*Object/m, 'class \1')
       src = src.gsub(/class\s+(GameStats|Game_Temp|PokemonSystem)\s*<\s*\1/m, 'class \1')
       src = src.gsub(/class\s+(ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/m, 'class \1')
@@ -2825,14 +2850,8 @@ end
 
 # 1.25 Captura global de excepciones no controladas
 at_exit do
-  if $!
-    bt = ($!.backtrace || []).take(12).join("\n")
-    err_msg = "CRASH EN RUBY DETECTADO [#{Time.now rescue ''}]:\nExcepción: #{$!.class}: #{$!.message}\nBacktrace:\n#{bt}"
-    log_compat(err_msg)
-    begin
-      File.open("crash_report.txt", "w") { |f| f.puts(err_msg) }
-    rescue Exception
-    end
+  if $! && !(defined?(SystemExit) && $!.is_a?(SystemExit))
+    write_crash_report($!, "at_exit")
   end
 end
 
@@ -2996,8 +3015,9 @@ module ::SwitchAssetOptimizer
       return if @anims_preloaded
       @anims_preloaded = true
       
-      log_compat("[SwitchAssetOptimizer] Pre-cargando Data/PkmnAnimations.rxdata en memoria...")
-      $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil)
+      log_compat("[SwitchAssetOptimizer] Pre-cargando Data/PkmnAnimations.rxdata y move2anim.dat en memoria...")
+      $PokemonBattleAnimations ||= (load_data("Data/PkmnAnimations.rxdata") rescue nil)
+      $PokemonMoveToAnim ||= (load_data("Data/move2anim.dat") rescue nil) || []
       if $PokemonBattleAnimations
         log_compat("[SwitchAssetOptimizer] PkmnAnimations.rxdata (#{$PokemonBattleAnimations.length rescue 0} animaciones) precargado en RAM.")
       end
@@ -3193,6 +3213,12 @@ def pbClearAnimationCache
     end
     $ANIMATION_BITMAP_CACHE.clear
   end
+  if defined?($ANIMATION_EVICTED_BITMAPS) && $ANIMATION_EVICTED_BITMAPS
+    $ANIMATION_EVICTED_BITMAPS.each do |bm|
+      bm.dispose if bm && !bm.disposed?
+    end
+    $ANIMATION_EVICTED_BITMAPS.clear
+  end
   $ANIMATION_BITMAP_SIZES&.clear
   $ANIMATION_BITMAP_BYTES = 0
 end
@@ -3202,28 +3228,67 @@ def pbGetAnimation(name, hue = 0)
   key = "#{name}_#{hue}"
   if $ANIMATION_BITMAP_CACHE.has_key?(key)
     bm = $ANIMATION_BITMAP_CACHE[key]
-    if bm.nil?
-      return nil
-    elsif !bm.disposed?
+    return nil if bm.nil?
+    if !bm.disposed?
       $ANIMATION_BITMAP_CACHE.delete(key)
       $ANIMATION_BITMAP_CACHE[key] = bm
       return bm
     end
   end
 
-  clean_name = name.to_s.sub(/^Graphics\/Animations\//i, "").sub(/^Animations\//i, "").sub(/^Graphics\/Battle animations\//i, "").sub(/^Battle animations\//i, "")
-  real_path = pbResolveBitmap("Graphics/Animations/" + clean_name) ||
-              pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
-              pbResolveBitmap(clean_name)
-  if real_path
-    bm = (Bitmap.new(real_path) rescue nil) ||
-         (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
-  else
-    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
-         (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+  clean_name = name.to_s.sub(/\A(Graphics\/)?(Battle\s*)?animations\//i, "")
+  base_no_ext = clean_name.sub(/\.(bmp|png|gif|jpg|jpeg)\z/i, "")
+  base_lower = base_no_ext.downcase
+
+  real_path = nil
+  if defined?($GRAPHICS_LOOKUP_TABLE) && $GRAPHICS_LOOKUP_TABLE
+    real_path = $GRAPHICS_LOOKUP_TABLE["graphics/animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["graphics/battle animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["battle animations/#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE["#{base_lower}.png"] ||
+                $GRAPHICS_LOOKUP_TABLE[clean_name.downcase] ||
+                $GRAPHICS_LOOKUP_TABLE["graphics/animations/#{clean_name.downcase}"]
   end
 
-  size = (bm && !bm.disposed?) ? (bm.width * bm.height * 4) : 0
+  real_path ||= pbResolveBitmap("Graphics/Animations/" + clean_name) ||
+                pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
+                pbResolveBitmap(clean_name)
+
+  if !real_path
+    cands = [
+      "Graphics/Animations/#{clean_name}.png",
+      "Graphics/Animations/#{base_no_ext}.png",
+      "Graphics/Animations/#{clean_name}",
+      "Graphics/Battle animations/#{clean_name}.png",
+      "Graphics/Battle animations/#{base_no_ext}.png",
+      "Graphics/Battle animations/#{clean_name}"
+    ]
+    for cand in cands
+      if File.exist?(cand) || FileTest.exist?(cand)
+        real_path = cand
+        break
+      end
+    end
+  end
+
+  bm = nil
+  if real_path
+    bm = Bitmap.new(real_path) rescue nil
+    bm.hue_change(hue) rescue nil if bm && (hue || 0) != 0
+  end
+
+  if !bm || bm.disposed?
+    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue || 0).deanimate rescue nil) ||
+         (AnimatedBitmap.new(clean_name, hue || 0).deanimate rescue nil)
+  end
+
+  if !bm || bm.disposed?
+    $ANIMATION_BITMAP_CACHE[key] = nil
+    return nil
+  end
+
+  size = (bm.width * bm.height * 4) rescue 0
   if $ANIMATION_BITMAP_CACHE.has_key?(key)
     old_size = $ANIMATION_BITMAP_SIZES.delete(key) || 0
     $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_size, 0].max
@@ -3233,19 +3298,20 @@ def pbGetAnimation(name, hue = 0)
   $ANIMATION_BITMAP_SIZES[key] = size
   $ANIMATION_BITMAP_BYTES += size
 
+  $ANIMATION_EVICTED_BITMAPS ||= []
   while $ANIMATION_BITMAP_BYTES > $ANIMATION_BITMAP_MAX_BYTES && !$ANIMATION_BITMAP_CACHE.empty?
     oldest_key = $ANIMATION_BITMAP_CACHE.keys.first
     old_bm = $ANIMATION_BITMAP_CACHE.delete(oldest_key)
     old_sz = $ANIMATION_BITMAP_SIZES.delete(oldest_key) || 0
     $ANIMATION_BITMAP_BYTES = [$ANIMATION_BITMAP_BYTES - old_sz, 0].max
-    old_bm.dispose if old_bm && !old_bm.disposed?
+    $ANIMATION_EVICTED_BITMAPS << old_bm if old_bm && !old_bm.disposed?
   end
 
   return bm
 end
 
 def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
+  return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
   $LAST_ANIM_LOAD_FRAME ||= 0
   current_frame = (Graphics.frame_count rescue 0)
   if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
@@ -3258,11 +3324,11 @@ def pbLoadBattleAnimations
   begin
     $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
   rescue Exception => e
-    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
+    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
     $PokemonBattleAnimations = nil
   end
   if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}")
+    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
     $PokemonBattleAnimations = nil
     fallback = PBAnimations.new(0)
     fallback.array.clear if fallback.respond_to?(:array) && fallback.array
@@ -3275,10 +3341,12 @@ def pbLoadBattleAnimations
 end
 
 def pbLoadMoveToAnim
-  return $game_temp.move_to_battle_animation_data if defined?($game_temp) && $game_temp&.move_to_battle_animation_data && !$game_temp.move_to_battle_animation_data.empty?
-  data = (load_data("Data/move2anim.dat") rescue nil) || []
-  $game_temp.move_to_battle_animation_data = data if defined?($game_temp) && $game_temp
-  return data
+  return $PokemonMoveToAnim if $PokemonMoveToAnim && !$PokemonMoveToAnim.empty?
+  $PokemonMoveToAnim = (load_data("Data/move2anim.dat") rescue nil) || []
+  if defined?($game_temp) && $game_temp
+    $game_temp.move_to_battle_animation_data = $PokemonMoveToAnim
+  end
+  return $PokemonMoveToAnim
 end
 
 # In-RAM Map Cache for instantaneous overworld transitions on Switch

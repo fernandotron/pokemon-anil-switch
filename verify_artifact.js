@@ -50,7 +50,7 @@ const metrics = [
   {
     name: 'Bytes de Ruby inflado',
     actual: totalBytes,
-    expected: 6031201,
+    expected: 6036428,
     type: 'exact',
     description: 'Tamaño total del código fuente Ruby inflado'
   },

@@ -16,6 +16,7 @@ function scanDir(dir, isAudio = false) {
 
   for (const entry of entries) {
     if (entry.name.startsWith('.')) continue;
+    if (entry.name.endsWith('.bak') || entry.name.endsWith('.tmp') || entry.name.endsWith('~') || entry.name.includes('_old') || entry.name.includes('_older')) continue;
     const fullPath = path.join(dir, entry.name).replace(/\\/g, '/');
     if (entry.isDirectory()) {
       subdirs.push(fullPath);
@@ -105,12 +106,8 @@ function scanDir(dir, isAudio = false) {
       graphicsLookup[relToGfxNoExt] = fullPath;
       graphicsLookup[baseWithExt] = fullPath;
       graphicsLookup[baseNoExt] = fullPath;
-      graphicsLookup[baseNoExt.replace(/ /g, '')] = fullPath;
-      graphicsLookup[baseNoExt.replace(/_/g, '')] = fullPath;
-      graphicsLookup[baseNoExt.replace(/-/g, '')] = fullPath;
-      graphicsLookup[baseNoExt.replace(/[ _-]/g, '')] = fullPath;
 
-      // Map subfolder prefixes (characters/, animations/, pictures/, ui/, battlers/, etc.)
+      // Subfolder mappings for fast resolution
       const subMatch = relToGfx.match(/^([^\/]+)\/(.+)$/);
       if (subMatch) {
         const folder = subMatch[1];
@@ -132,7 +129,7 @@ function scanDir(dir, isAudio = false) {
   }
 }
 
-// Scan Graphics and Data
+// Scan Graphics and Data (excluding backup/temp files)
 ['Graphics', 'Data'].forEach(d => scanDir(d, false));
 
 // Scan Audio

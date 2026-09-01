@@ -20,3 +20,11 @@ Desktop.ini
 .idea/
 node_modules/
 ACTUALIZACION_LIGERA/
+PAQUETE_TEST_SWITCH/
+switch_update/
+ARCHIVOS_MODIFICADOS_SWITCH/
+test_*.js
+check_*.js
+inspect_*.js
+convert_*.js
+audit_*.js

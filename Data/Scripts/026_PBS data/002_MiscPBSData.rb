@@ -37,7 +37,7 @@ end
 # Methods relating to battle animations data.
 #===============================================================================
 def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
+  return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
   $LAST_ANIM_LOAD_FRAME ||= 0
   current_frame = (Graphics.frame_count rescue 0)
   if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
@@ -50,27 +50,29 @@ def pbLoadBattleAnimations
   begin
     $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
   rescue Exception => e
-    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
+    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
     $PokemonBattleAnimations = nil
   end
   if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}")
+    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
     $PokemonBattleAnimations = nil
     fallback = PBAnimations.new(0)
     fallback.array.clear if fallback.respond_to?(:array) && fallback.array
     return fallback
   end
-  $game_temp = Game_Temp.new if !$game_temp
-  $game_temp.battle_animations_data = $PokemonBattleAnimations if $game_temp
+  if defined?($game_temp) && $game_temp
+    $game_temp.battle_animations_data = $PokemonBattleAnimations
+  end
   return $PokemonBattleAnimations
 end
 
 def pbLoadMoveToAnim
-  $game_temp = Game_Temp.new if !$game_temp
-  if !$game_temp.move_to_battle_animation_data
-    $game_temp.move_to_battle_animation_data = load_data("Data/move2anim.dat") || []
+  return $PokemonMoveToAnim if $PokemonMoveToAnim && !$PokemonMoveToAnim.empty?
+  $PokemonMoveToAnim = (load_data("Data/move2anim.dat") rescue nil) || []
+  if defined?($game_temp) && $game_temp
+    $game_temp.move_to_battle_animation_data = $PokemonMoveToAnim
   end
-  return $game_temp.move_to_battle_animation_data
+  return $PokemonMoveToAnim
 end
 
 #===============================================================================

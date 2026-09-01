@@ -194,6 +194,8 @@ class Game_Map
 
   def setup(map_id)
     @map_id = map_id
+    # NOTA SWITCH (Fase 4.16 - Issue #17): pbGetCachedMap evita deserializaciones síncronas redundantes de mapas desde la MicroSD.
+    # PRECAUCIÓN: Si este plugin se actualiza o se redefine Game_Map#setup, debe mantenerse este hook para no anular la caché de mapas.
     @map = (defined?(pbGetCachedMap) ? pbGetCachedMap(map_id) : nil) || load_data(sprintf("Data/Map%03d.rxdata", map_id))
     @side_stairs = {}  # Keep side stair events here
     tileset = $data_tilesets[@map.tileset_id]
