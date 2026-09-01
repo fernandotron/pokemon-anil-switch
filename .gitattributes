@@ -1,0 +1,8 @@
+# Los ficheros de parche DEBEN llegar con LF.
+# Con CRLF, "git apply" no consigue parsear las cabeceras y aborta el parche
+# entero, y build_switch.sh lo enmascara imprimiendo "Parches ya aplicados o
+# no requeridos". Ver #27.
+*.patch text eol=lf
+
+# Scripts de shell: LF obligatorio para que corran en el contenedor de CI.
+*.sh text eol=lf
