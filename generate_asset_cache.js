@@ -16,6 +16,7 @@ function scanDir(dir, isAudio = false) {
 
   for (const entry of entries) {
     if (entry.name.startsWith('.')) continue;
+    if (entry.name.endsWith('.bak') || entry.name.endsWith('.tmp') || entry.name.endsWith('~') || entry.name.includes('_old') || entry.name.includes('_older')) continue;
     const fullPath = path.join(dir, entry.name).replace(/\\/g, '/');
     if (entry.isDirectory()) {
       subdirs.push(fullPath);

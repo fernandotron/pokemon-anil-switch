@@ -263,11 +263,16 @@ def pbGetAnimation(name, hue = 0)
               pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
               pbResolveBitmap(clean_name)
   if real_path
-    bm = (Bitmap.new(real_path) rescue nil) ||
-         (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
+    if (hue || 0) == 0
+      bm = (Bitmap.new(real_path) rescue nil) ||
+           (AnimatedBitmap.new(real_path, 0).deanimate rescue nil)
+    else
+      bm = (AnimatedBitmap.new(real_path, hue).deanimate rescue nil) ||
+           (Bitmap.new(real_path) rescue nil)
+    end
   else
-    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
-         (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue || 0).deanimate rescue nil) ||
+         (AnimatedBitmap.new(clean_name, hue || 0).deanimate rescue nil)
   end
 
   size = (bm && !bm.disposed?) ? (bm.width * bm.height * 4) : 0

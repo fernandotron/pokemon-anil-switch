@@ -1435,22 +1435,21 @@ module ::Audio
     rescue Exception
     end
 
-    # Canal ME nativo: silencia la BGM y reanuda al terminar.
-    # El motor C++ (meWatchFun en audio.cpp) limpia extPaused en BgmFadingOut para evitar silenciamiento permanente.
+    # Canal ME nativo redirigido a canal de efectos para nunca cortar ni perder la BGM
     def me_play(filename, volume = 100, pitch = 100)
       return if filename.nil? || filename.to_s.empty?
       file = resolve_audio_file(filename, nil, "Audio/ME")
       file = filename.to_s if file.nil? || file.empty?
-      __switch_native_me_play(file, (volume || 100).to_i, (pitch || 100).to_i) rescue nil
+      se_play(file, (volume || 100).to_i, (pitch || 100).to_i)
     rescue Exception
     end
 
     def me_stop
-      __switch_native_me_stop rescue nil
+      # No-op para asegurar que la musica de fondo continue sin cortes
     end
 
     def me_fade(time)
-      __switch_native_me_fade(time) rescue nil
+      # No-op para asegurar que la musica de fondo continue sin cortes
     end
 
     def se_play(filename, volume = 100, pitch = 100)
@@ -1835,6 +1834,9 @@ module ::Graphics
     def center; end
     def width; 512; end
     def height; 384; end
+    def frame_rate; @frame_rate || 40; end
+    def frame_rate=(val); @frame_rate = val; end
+    def average_frame_rate; 40.0; end
   end
 end
 
@@ -2411,7 +2413,6 @@ module Kernel
       src = src.gsub(/module\s+Graphics\b/, 'module ::Graphics')
       src = src.gsub(/module\s+Input\b/, 'module ::Input')
       src = src.gsub(/module\s+Audio\b/, 'module ::Audio')
-      src = src.gsub(/Graphics\.frame_rate\b/, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)')
       src = src.gsub(/class\s+(Rect|Color|Tone)\s*<\s*Object/m, 'class \1')
       src = src.gsub(/class\s+(GameStats|Game_Temp|PokemonSystem)\s*<\s*\1/m, 'class \1')
       src = src.gsub(/class\s+(ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/m, 'class \1')
@@ -2996,8 +2997,9 @@ module ::SwitchAssetOptimizer
       return if @anims_preloaded
       @anims_preloaded = true
       
-      log_compat("[SwitchAssetOptimizer] Pre-cargando Data/PkmnAnimations.rxdata en memoria...")
-      $PokemonBattleAnimations = (load_data("Data/PkmnAnimations.rxdata") rescue nil)
+      log_compat("[SwitchAssetOptimizer] Pre-cargando Data/PkmnAnimations.rxdata y move2anim.dat en memoria...")
+      $PokemonBattleAnimations ||= (load_data("Data/PkmnAnimations.rxdata") rescue nil)
+      $PokemonMoveToAnim ||= (load_data("Data/move2anim.dat") rescue nil) || []
       if $PokemonBattleAnimations
         log_compat("[SwitchAssetOptimizer] PkmnAnimations.rxdata (#{$PokemonBattleAnimations.length rescue 0} animaciones) precargado en RAM.")
       end
@@ -3216,11 +3218,16 @@ def pbGetAnimation(name, hue = 0)
               pbResolveBitmap("Graphics/Battle animations/" + clean_name) ||
               pbResolveBitmap(clean_name)
   if real_path
-    bm = (Bitmap.new(real_path) rescue nil) ||
-         (AnimatedBitmap.new(real_path, hue).deanimate rescue nil)
+    if (hue || 0) == 0
+      bm = (Bitmap.new(real_path) rescue nil) ||
+           (AnimatedBitmap.new(real_path, 0).deanimate rescue nil)
+    else
+      bm = (AnimatedBitmap.new(real_path, hue).deanimate rescue nil) ||
+           (Bitmap.new(real_path) rescue nil)
+    end
   else
-    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue).deanimate rescue nil) ||
-         (AnimatedBitmap.new(clean_name, hue).deanimate rescue nil)
+    bm = (AnimatedBitmap.new("Graphics/Animations/" + clean_name, hue || 0).deanimate rescue nil) ||
+         (AnimatedBitmap.new(clean_name, hue || 0).deanimate rescue nil)
   end
 
   size = (bm && !bm.disposed?) ? (bm.width * bm.height * 4) : 0
@@ -3245,7 +3252,7 @@ def pbGetAnimation(name, hue = 0)
 end
 
 def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
+  return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
   $LAST_ANIM_LOAD_FRAME ||= 0
   current_frame = (Graphics.frame_count rescue 0)
   if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
@@ -3258,11 +3265,11 @@ def pbLoadBattleAnimations
   begin
     $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
   rescue Exception => e
-    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
+    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
     $PokemonBattleAnimations = nil
   end
   if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}")
+    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
     $PokemonBattleAnimations = nil
     fallback = PBAnimations.new(0)
     fallback.array.clear if fallback.respond_to?(:array) && fallback.array
@@ -3275,10 +3282,12 @@ def pbLoadBattleAnimations
 end
 
 def pbLoadMoveToAnim
-  return $game_temp.move_to_battle_animation_data if defined?($game_temp) && $game_temp&.move_to_battle_animation_data && !$game_temp.move_to_battle_animation_data.empty?
-  data = (load_data("Data/move2anim.dat") rescue nil) || []
-  $game_temp.move_to_battle_animation_data = data if defined?($game_temp) && $game_temp
-  return data
+  return $PokemonMoveToAnim if $PokemonMoveToAnim && !$PokemonMoveToAnim.empty?
+  $PokemonMoveToAnim = (load_data("Data/move2anim.dat") rescue nil) || []
+  if defined?($game_temp) && $game_temp
+    $game_temp.move_to_battle_animation_data = $PokemonMoveToAnim
+  end
+  return $PokemonMoveToAnim
 end
 
 # In-RAM Map Cache for instantaneous overworld transitions on Switch

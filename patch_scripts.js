@@ -913,13 +913,10 @@ end # SWITCH_CORE_RGSS_PATCHED
     changed = true;
   }
 
-  if (s.code.includes('Graphics.frame_rate')) {
-    console.log('Patching Graphics.frame_rate in:', s.name);
-    // Issue #2: Limpiar anidamientos previos para garantizar idempotencia real
-    while (s.code.includes('(Graphics.respond_to?(:frame_rate) ? (Graphics.respond_to?(:frame_rate)')) {
-      s.code = s.code.replace(/\(Graphics\.respond_to\?\(:frame_rate\)\s*\?\s*\(Graphics\.respond_to\?\(:frame_rate\)[\s\S]*?: 40\)\s*:\s*40\)/g, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)');
-    }
-    s.code = s.code.replace(/(?<!respond_to\?\(:frame_rate\)\s*\?\s*)Graphics\.frame_rate\b(?!\s*:\s*40)/g, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)');
+  if (s.code.includes('frame_rate')) {
+    console.log('Unwrapping Graphics.frame_rate in:', s.name);
+    s.code = s.code.replace(/(?:\(Graphics\.respond_to\?\(:frame_rate\)\s*\?\s*)+Graphics\.frame_rate(?:\s*:\s*40\))+/g, 'Graphics.frame_rate');
+    s.code = s.code.replace(/Graphics\.frame_rate(?:\s*:\s*40\))+/g, 'Graphics.frame_rate');
     changed = true;
   }
   
@@ -1875,56 +1872,6 @@ end`
     changed = true;
   }
 
-  if (s.name.includes('BattleIntroAnim') || (s.code.includes('def pbBattleAnimationCore') && s.code.includes('SpecialBattleIntroAnimations'))) {
-    console.log('Patching Overworld_BattleIntroAnim in:', s.name);
-    s.code = s.code.replace(
-      /def pbBattleAnimation\(bgm = nil, battletype = 0, foe = nil\)[\s\S]*?def pbBattleAnimationCore[\s\S]*?end\s*\n\s*#={10,}/m,
-`def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
-  $game_temp.in_battle = true
-  viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
-  viewport.z = 99999
-  playingBGS = $game_system&.getPlayingBGS
-  playingBGM = $game_system&.getPlayingBGM
-  bgm = pbGetWildBattleBGM([]) if !bgm
-  pbBGMPlay(bgm)
-  
-  # Flash rápido y transición fluida en Switch (0.12s)
-  viewport.color = Color.new(255, 255, 255, 255)
-  5.times do |i|
-    viewport.color.alpha = ((5 - i) * 50).clamp(0, 255)
-    Graphics.update
-  end
-  Graphics.freeze
-  viewport.color = Color.black
-  Graphics.transition(6)
-  
-  pbPushFade
-  yield if block_given?
-  pbPopFade
-  if $game_system.is_a?(Game_System)
-    if playingBGM && !playingBGM.name.to_s.empty?
-      $game_system.bgm_play(playingBGM)
-    elsif $game_map && $game_map.bgm
-      $game_system.bgm_play($game_map.bgm)
-    end
-    if playingBGS && !playingBGS.name.to_s.empty?
-      $game_system.bgs_play(playingBGS)
-    end
-  end
-  $game_temp.memorized_bgm          = nil
-  $game_temp.memorized_bgm_position = 0
-  $PokemonGlobal.nextBattleBGM      = nil
-  $PokemonEncounters.reset_step_count
-  viewport.dispose
-  $game_temp.in_battle = false
-end
-
-def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2); end
-
-#===============================================================================`
-    );
-    changed = true;
-  }
   
   if (s.name.includes('Game_System') || s.code.includes('def bgm_play_internal2')) {
     console.log('Patching Game_System in:', s.name);
@@ -2229,9 +2176,9 @@ end unless defined?(PBAnimations)`
     console.log('Patching MiscPBSData pbLoadBattleAnimations in:', s.name);
     s.code = sub(
       s.code,
-      /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?return \$game_temp\.move_to_battle_animation_data\s*\nend/m,
+      /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?\nend\s*\n\s*(?=#={10,})/m,
 `def pbLoadBattleAnimations
-  return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
+  return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
   $LAST_ANIM_LOAD_FRAME ||= 0
   current_frame = (Graphics.frame_count rescue 0)
   if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
@@ -2244,11 +2191,11 @@ end unless defined?(PBAnimations)`
   begin
     $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
   rescue Exception => e
-    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
+    log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
     $PokemonBattleAnimations = nil
   end
   if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}")
+    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
     $PokemonBattleAnimations = nil
     fallback = PBAnimations.new(0)
     fallback.array.clear if fallback.respond_to?(:array) && fallback.array
@@ -2261,10 +2208,12 @@ end unless defined?(PBAnimations)`
 end
  
 def pbLoadMoveToAnim
-  return $game_temp.move_to_battle_animation_data if defined?($game_temp) && $game_temp&.move_to_battle_animation_data && !$game_temp.move_to_battle_animation_data.empty?
-  data = (load_data("Data/move2anim.dat") rescue nil) || []
-  $game_temp.move_to_battle_animation_data = data if defined?($game_temp) && $game_temp
-  return data
+  return $PokemonMoveToAnim if $PokemonMoveToAnim && !$PokemonMoveToAnim.empty?
+  $PokemonMoveToAnim = (load_data("Data/move2anim.dat") rescue nil) || []
+  if defined?($game_temp) && $game_temp
+    $game_temp.move_to_battle_animation_data = $PokemonMoveToAnim
+  end
+  return $PokemonMoveToAnim
 end`,
       'MiscPBSData_pbLoadBattleAnimations'
     );
