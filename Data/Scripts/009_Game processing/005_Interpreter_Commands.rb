@@ -1181,7 +1181,7 @@ class Interpreter
     end
     # Run the script
     result = execute_script(script)
-    return false if result == false
+    return false if result == Interpreter::SCRIPT_ABORTED
     return true
   end
 end
