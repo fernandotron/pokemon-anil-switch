@@ -50,8 +50,6 @@ class Battle::AI
     return switch_score >= threshold
   end
   
-  private # All methods below are private helper methods
-  
   # Calculates Switch Score (0-100+)
   def calculate_switch_score(user, skill)
     dbg = AdvancedAI::DEBUG_SWITCH_INTELLIGENCE
@@ -832,7 +830,7 @@ class Battle::AI
     end
     
     # Sub-bullet: Entry hazard cost
-    hazard_dmg = calculate_entry_hazard_damage(best_pkmn, get_battler_index(user) & 1) rescue 0
+    hazard_dmg = aai_calculate_entry_hazard_damage(best_pkmn, get_battler_index(user) & 1) rescue 0
     if hazard_dmg > 0
       hazard_source = []
       side = @battle.sides[user.index & 1]  # own side (& 1 is safe in doubles)
@@ -847,8 +845,6 @@ class Battle::AI
     # Return party index directly (Core.rb expects integer)
     return best_idx
   end
-  
-  private
   
   # Constants for damage calculation
   DAMAGE_RANDOM_MULTIPLIER = 0.925  # Average of random damage roll (85-100%)
@@ -1254,7 +1250,7 @@ class Battle::AI
     return 0 if switch_types.empty? || switch_types.any?(&:nil?)
     
     # === ENTRY HAZARD DAMAGE PENALTY ===
-    hazard_damage = calculate_entry_hazard_damage(switch_pkmn, get_battler_index(current_user) & 1)
+    hazard_damage = aai_calculate_entry_hazard_damage(switch_pkmn, get_battler_index(current_user) & 1)
     if hazard_damage > 0
       hazard_penalty = (hazard_damage * 100).to_i  # Scale: 50% hazard damage = -50 points
       score -= hazard_penalty
@@ -1630,7 +1626,7 @@ class Battle::AI
   
   # Calculate total damage from entry hazards on switch-in
   # Returns damage as percentage of total HP (0.0 to 1.0+)
-  def calculate_entry_hazard_damage(switch_pkmn, current_user)
+  def aai_calculate_entry_hazard_damage(switch_pkmn, current_user)
     return 0.0 unless switch_pkmn && current_user
     
     total_damage = 0.0
