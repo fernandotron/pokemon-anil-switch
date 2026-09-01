@@ -95,6 +95,14 @@ if [ ! -f "$DEVKITPRO/portlibs/switch/lib/libiconv.a" ]; then
 fi
 
 # 2.5 Compilar Ruby 3.1 para Switch si no está instalado
+RUBY_STAMP_FILE="$DEVKITPRO/portlibs/switch/.ruby_build_stamp"
+CURRENT_RUBY_STAMP=$(md5sum "$0" "$PROJECT_ROOT"/patches/* 2>/dev/null | md5sum | cut -d' ' -f1)
+
+if [ -f "$RUBY_STAMP_FILE" ] && [ "$(cat "$RUBY_STAMP_FILE" 2>/dev/null)" != "$CURRENT_RUBY_STAMP" ]; then
+    echo "--- Configuración de build o parches modificados: invalidando libruby previa ---"
+    rm -f "$DEVKITPRO/portlibs/switch/lib/libruby"* "$RUBY_STAMP_FILE"
+fi
+
 if [ ! -f "$DEVKITPRO/portlibs/switch/lib/libruby-static.a" ] && [ ! -f "$DEVKITPRO/portlibs/switch/lib/libruby.a" ]; then
     echo "--- Compilando Ruby 3.1 para Nintendo Switch ---"
     
@@ -326,6 +334,7 @@ Version: 3.1.4
 Cflags: -I${includedir}/ruby-3.1.0 -I${includedir}/ruby-3.1.0/aarch64-elf
 Libs: -L${libdir} -Wl,--whole-archive -lruby-static -Wl,--no-whole-archive -lm
 EOF
+    echo "$CURRENT_RUBY_STAMP" > "$RUBY_STAMP_FILE"
     cd "$PROJECT_ROOT"
 fi
 
@@ -342,8 +351,11 @@ if [ -f "$PROJECT_ROOT/patches/mkxp-z-switch.patch" ]; then
     if git apply --check "$PROJECT_ROOT/patches/mkxp-z-switch.patch" >/dev/null 2>&1; then
         git apply "$PROJECT_ROOT/patches/mkxp-z-switch.patch"
         echo "Parches aplicados exitosamente a mkxp-z."
+    elif git apply --reverse --check "$PROJECT_ROOT/patches/mkxp-z-switch.patch" >/dev/null 2>&1; then
+        echo "Parches de Nintendo Switch ya aplicados en mkxp-z."
     else
-        echo "Parches de Nintendo Switch ya aplicados o no requeridos en mkxp-z."
+        echo "[ERROR] Falló git apply --check sobre patches/mkxp-z-switch.patch. El parche está roto."
+        exit 1
     fi
 fi
 
