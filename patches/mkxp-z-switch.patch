@@ -521,6 +521,24 @@ index 9a8cf6a..ee4ab4f 100644
 +        depend_files: files(file)
 +    )
  endforeach
+diff --git a/src/audio/audio.cpp b/src/audio/audio.cpp
+index eaf4cc6..3087cdd 100644
+--- a/src/audio/audio.cpp
++++ b/src/audio/audio.cpp
+@@ -140,6 +140,13 @@ struct AudioPrivate
+ 				if (me.stream.queryState() != ALStream::Playing)
+ 				{
+ 					/* ME has ended while fading OUT BGM. -> FadeInBGM */
++					for (auto track : bgmTracks) {
++						track->lockStream();
++						track->extPaused = false;
++						if (track->stream.queryState() == ALStream::Paused)
++							track->stream.play();
++						track->unlockStream();
++					}
+ 					me.unlockStream();
+ 					meWatch.state = BgmFadingIn;
+ 
 diff --git a/src/audio/fluid-fun.cpp b/src/audio/fluid-fun.cpp
 index 3d89733..98d8f41 100644
 --- a/src/audio/fluid-fun.cpp

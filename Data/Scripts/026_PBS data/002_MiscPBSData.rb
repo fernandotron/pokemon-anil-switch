@@ -38,15 +38,27 @@ end
 #===============================================================================
 def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
+  $LAST_ANIM_LOAD_FRAME ||= 0
+  current_frame = (Graphics.frame_count rescue 0)
+  if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
+    fallback = PBAnimations.new(0)
+    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
+    return fallback
+  end
+  $LAST_ANIM_LOAD_FRAME = current_frame
+
   begin
     $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
   rescue Exception => e
     log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
     $PokemonBattleAnimations = nil
   end
-  if !$PokemonBattleAnimations.is_a?(PBAnimations)
-    log_compat("[Animaciones] Tipo inesperado: #{$PokemonBattleAnimations.class}")
-    $PokemonBattleAnimations = PBAnimations.new(0)
+  if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
+    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}")
+    $PokemonBattleAnimations = nil
+    fallback = PBAnimations.new(0)
+    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
+    return fallback
   end
   $game_temp = Game_Temp.new if !$game_temp
   $game_temp.battle_animations_data = $PokemonBattleAnimations if $game_temp

@@ -108,7 +108,7 @@ Si hay más de una, parchea **la última que se evalúa**, o todas.
 | `Data/switch_assets_index.{rb,dat}` | Generado por `generate_asset_cache.js`. |
 | `ARCHIVOS_PARA_SWITCH/**` | **Generado.** Si está corrupto: `git restore ARCHIVOS_PARA_SWITCH`. |
 | `Data/Scripts/999_Main/999_Main.rb` | **No se embarca.** `patch_scripts.js` lo reescribe entero. Editarlo es trabajo perdido. |
-| `*.nro`, `*.dll`, `*.nacp` | Binarios. Solo los regenera `build_switch.sh`. |
+| `*.nro`, `*.dll`, `*.nacp` | Binarios. Solo los regenera `build_switch.sh` o CI. Los versionados en el repo son binarios base; el `.nro` al día se descarga del artefacto de CI `PokemonAnil-Switch-NRO`. |
 | `mkxp-z/` | Submódulo del motor C++. |
 | `Audio/**`, `Graphics/**` | Assets. No los conviertas ni los renombres. |
 

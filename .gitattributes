@@ -6,3 +6,7 @@
 
 # Scripts de shell: LF obligatorio para que corran en el contenedor de CI.
 *.sh text eol=lf
+
+# Scripts de Ruby: LF obligatorio para parsing consistente de regex en herramientas
+*.rb text eol=lf
+

@@ -217,6 +217,17 @@ function syncFromDisk(dir) {
 }
 syncFromDisk('Data/Scripts');
 
+// Issue #2: NO crear Scripts.rxdata.pristine; la idempotencia se garantiza normalizando código y evitando auto-anidaciones.
+// Issue #3: Capturar mapa de métodos def antes de cualquier mutación para la verificación de round-trip.
+const inputScriptDefs = new Map();
+let inputDefsTotal = 0;
+for (const s of scripts) {
+  const m = s.code.match(/\bdef\s+/g);
+  const count = m ? m.length : 0;
+  inputScriptDefs.set(s.name, count);
+  inputDefsTotal += count;
+}
+
 // Universal sanitizer for ANY reopened class with < Superclass
 const definedClasses = new Set([
   'Rect', 'Color', 'Tone', 'File', 'Dir', 'FileTest',
@@ -813,26 +824,26 @@ end # SWITCH_CORE_RGSS_PATCHED
 
   if (s.name === 'PluginManager' || s.code.includes('def self.runPlugins')) {
     console.log('Patching PluginManager in:', s.name);
-    s.code = fs.readFileSync('Data/Scripts/003_Technical/006_PluginManager.rb', 'utf-8');
+    s.code = fs.readFileSync('Data/Scripts/003_Technical/006_PluginManager.rb', 'utf-8').replace(/\r\n/g, '\n');
     s.code = s.code.replace(/module\s+PluginManager\b/g, 'module ::PluginManager');
     changed = true;
   }
 
   if (s.name.includes('EventScene') || s.code.includes('class EventScene')) {
     console.log('Patching EventScene in:', s.name);
-    s.code = fs.readFileSync('Data/Scripts/022_Scenes/003_EventScene.rb', 'utf-8');
+    s.code = fs.readFileSync('Data/Scripts/022_Scenes/003_EventScene.rb', 'utf-8').replace(/\r\n/g, '\n');
     changed = true;
   }
 
   if (s.name.includes('UI_SplashesAndTitleScreen') || s.code.includes('class IntroEventScene')) {
     console.log('Patching UI_SplashesAndTitleScreen in:', s.name);
-    s.code = fs.readFileSync('Data/Scripts/049_Non-interactive UI/002_UI_SplashesAndTitleScreen.rb', 'utf-8');
+    s.code = fs.readFileSync('Data/Scripts/049_Non-interactive UI/002_UI_SplashesAndTitleScreen.rb', 'utf-8').replace(/\r\n/g, '\n');
     changed = true;
   }
 
   if (s.name === 'FileTests' || s.code.includes('def pbGetFileChar')) {
     console.log('Patching FileTests in:', s.name);
-    s.code = fs.readFileSync('Data/Scripts/005_Files/002_FileTests.rb', 'utf-8');
+    s.code = fs.readFileSync('Data/Scripts/005_Files/002_FileTests.rb', 'utf-8').replace(/\r\n/g, '\n');
     s.code = s.code.replace(/file\.last\s*==\s*["']\/["']/g, 'file.to_s[-1] == "/"');
     changed = true;
   }
@@ -904,7 +915,11 @@ end # SWITCH_CORE_RGSS_PATCHED
 
   if (s.code.includes('Graphics.frame_rate')) {
     console.log('Patching Graphics.frame_rate in:', s.name);
-    s.code = s.code.replace(/Graphics\.frame_rate\b/g, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)');
+    // Issue #2: Limpiar anidamientos previos para garantizar idempotencia real
+    while (s.code.includes('(Graphics.respond_to?(:frame_rate) ? (Graphics.respond_to?(:frame_rate)')) {
+      s.code = s.code.replace(/\(Graphics\.respond_to\?\(:frame_rate\)\s*\?\s*\(Graphics\.respond_to\?\(:frame_rate\)[\s\S]*?: 40\)\s*:\s*40\)/g, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)');
+    }
+    s.code = s.code.replace(/(?<!respond_to\?\(:frame_rate\)\s*\?\s*)Graphics\.frame_rate\b(?!\s*:\s*40)/g, '(Graphics.respond_to?(:frame_rate) ? Graphics.frame_rate : 40)');
     changed = true;
   }
   
@@ -1122,8 +1137,9 @@ end
 
   if (s.name.includes('SplashesAndTitleScreen') || s.code.includes('def fade_out_title_screen')) {
     console.log('Patching fade_out_title_screen in:', s.name);
-    s.code = s.code.replace(
-      /def fade_out_title_screen\(scene\)[\s\S]*?end\n\n\s*def close_title_screen/m,
+    s.code = sub(
+      s.code,
+      /def fade_out_title_screen\(scene\)[\s\S]*?end\r?\n\r?\n\s*def close_title_screen/m,
 `def fade_out_title_screen(scene)
     onUpdate.clear
     onCTrigger.clear
@@ -1148,7 +1164,8 @@ end
     scene.dispose
   end
 
-  def close_title_screen`
+  def close_title_screen`,
+      'fade_out_title_screen'
     );
     changed = true;
   }
@@ -2215,15 +2232,27 @@ end unless defined?(PBAnimations)`
       /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?return \$game_temp\.move_to_battle_animation_data\s*\nend/m,
 `def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations.is_a?(PBAnimations) && $PokemonBattleAnimations.length > 0
+  $LAST_ANIM_LOAD_FRAME ||= 0
+  current_frame = (Graphics.frame_count rescue 0)
+  if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
+    fallback = PBAnimations.new(0)
+    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
+    return fallback
+  end
+  $LAST_ANIM_LOAD_FRAME = current_frame
+
   begin
     $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
   rescue Exception => e
     log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}")
     $PokemonBattleAnimations = nil
   end
-  if !$PokemonBattleAnimations.is_a?(PBAnimations)
-    log_compat("[Animaciones] Tipo inesperado: #{$PokemonBattleAnimations.class}")
-    $PokemonBattleAnimations = PBAnimations.new(0)
+  if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
+    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}")
+    $PokemonBattleAnimations = nil
+    fallback = PBAnimations.new(0)
+    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
+    return fallback
   end
   if defined?($game_temp) && $game_temp
     $game_temp.battle_animations_data = $PokemonBattleAnimations
@@ -2473,33 +2502,6 @@ end
 
 def mainFunctionDebug
   begin
-    # Iniciar música inmediatamente al arrancar
-    Audio.bgm_play("Audio/BGM/Title.ogg", 100, 100) rescue nil
-
-    # 0. Pantalla de carga visual inmediata (para que nunca haya pantalla negra en la Switch)
-    $loading_viewport = nil
-    $loading_sprite = nil
-    begin
-      $loading_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height) rescue nil
-      if $loading_viewport
-        $loading_viewport.z = 999999
-        $loading_sprite = Sprite.new($loading_viewport) rescue nil
-        if $loading_sprite
-          splash_file = pbResolveBitmap("Graphics/Titles/splash") || pbResolveBitmap("Graphics/Titles/splash1") || pbResolveBitmap("Graphics/Titles/title")
-          if splash_file
-            $loading_sprite.bitmap = Bitmap.new(splash_file) rescue nil
-          else
-            $loading_sprite.bitmap = Bitmap.new(Graphics.width, Graphics.height) rescue nil
-            $loading_sprite.bitmap.fill_rect(0, 0, Graphics.width, Graphics.height, Color.new(20, 24, 35)) rescue nil
-          end
-          Graphics.update rescue nil
-          Graphics.transition(0) rescue nil
-        end
-      end
-    rescue Exception => e_splash
-      log_compat("[Warning Splash] #{e_splash.message}") rescue nil
-    end
-
     # Descartar pantalla de carga visual antes del título
     begin
       if $loading_sprite
@@ -2558,6 +2560,33 @@ def mainFunctionDebug
     rescue Exception
     end
   end
+end
+
+# Iniciar música inmediatamente al arrancar
+Audio.bgm_play("Audio/BGM/Title.ogg", 100, 100) rescue nil
+
+# 0. Pantalla de carga visual inmediata (para que nunca haya pantalla negra en la Switch)
+$loading_viewport = nil
+$loading_sprite = nil
+begin
+  $loading_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height) rescue nil
+  if $loading_viewport
+    $loading_viewport.z = 999999
+    $loading_sprite = Sprite.new($loading_viewport) rescue nil
+    if $loading_sprite
+      splash_file = pbResolveBitmap("Graphics/Titles/splash") || pbResolveBitmap("Graphics/Titles/splash1") || pbResolveBitmap("Graphics/Titles/title")
+      if splash_file
+        $loading_sprite.bitmap = Bitmap.new(splash_file) rescue nil
+      else
+        $loading_sprite.bitmap = Bitmap.new(Graphics.width, Graphics.height) rescue nil
+        $loading_sprite.bitmap.fill_rect(0, 0, Graphics.width, Graphics.height, Color.new(20, 24, 35)) rescue nil
+      end
+      Graphics.update rescue nil
+      Graphics.transition(0) rescue nil
+    end
+  end
+rescue Exception => e_splash
+  log_compat("[Warning Splash] #{e_splash.message}") rescue nil
 end
 
 # Inicialización única del sistema fuera del bucle de escenas
@@ -2754,18 +2783,30 @@ function verifyRoundTrip(buffer, originalScripts) {
     process.exit(1);
   }
 
-  let origDefs = 0;
+  // Validar que ningún script individual haya perdido métodos def respecto a la entrada
+  const allowedLoss = {
+    'RubyUtilities': 2,        // Remoción intencionada del override obsoleto de Kernel.rand (reemplazado por Kernel.rand nativo en Ruby 3)
+    'Barras entrenadores': 2,  // Reemplazo completo por stub optimizado para Switch
+    'PreloadManager': 1        // Reemplazo de métodos de preloading síncrono por stubs seguros
+  };
   for (let s of originalScripts) {
+    const orig = inputScriptDefs.get(s.name) || 0;
+    const allowed = allowedLoss[s.name] || 0;
     const m = s.code.match(/\bdef\s+/g);
-    if (m) origDefs += m.length;
+    const curr = m ? m.length : 0;
+    if (curr < orig - allowed) {
+      console.error(`[ERROR Round-trip] El script '${s.name}' perdió métodos def no autorizados: antes=${orig}, después=${curr} (permitido: -${allowed})`);
+      process.exit(1);
+    }
   }
 
-  if (totalDefs < origDefs) {
-    console.error(`[ERROR Round-trip] El número de métodos def disminuyó: antes=${origDefs}, después=${totalDefs}`);
+  const expectedMinTotal = inputDefsTotal - 5;
+  if (totalDefs < expectedMinTotal) {
+    console.error(`[ERROR Round-trip] El número total de métodos def disminuyó: antes=${inputDefsTotal}, después=${totalDefs} (mínimo esperado: ${expectedMinTotal})`);
     process.exit(1);
   }
 
-  console.log(`[OK Round-trip] Verificado: ${total} scripts, ${totalDefs} métodos def (original: ${origDefs}), 0 nombres duplicados.`);
+  console.log(`[OK Round-trip] Verificado: ${total} scripts, ${totalDefs} métodos def (original: ${inputDefsTotal}), 0 nombres duplicados.`);
 }
 
 verifyRoundTrip(outBuf, scripts);

@@ -12,7 +12,7 @@ MenuHandlers.add(:options_menu, :guardar_al_curar, {
 class PokemonSystem
 	attr_accessor :guardar_al_curar
 	
-	alias guardar_al_curar_initialize initialize unless method_defined?(:guardar_al_curar_initialize)
+	alias guardar_al_curar_initialize initialize unless method_defined?(:guardar_al_curar_initialize) || private_method_defined?(:guardar_al_curar_initialize)
 	def initialize
 		guardar_al_curar_initialize
 		@guardar_al_curar = 1

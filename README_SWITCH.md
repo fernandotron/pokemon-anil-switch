@@ -53,13 +53,15 @@ chmod +x build_switch.sh
 
 ## 4. Despliegue en la Consola (MicroSD)
 
+> **Nota sobre el binario `.nro`:** Los ficheros `.nro` versionados en el repositorio son binarios base. El ejecutable compilado al día con todos los parches más recientes se genera automáticamente en GitHub Actions y se puede descargar desde los artefactos de CI (**PokemonAnil-Switch-NRO**).
+
 Copia los archivos a tu tarjeta MicroSD en la siguiente ruta:
 
 ```text
 sdmc:/
 └── switch/
     └── port/
-        ├── port.nro              <-- Binario generado
+        ├── port.nro              <-- Binario generado (o descargado de CI)
         ├── mkxp.json             <-- Renombrar mkxp.switch.json a mkxp.json
         ├── Game.ini              <-- Configuración del juego
         ├── preload.rb            <-- Script de compatibilidad
