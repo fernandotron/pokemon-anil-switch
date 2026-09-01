@@ -6,6 +6,8 @@
 $SWITCH_STRICT_EVENTS = false unless defined?($SWITCH_STRICT_EVENTS)
 
 class Interpreter
+  SCRIPT_ABORTED = :__switch_script_aborted
+
   # Object Initialization
   #     depth : nest depth
   #     main  : main flag
@@ -144,7 +146,7 @@ class Interpreter
         $game_map.events[@event_id].clear_starting
       end
       command_end
-      return false
+      return SCRIPT_ABORTED
     end
   end
 
