@@ -27,7 +27,7 @@ index b746281..7c741f9 100644
 -    count += 1
  endforeach
 diff --git a/binding/binding-mri.cpp b/binding/binding-mri.cpp
-index 3c54842..b60cc1a 100644
+index 3c54842..39667d2 100644
 --- a/binding/binding-mri.cpp
 +++ b/binding/binding-mri.cpp
 @@ -157,7 +157,116 @@ json5pp::value rb2json(VALUE v);
@@ -218,7 +218,15 @@ index 3c54842..b60cc1a 100644
      }
      
      return Qnil;
-@@ -978,6 +1091,7 @@ static void runRMXPScripts(BacktraceData &btData) {
+@@ -964,6 +1077,7 @@ static void runRMXPScripts(BacktraceData &btData) {
+     /* We checked if Scripts.rxdata exists, but something might
+      * still go wrong */
+     try {
++    Debug() << "[SCR 1] antes de leer Scripts.rxdata de disco";
+         scriptArray = kernelLoadDataInt(scriptPack.c_str(), false, false);
+     } catch (const Exception &e) {
+         showMsg(std::string("Failed to read script data: ") + e.msg);
+@@ -978,9 +1092,11 @@ static void runRMXPScripts(BacktraceData &btData) {
      rb_gv_set("$RGSS_SCRIPTS", scriptArray);
      
      long scriptCount = RARRAY_LEN(scriptArray);
@@ -226,9 +234,15 @@ index 3c54842..b60cc1a 100644
      
      std::string decodeBuffer;
      decodeBuffer.resize(0x1000);
-@@ -1027,6 +1141,36 @@ static void runRMXPScripts(BacktraceData &btData) {
++    Debug() << "[SCR 2] leido y deserializado; empieza el inflado de las 437 secciones (CPU pura, sin disco)";
+     
+     for (long i = 0; i < scriptCount; ++i) {
+         VALUE script = rb_ary_entry(scriptArray, i);
+@@ -1026,7 +1142,38 @@ static void runRMXPScripts(BacktraceData &btData) {
+         rb_ary_store(script, 3, rb_utf8_str_new_cstr(decodeBuffer.c_str()));
      }
      
++    Debug() << "[SCR 3] inflado completado: 6.067.970 bytes de Ruby descomprimidos";
      /* Execute preloaded scripts */
 +    rb_eval_string(
 +        "if defined?(Encoding)\n"
@@ -263,7 +277,7 @@ index 3c54842..b60cc1a 100644
      for (std::vector<std::string>::const_iterator i = conf.preloadScripts.begin();
           i != conf.preloadScripts.end(); ++i)
      {
-@@ -1036,9 +1180,12 @@ static void runRMXPScripts(BacktraceData &btData) {
+@@ -1036,9 +1183,12 @@ static void runRMXPScripts(BacktraceData &btData) {
      }
      
      VALUE exc = rb_gv_get("$!");
@@ -277,7 +291,7 @@ index 3c54842..b60cc1a 100644
      while (true) {
          for (long i = 0; i < scriptCount; ++i) {
              if (shState->rtData().rqTerm)
-@@ -1087,13 +1234,25 @@ static void runRMXPScripts(BacktraceData &btData) {
+@@ -1087,13 +1237,25 @@ static void runRMXPScripts(BacktraceData &btData) {
               }
               */
              
@@ -306,7 +320,7 @@ index 3c54842..b60cc1a 100644
          VALUE exc = rb_gv_get("$!");
          if (rb_obj_class(exc) != getRbData()->exc[Reset])
              break;
-@@ -1174,140 +1333,102 @@ static void showExc(VALUE exc, const BacktraceData &btData) {
+@@ -1174,140 +1336,102 @@ static void showExc(VALUE exc, const BacktraceData &btData) {
  static void mriBindingExecute() {
      Config &conf = shState->rtData().config;
      
@@ -791,25 +805,26 @@ index 1d79dee..52365bc 100644
  }
 +#endif
 diff --git a/src/main.cpp b/src/main.cpp
-index 6e09d71..a25406f 100644
+index 6e09d71..9af85b5 100644
 --- a/src/main.cpp
 +++ b/src/main.cpp
-@@ -49,6 +49,24 @@
+@@ -49,6 +49,25 @@
  
  #include "system/system.h"
  
 +#if defined(__SWITCH__) || defined(__NX__)
 +#include <stdarg.h>
++#include <stdio.h>
 +static void log_info(const char *fmt, ...) {
 +    va_list args;
 +    va_start(args, fmt);
-+    FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "a");
-+    if (f) {
-+        vfprintf(f, fmt, args);
-+        fprintf(f, "\n");
-+        fflush(f);
-+        fclose(f);
-+    }
++    /* Antes abria mkxp.log por su cuenta en modo append. Habia TRES escritores sobre ese
++     * fichero (este, Debug() y log_ruby_step) y Debug() lo abre TRUNCANDO, asi que las
++     * lineas de aqui se perdian enteras. Ahora se enruta por Debug(): un unico handle, un
++     * unico orden temporal, y marca de milisegundos gratis. */
++    char _li[1024];
++    vsnprintf(_li, sizeof(_li), fmt, args);
++    Debug() << _li;
 +    va_end(args);
 +}
 +#else
@@ -819,7 +834,7 @@ index 6e09d71..a25406f 100644
  #if defined(__WIN32__)
  #include "resource.h"
  #include <Winsock2.h>
-@@ -120,49 +138,64 @@ static SDL_GLContext initGL(SDL_Window *win, Config &conf,
+@@ -120,49 +139,64 @@ static SDL_GLContext initGL(SDL_Window *win, Config &conf,
  int rgssThreadFun(void *userdata) {
    RGSSThreadData *threadData = static_cast<RGSSThreadData *>(userdata);
  
@@ -896,7 +911,7 @@ index 6e09d71..a25406f 100644
  
    threadData->rqTermAck.set();
    threadData->ethread->requestTerminate();
-@@ -196,26 +229,29 @@ static void showInitError(const std::string &msg) {
+@@ -196,26 +230,29 @@ static void showInitError(const std::string &msg) {
  }
  
  static void setupWindowIcon(const Config &conf, SDL_Window *win) {
@@ -938,7 +953,7 @@ index 6e09d71..a25406f 100644
      SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
      SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
  
-@@ -225,16 +261,21 @@ int main(int argc, char *argv[]) {
+@@ -225,16 +262,21 @@ int main(int argc, char *argv[]) {
  
      SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
  
@@ -962,7 +977,7 @@ index 6e09d71..a25406f 100644
  
  #ifndef WORKDIR_CURRENT
      char dataDir[512]{};
-@@ -251,9 +292,19 @@ int main(int argc, char *argv[]) {
+@@ -251,9 +293,19 @@ int main(int argc, char *argv[]) {
      mkxp_fs::setCurrentDirectory(dataDir);
  #endif
      
@@ -983,7 +998,7 @@ index 6e09d71..a25406f 100644
  
  #if defined(__WIN32__)
      // Create a debug console in debug mode
-@@ -267,6 +318,10 @@ int main(int argc, char *argv[]) {
+@@ -267,6 +319,10 @@ int main(int argc, char *argv[]) {
          showInitError(std::string(buf));
        }
      }
@@ -994,7 +1009,7 @@ index 6e09d71..a25406f 100644
  #endif
  
  #ifdef MKXPZ_STEAM
-@@ -284,8 +339,10 @@ int main(int argc, char *argv[]) {
+@@ -284,8 +340,10 @@ int main(int argc, char *argv[]) {
      assert(conf.rgssVersion >= 1 && conf.rgssVersion <= 3);
      printRgssVersion(conf.rgssVersion);
  
@@ -1005,7 +1020,7 @@ index 6e09d71..a25406f 100644
        showInitError(std::string("Error initializing SDL_image: ") +
                      SDL_GetError());
        SDL_Quit();
-@@ -296,8 +353,10 @@ int main(int argc, char *argv[]) {
+@@ -296,8 +354,10 @@ int main(int argc, char *argv[]) {
  
        return 0;
      }
@@ -1016,7 +1031,7 @@ index 6e09d71..a25406f 100644
        showInitError(std::string("Error initializing SDL_ttf: ") +
                      SDL_GetError());
        IMG_Quit();
-@@ -309,8 +368,10 @@ int main(int argc, char *argv[]) {
+@@ -309,8 +369,10 @@ int main(int argc, char *argv[]) {
  
        return 0;
      }
@@ -1028,7 +1043,7 @@ index 6e09d71..a25406f 100644
        showInitError(std::string("Error initializing SDL_sound: ") +
                      Sound_GetError());
        TTF_Quit();
-@@ -323,108 +384,59 @@ int main(int argc, char *argv[]) {
+@@ -323,108 +385,59 @@ int main(int argc, char *argv[]) {
  
        return 0;
      }
@@ -1154,7 +1169,7 @@ index 6e09d71..a25406f 100644
  
      /* Can't sync to display refresh rate if its value is unknown */
      if (!mode.refresh_rate)
-@@ -450,17 +462,18 @@ int main(int argc, char *argv[]) {
+@@ -450,17 +463,18 @@ int main(int argc, char *argv[]) {
  
      /* Load and post key bindings */
      rtData.bindingUpdateMsg.post(loadBindings(conf));
@@ -1222,6 +1237,28 @@ index f51ac03..a953dd0 100644
      return ret;
  }
 +#endif
+diff --git a/src/sharedstate.cpp b/src/sharedstate.cpp
+index 83af953..a677912 100644
+--- a/src/sharedstate.cpp
++++ b/src/sharedstate.cpp
+@@ -36,6 +36,7 @@
+ #include "quad.h"
+ #include "binding.h"
+ #include "exception.h"
++#include "debugwriter.h"
+ #include "sharedmidistate.h"
+ 
+ #include <unistd.h>
+@@ -382,7 +383,9 @@ unsigned int SharedState::genTimeStamp()
+ 
+ SharedState::SharedState(RGSSThreadData *threadData)
+ {
++	Debug() << "[SS 1] antes de construir SharedStatePrivate";
+ 	p = new SharedStatePrivate(threadData);
++	Debug() << "[SS 3] SharedStatePrivate construido; empieza init()";
+ 	SharedState::instance = this;
+ 	try
+ 	{
 diff --git a/src/system/system.h b/src/system/system.h
 index 4ef8738..a7dd091 100644
 --- a/src/system/system.h
@@ -1324,19 +1361,20 @@ index 7270e7d..9d3694e 100644
      {
          p.clear();
 diff --git a/src/util/debugwriter.h b/src/util/debugwriter.h
-index da12825..11818fe 100644
+index da12825..0362edd 100644
 --- a/src/util/debugwriter.h
 +++ b/src/util/debugwriter.h
-@@ -22,6 +22,8 @@
+@@ -22,6 +22,9 @@
  #ifndef DEBUGWRITER_H
  #define DEBUGWRITER_H
  
 +#include <SDL_timer.h>
++#include <cstdio>
 +
  #include <iostream>
  #include <sstream>
  #include <vector>
-@@ -61,10 +63,26 @@ public:
+@@ -61,10 +64,26 @@ public:
  
  	~Debug()
  	{

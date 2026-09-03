@@ -3,6 +3,10 @@
 # ==============================================================================
 
 # Guard against duplicate preload execution (mkxp-z C++ patch + mkxp.json preloadScript)
+# Primer instante en que el reloj de Ruby y el del motor quedan en la MISMA escala: System.puts
+# esta enlazado a Debug(), que estampa SDL_GetTicks. El salto respecto a la linea
+# "[Ruby] Cargando automaticamente preload.rb..." es el coste de compilar este fichero a ISeq.
+System.puts("[preload] compilado; empieza ejecucion") rescue nil
 $PRELOAD_RB_LOADED ||= false
 if $PRELOAD_RB_LOADED
   log_compat("[Switch Compatibility] preload.rb ya fue evaluado anteriormente.") rescue nil
@@ -43,6 +47,12 @@ def update_boot_progress(pct, text = "")
   pct = $switch_boot_pct if pct < $switch_boot_pct
   pct = 100 if pct > 100
   $switch_boot_pct = pct
+  # Contador incremental a proposito: reparte todo el tramo 2%->100% sobre el reloj del motor.
+  # No se usa log_compat aqui porque descarta mensajes cuyos primeros 120 caracteres se repiten
+  # (preload.rb, dedup_key) y la marca de ms se anade DESPUES, fuera de esa clave: dos repintados
+  # con el mismo pct y texto se colapsarian en uno y el hueco medido saldria falsamente largo.
+  $switch_boot_tick = ($switch_boot_tick || 0) + 1
+  System.puts("[barra ##{$switch_boot_tick}] #{pct}% #{text}") rescue nil
   begin
     bm = $switch_boot_bar.bitmap
     bm.clear
@@ -185,6 +195,10 @@ begin
       # Es relativo a $SWITCH_BOOT_T0 (arriba del fichero). El absoluto desde que arranco el
       # homebrew lo da mkxp.log del motor, que cuenta desde SDL_Init.
       $SWITCH_FIRST_PIXEL_MS = (((Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f) - $SWITCH_BOOT_T0) * 1000.0).to_i rescue nil
+      # EL NUMERO DECISIVO. En la escala absoluta de SDL_GetTicks, que es la unica comparable
+      # con el cronometro. Si sale muy por debajo de los 34 s medidos, el tiempo se va ANTES
+      # de SDL_Init (carga del NRO por hbloader) y no dentro del arranque trazado.
+      System.puts("[preload] PRIMER PIXEL") rescue nil
     end
   end
 rescue Exception => e_boot
