@@ -49,10 +49,24 @@ const metrics = [
   },
   {
     name: 'Bytes de Ruby inflado',
-    expected: 6066169,
+    expected: 6067970,
     actual: totalBytes,
     type: 'exact',
     description: 'Tamaño total del código fuente Ruby inflado'
+  },
+  {
+    name: 'Inyecciones de barra de arranque',
+    actual: countOccurrences(totalRuby, 'Cargando motor de juego'),
+    expected: 29,
+    type: 'exact',
+    description: 'Puntos de progreso inyectados por patch_scripts.js. Si sale MAYOR que 29, patch_scripts.js ha vuelto a ser no idempotente y está apilando una línea por ejecución sobre las secciones separadoras que no tienen un .rb en disco'
+  },
+  {
+    name: 'Precarga de animaciones en el arranque',
+    actual: countOccurrences(totalRuby, '$PokemonBattleAnimations = pbLoadBattleAnimations'),
+    expected: 1,
+    type: 'exact',
+    description: 'Data/PkmnAnimations.rxdata DEBE precargarse en el arranque. Si sale 0, alguien ha vuelto a diferirlo: ya se intento y el commit cb20f818 tuvo que revertirlo, porque prewarm_battle hace su "||= load_data" justo despues de que pbBattleAnimationCore deje un viewport negro opaco a z=99999, y el resultado es varios segundos de pantalla negra congelada con la musica de combate sonando en la primera batalla de cada sesion'
   },
   {
     name: 'eval(script, binding)',

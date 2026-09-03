@@ -360,7 +360,34 @@ class PokemonLoadScreen
     
     # OPTIMIZATION: Cache save data to avoid reloading when switching slots
     @save_data_cache = {}
-    
+
+    # Siembra la cache con la partida que Game.set_up_system ya deserializo en el arranque.
+    # Sin esto el mismo fichero se lee y deserializa dos veces por arranque.
+    #
+    # Tres guardas, y las tres hacen falta:
+    #  - !empty? deja fuera las partidas corruptas, para que load_save_file siga ejecutando su
+    #    rama de deteccion y borrado con normalidad.
+    #  - EL FICHERO TIENE QUE SEGUIR EXISTIENDO. Entre el arranque y este punto el jugador ha
+    #    podido borrar la partida (pbStartDeleteScreen vuelve al titulo sin pasar por aqui, asi
+    #    que la global sobrevive). Sin esta comprobacion la partida borrada reaparece en la
+    #    pantalla de carga como si nada. Se valida contra el disco en vez de limpiar la global en
+    #    cada ruta de borrado, para que tambien cubra las rutas que no conocemos.
+    #  - El slot tiene que ser el mismo que se va a mostrar.
+    begin
+      if defined?($switch_bootup_save_data) && $switch_bootup_save_data.is_a?(Hash) &&
+         !$switch_bootup_save_data.empty? && defined?($switch_bootup_save_slot) && $switch_bootup_save_slot
+        ruta = SaveData.get_full_path($switch_bootup_save_slot)
+        if ruta && File.file?(ruta)
+          @save_data_cache[$switch_bootup_save_slot] = $switch_bootup_save_data
+        end
+      end
+    rescue Exception
+    end
+    # Se liberan las globales: la cache local ya sostiene lo que haga falta. Se limpia tambien el
+    # slot, para que una segunda entrada a esta pantalla no reutilice nada del arranque.
+    $switch_bootup_save_data = nil
+    $switch_bootup_save_slot = nil
+
     loop do # Outer loop is used for switching save files
       if @selected_file
         # Use cached data if available
@@ -744,6 +771,12 @@ module Game
     else
       save_data = {}
     end
+    # Guarda lo ya deserializado para que PokemonLoadScreen no vuelva a leer y deserializar el
+    # mismo fichero de 1-4 MB unos segundos despues. Esa segunda lectura era parte de la espera
+    # que el jugador percibe tras la pantalla de titulo. pbStartLoadScreen consume estas
+    # globales y las libera acto seguido.
+    $switch_bootup_save_slot = save_slot
+    $switch_bootup_save_data = save_data
     if save_data.empty?
       SaveData.initialize_bootup_values
     else

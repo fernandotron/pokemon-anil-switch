@@ -641,7 +641,7 @@ module PluginManager
       end
       self.register(meta) rescue nil
       if defined?(update_boot_progress)
-        pct = 28 + (p_idx * 20 / [scripts.length, 1].max)
+        pct = 37 + (p_idx * 25 / [scripts.length, 1].max)
         sname = meta[:name] || name rescue "Extensiones"
         update_boot_progress(pct, "Cargando plugins (#{sname})...")
       elsif p_idx % 2 == 0

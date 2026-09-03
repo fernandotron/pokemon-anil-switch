@@ -618,6 +618,112 @@ index 0cba9bd..ceb5536 100644
      event.type = usrIdStart + REQUEST_MESSAGEBOX;
      SDL_PushEvent(&event);
      
+diff --git a/src/filesystem/filesystem.cpp b/src/filesystem/filesystem.cpp
+index 67c9be0..73ef224 100644
+--- a/src/filesystem/filesystem.cpp
++++ b/src/filesystem/filesystem.cpp
+@@ -32,6 +32,7 @@
+ #include "sharedstate.h"
+ 
+ #include <physfs.h>
++#include <SDL_timer.h>
+ 
+ #include <algorithm>
+ #include <stack>
+@@ -394,6 +395,35 @@ struct CacheEnumData {
+   }
+ };
+ 
++#ifdef __SWITCH__
++/* Every extension that ships with the game, lowercase. Anything not listed here
++ * falls back to PHYSFS_stat(), i.e. to the original exact behaviour. */
++static bool switchLooksLikeFile(const std::string &lowerPath) {
++  size_t dot = lowerPath.find_last_of('.');
++  if (dot == std::string::npos)
++    return false;
++
++  /* A dot belonging to a parent directory says nothing about this entry. */
++  size_t slash = lowerPath.find_last_of('/');
++  if (slash != std::string::npos && dot < slash)
++    return false;
++
++  const char *ext = lowerPath.c_str() + dot + 1;
++  static const char *const known[] = {
++    "png",  "wav",  "ogg",  "rb",   "rxdata", "txt",  "mp3",  "dat",
++    "ttf",  "otf",  "jpg",  "jpeg", "gif",    "bmp",  "mid",  "midi",
++    "flac", "json", "csv",  "sf2",  "ini",    "log",  "bak",  "xml",
++    "yaml", "yml",  "py",   "exe",  "nro",    "nacp", "webp", "m4a"
++  };
++
++  for (size_t i = 0; i < sizeof(known) / sizeof(known[0]); ++i)
++    if (strcmp(ext, known[i]) == 0)
++      return true;
++
++  return false;
++}
++#endif
++
+ static PHYSFS_EnumerateCallbackResult cacheEnumCB(void *d, const char *origdir,
+                                                   const char *fname) {
+   if (shState && shState->rtData().rqTerm)
+@@ -414,10 +444,35 @@ static PHYSFS_EnumerateCallbackResult cacheEnumCB(void *d, const char *origdir,
+   std::string lowerCase = mixedCase;
+   strTolower(lowerCase);
+ 
++  bool entryIsDir;
++
++#ifdef __SWITCH__
++  /* On Horizon OS a PHYSFS_stat() of a file is not a cheap metadata peek: it
++   * turns into fsFsGetEntryType + fsFsOpenFile + fsFileGetSize + fsFileClose,
++   * i.e. 3-4 IPC round trips to the FS sysmodule, and this callback runs once
++   * per entry. With ~24000 files under Graphics/ and Audio/ that is over 20
++   * seconds spent opening and closing every single asset, on the drawing
++   * thread, with the screen still black and no feedback at all.
++   *
++   * The stat result is used for exactly one thing here: telling a directory
++   * apart from a file. So recognise the known asset extensions by name and
++   * skip the stat for them. Names that are not recognised still go through
++   * PHYSFS_stat, which keeps directories correct even if one is ever given a
++   * name containing a dot. */
++  if (switchLooksLikeFile(lowerCase)) {
++    entryIsDir = false;
++  } else {
++    PHYSFS_Stat stat;
++    PHYSFS_stat(fullPath, &stat);
++    entryIsDir = (stat.filetype == PHYSFS_FILETYPE_DIRECTORY);
++  }
++#else
+   PHYSFS_Stat stat;
+   PHYSFS_stat(fullPath, &stat);
++  entryIsDir = (stat.filetype == PHYSFS_FILETYPE_DIRECTORY);
++#endif
+ 
+-  if (stat.filetype == PHYSFS_FILETYPE_DIRECTORY) {
++  if (entryIsDir) {
+     /* Create a new list for this directory */
+     std::vector<std::string> &list = data.p->fileLists[lowerCase];
+ 
+@@ -444,13 +499,19 @@ static PHYSFS_EnumerateCallbackResult cacheEnumCB(void *d, const char *origdir,
+ void FileSystem::createPathCache() {
+   Debug() << "Loading path cache...";
+ 
++  const Uint32 startTicks = SDL_GetTicks();
++
+   CacheEnumData data(p);
+   data.fileLists.push(&p->fileLists[""]);
+   PHYSFS_enumerate("", cacheEnumCB, &data);
+ 
+   p->havePathCache = true;
+ 
+-  Debug() << "Path cache completed.";
++  /* This is the single most expensive step of the whole boot on Switch, and it
++   * runs with the screen black, so keep it measurable instead of guessed. */
++  Debug() << "Path cache completed in" << (SDL_GetTicks() - startTicks)
++          << "ms," << (int)p->pathCache.size() << "files in"
++          << (int)p->fileLists.size() << "directories.";
+ }
+ 
+ void FileSystem::reloadPathCache() {
 diff --git a/src/filesystem/filesystemImpl.cpp b/src/filesystem/filesystemImpl.cpp
 index 1d79dee..52365bc 100644
 --- a/src/filesystem/filesystemImpl.cpp
@@ -1193,6 +1299,22 @@ index 41fda3d..5cac6d0 100644
  }
      
  bool systemImpl::isWine() {
+diff --git a/src/util/boost-hash.h b/src/util/boost-hash.h
+index 7270e7d..42600bc 100644
+--- a/src/util/boost-hash.h
++++ b/src/util/boost-hash.h
+@@ -94,6 +94,11 @@ public:
+ 		return p.cend();
+ 	}
+     
++    inline size_t size() const
++    {
++        return p.size();
++    }
++
+     inline void clear()
+     {
+         p.clear();
 diff --git a/src/util/debugwriter.h b/src/util/debugwriter.h
 index da12825..aa6fb63 100644
 --- a/src/util/debugwriter.h

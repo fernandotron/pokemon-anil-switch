@@ -217,6 +217,29 @@ function syncFromDisk(dir) {
 }
 syncFromDisk('Data/Scripts');
 
+// Idempotencia de la barra de arranque: borrar toda inyección previa ANTES de volver a inyectar.
+//
+// Sin esto el script NO es idempotente, y está verificado: una segunda ejecución inflaba el
+// artefacto en 754 bytes y rompía la aserción exacta de verify_artifact.js.
+//
+// El motivo es que la fuente nunca es un artefacto limpio. Data/Scripts.rxdata.bak (línea 5) se
+// crea más abajo (línea ~2813) copiando el Scripts.rxdata que se acaba de leer, que YA lleva las
+// inyecciones; y además está en .gitignore, así que en CI y en un clon nuevo ni siquiera existe y
+// la fuente es directamente Data/Scripts.rxdata, también ya inyectado. En ambos caminos
+// syncFromDisk limpia la inyección sólo de las secciones que tienen un .rb detrás: las secciones
+// separadoras ([[ Files ]], [[ Data ]], [[ Scene ]]...) no lo tienen y acumulaban una línea por
+// ejecución. Este strip cierra los dos caminos.
+const BOOT_PROGRESS_LINE_RE = /^update_boot_progress\(\d+, "Cargando motor de juego \(\d+%\)\.\.\."\) if defined\?\(update_boot_progress\)\r?\n/gm;
+let strippedBootLines = 0;
+for (const s of scripts) {
+  const before = s.code;
+  s.code = s.code.replace(BOOT_PROGRESS_LINE_RE, '');
+  if (s.code !== before) strippedBootLines++;
+}
+if (strippedBootLines > 0) {
+  console.log(`  -> Idempotencia: retiradas inyecciones de barra previas en ${strippedBootLines} secciones`);
+}
+
 // Issue #2: NO crear Scripts.rxdata.pristine; la idempotencia se garantiza normalizando código y evitando auto-anidaciones.
 // Issue #3: Capturar mapa de métodos def antes de cualquier mutación para la verificación de round-trip.
 const inputScriptDefs = new Map();
@@ -260,16 +283,40 @@ function sub(texto, patron, reemplazo, nombre) {
   return despues;
 }
 
+// Puntos de progreso repartidos por BYTES, no por índice. Las 437 secciones van de 3 KB a
+// más de 300 KB, así que un punto cada 20 secciones hacía avanzar la barra a tirones. Además
+// el reparto anterior (sIdx < 420) dejaba las últimas 17 secciones sin reportar nada.
+// Banda 5%->35%: preload.rb termina en 5% y el bloque Main arranca en 35%, de modo que la
+// barra es monótona de principio a fin y nunca retrocede.
+const BOOT_PCT_FROM = 5;
+const BOOT_PCT_TO = 35;
+const bootProgressAt = new Map();
+{
+  const byteLen = scripts.map(s => Buffer.byteLength(s.code, 'utf-8'));
+  const totalBytes = byteLen.reduce((n, b) => n + b, 0) || 1;
+  let acc = 0;
+  let lastPct = BOOT_PCT_FROM;
+  for (let i = 0; i < scripts.length; i++) {
+    const pct = BOOT_PCT_FROM + Math.floor((acc / totalBytes) * (BOOT_PCT_TO - BOOT_PCT_FROM));
+    if (i > 0 && pct > lastPct) {
+      bootProgressAt.set(i, pct);
+      lastPct = pct;
+    }
+    acc += byteLen[i];
+  }
+}
+console.log(`  -> Barra de arranque: ${bootProgressAt.size} puntos repartidos por bytes (${BOOT_PCT_FROM}% -> ${BOOT_PCT_TO}%)`);
+
 let patchedCount = 0;
 for (let sIdx = 0; sIdx < scripts.length; sIdx++) {
   let s = scripts[sIdx];
   let changed = false;
 
-  if (sIdx > 0 && sIdx < 420 && sIdx % 20 === 0) {
-    const pct = Math.floor(5 + (sIdx * 20 / 437));
+  if (bootProgressAt.has(sIdx)) {
+    const pct = bootProgressAt.get(sIdx);
     s.code = `update_boot_progress(${pct}, "Cargando motor de juego (${pct}%)...") if defined?(update_boot_progress)\n` + s.code;
   }
-  
+
   if (s.code.includes('def pbSetResizeFactor')) {
     console.log('Patching pbSetResizeFactor in:', s.name);
     s.code = sub(s.code, /def pbSetResizeFactor[\s\S]*?\bend\b/m, `def pbSetResizeFactor(factor = 0)
@@ -2415,6 +2462,9 @@ end
 
 class Scene_DebugIntro
   def main
+    # Esta ruta se salta Scene_Intro, que es quien normalmente retira la pantalla de arranque.
+    # Sin esto la overlay se quedaria encima del juego a z=999999 para siempre.
+    pbDisposeBootOverlay if defined?(pbDisposeBootOverlay)
     Graphics.transition(0)
     sscene = PokemonLoad_Scene.new
     sscreen = PokemonLoadScreen.new(sscene)
@@ -2439,40 +2489,14 @@ end
 
 def mainFunctionDebug
   begin
-    # Descartar pantalla de carga visual antes del título
-    begin
-      if defined?($switch_boot_bg) && $switch_boot_bg
-        $switch_boot_bg.bitmap&.dispose rescue nil
-        $switch_boot_bg.dispose rescue nil
-        $switch_boot_bg = nil
-      end
-      if defined?($switch_boot_logo) && $switch_boot_logo
-        $switch_boot_logo.bitmap&.dispose rescue nil
-        $switch_boot_logo.dispose rescue nil
-        $switch_boot_logo = nil
-      end
-      if defined?($switch_boot_bar) && $switch_boot_bar
-        $switch_boot_bar.bitmap&.dispose rescue nil
-        $switch_boot_bar.dispose rescue nil
-        $switch_boot_bar = nil
-      end
-      if defined?($switch_boot_viewport) && $switch_boot_viewport
-        $switch_boot_viewport.dispose rescue nil
-        $switch_boot_viewport = nil
-      end
-      if $loading_sprite
-        $loading_sprite.bitmap&.dispose rescue nil
-        $loading_sprite.dispose rescue nil
-        $loading_viewport&.dispose rescue nil
-        $loading_sprite = nil
-        $loading_viewport = nil
-      end
-    rescue
-    end
-
-    log_compat("[Main] 6. Renderizando primer cuadro...") rescue puts("[Main] 6. Renderizando primer cuadro...")
-    Graphics.update rescue nil
-    Graphics.transition(10) rescue nil
+    # La pantalla de arranque NO se descarta aqui. Se mantiene viva, con su barra, hasta que
+    # Scene_Intro ha construido ModularTitleScreen (unos segundos de Bitmap.new); esa escena
+    # llama a pbDisposeBootOverlay con un fundido. Descartarla en este punto era la causa de
+    # la "segunda pantalla de carga": dejaba el televisor en negro durante toda la
+    # construccion del titulo. El Graphics.update y el Graphics.transition(10) que habia aqui
+    # tampoco servian: sin un Graphics.freeze previo, transition es un no-op
+    # (mkxp-z/src/display/graphics.cpp: "if (!p->frozen) return;"), asi que lo unico que
+    # conseguian era presentar un fotograma negro.
     log_compat("[Main] 7. Iniciando pantalla de título...") rescue puts("[Main] 7. Iniciando pantalla de título...")
     $scene = pbCallTitle
     log_compat("[Main] 8. Escena inicial creada: #{$scene ? $scene.class : 'nil'}") rescue nil
@@ -2481,8 +2505,17 @@ def mainFunctionDebug
       log_compat("[Main Loop] Iniciando escena: #{current_scene.class}") rescue nil
       begin
         current_scene.main
+        # Si la escena termino sin retirar la pantalla de arranque (por ejemplo si el plugin
+        # de titulo animado estuviera desactivado y ganara el Scene_Intro base), retirarla
+        # aqui. Es idempotente: tras la primera vez no hace nada.
+        pbDisposeBootOverlay if defined?(pbDisposeBootOverlay)
       rescue Exception => e
         break if e.is_a?(SystemExit)
+        # Red de seguridad: si la escena revienta ANTES de retirar la pantalla de arranque
+        # (por ejemplo si ModularTitleScreen.new lanza), la overlay se quedaria tapando la
+        # pantalla a z=999999 y el juego pareceria colgado. pbDisposeBootOverlay es
+        # idempotente, asi que llamarla aqui no cuesta nada en el caso normal.
+        pbDisposeBootOverlay if defined?(pbDisposeBootOverlay)
         if defined?(write_crash_report)
           write_crash_report(e, "Scene: #{current_scene.class}")
         else
@@ -2532,7 +2565,9 @@ end
 Audio.bgm_play("Audio/BGM/Title.ogg", 100, 100) rescue nil
 
 # 1. Progreso inicial del sistema
-update_boot_progress(25, "Iniciando sistema...") if defined?(update_boot_progress)
+# La barra viene del 35% (preload.rb la deja en 5% y el bucle de scripts la sube hasta 35%),
+# así que aquí se continúa hacia arriba: nunca retrocede.
+update_boot_progress(35, "Iniciando sistema...") if defined?(update_boot_progress)
 
 # Inicialización única del sistema fuera del bucle de escenas
 log_compat("[Main] 1. Cargando mensajes...") rescue puts("[Main] 1. Cargando mensajes...")
@@ -2540,13 +2575,13 @@ MessageTypes.load_default_messages if FileTest.exist?("Data/messages_core.dat") 
 
 # 2. Plugins
 log_compat("[Main] 2. Ejecutando Plugins...") rescue puts("[Main] 2. Ejecutando Plugins...")
-update_boot_progress(28, "Cargando plugins y extensiones...") if defined?(update_boot_progress)
+update_boot_progress(37, "Cargando plugins y extensiones...") if defined?(update_boot_progress)
 PluginManager.runPlugins rescue nil
-update_boot_progress(50, "Plugins cargados con éxito...") if defined?(update_boot_progress)
+update_boot_progress(62, "Plugins cargados con éxito...") if defined?(update_boot_progress)
 
 # 3. Base de datos y Game
 log_compat("[Main] 3. Inicializando Game...") rescue puts("[Main] 3. Inicializando Game...")
-update_boot_progress(52, "Cargando base de datos del juego...") if defined?(update_boot_progress)
+update_boot_progress(64, "Cargando base de datos del juego...") if defined?(update_boot_progress)
 begin
   $data_system ||= load_data("Data/System.rxdata") rescue nil
   Game.initialize
@@ -2558,12 +2593,29 @@ rescue Exception => eg
 end
 
 # 3.4 Carga del índice de recursos en memoria
-update_boot_progress(62, "Indexando recursos del juego...") if defined?(update_boot_progress)
+update_boot_progress(72, "Indexando recursos del juego...") if defined?(update_boot_progress)
 pbLoadSwitchAssetsIndex rescue nil
 
-# 3.5 Precarga de Animaciones de Combate (Elimina el retardo en la primera batalla contra entrenador)
+# 3.5 Precarga de animaciones de combate.
+#
+# NO QUITAR ESTO SIN LEER LO SIGUIENTE.
+#
+# Son 14.908.394 bytes y ~7,67 M de nodos Marshal: el paso mas caro de este bloque. Es tentador
+# diferirlo, porque pbLoadBattleAnimations memoiza y SwitchAssetOptimizer.prewarm_battle lo
+# invoca al montar el combate. Ya se intento, y el commit cb20f818 tuvo que revertirlo: ANTES de
+# ese commit prewarm_battle YA hacia el "||= load_data(...)" perezoso, y aun asi se producia
+# "la congelacion con pantalla negra y musica en la primera batalla contra entrenador".
+#
+# El motivo es el encuadre, no el cargador: pbBattleAnimationCore termina dejando un viewport
+# negro OPACO a z=99999 como ultimo fotograma presentado, y la primera sentencia despues del
+# yield es prewarm_battle. Diferir la carga la deja caer justo ahi: pantalla negra total,
+# congelada, con la musica de combate ya sonando y sin ninguna forma de mostrar progreso.
+#
+# Aqui, en cambio, la pantalla de arranque esta viva y con barra, que es el sitio correcto para
+# una espera. Los ~34 s de arranque que se arreglaron en esta tanda venian del path cache en C++,
+# no de esto: quitar la precarga no era necesario para conseguirlos.
 log_compat("[Main] 3.5. Precargando animaciones de combate...") rescue nil
-update_boot_progress(72, "Precargando animaciones de combate...") if defined?(update_boot_progress)
+update_boot_progress(74, "Precargando animaciones de combate...") if defined?(update_boot_progress)
 begin
   t_anim0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
   $PokemonBattleAnimations = pbLoadBattleAnimations rescue nil
@@ -2573,11 +2625,11 @@ begin
 rescue Exception => e_anim
   log_compat("[Warning Animaciones Preload] #{e_anim.class}: #{e_anim.message}") rescue nil
 end
-update_boot_progress(88, "Animaciones cargadas con éxito...") if defined?(update_boot_progress)
+update_boot_progress(86, "Animaciones cargadas con exito...") if defined?(update_boot_progress)
 
-# 4. Configuración de sistema y guardado
+# 4. Configuracion de sistema y guardado
 log_compat("[Main] 4. Configurando sistema...") rescue puts("[Main] 4. Configurando sistema...")
-update_boot_progress(92, "Configurando sistema y opciones...") if defined?(update_boot_progress)
+update_boot_progress(88, "Configurando sistema y opciones...") if defined?(update_boot_progress)
 begin
   SaveData.initialize_bootup_values rescue nil
   Game.set_up_system
@@ -2597,50 +2649,18 @@ SaveData.load_options rescue nil
 $game_system ||= Game_System.new rescue nil
 $game_temp ||= Game_Temp.new rescue nil
 
-update_boot_progress(100, "¡Listo!") if defined?(update_boot_progress)
-Graphics.update rescue nil
+update_boot_progress(92, "Preparando pantalla de título...") if defined?(update_boot_progress)
 
-# Descartar pantalla de arranque visual
-begin
-  if defined?($switch_boot_bg) && $switch_boot_bg
-    $switch_boot_bg.bitmap&.dispose rescue nil
-    $switch_boot_bg.dispose rescue nil
-    $switch_boot_bg = nil
-  end
-  if defined?($switch_boot_logo) && $switch_boot_logo
-    $switch_boot_logo.bitmap&.dispose rescue nil
-    $switch_boot_logo.dispose rescue nil
-    $switch_boot_logo = nil
-  end
-  if defined?($switch_boot_bar) && $switch_boot_bar
-    $switch_boot_bar.bitmap&.dispose rescue nil
-    $switch_boot_bar.dispose rescue nil
-    $switch_boot_bar = nil
-  end
-  if defined?($switch_boot_viewport) && $switch_boot_viewport
-    $switch_boot_viewport.dispose rescue nil
-    $switch_boot_viewport = nil
-  end
-  if defined?($switch_boot_sprite) && $switch_boot_sprite
-    $switch_boot_sprite.bitmap&.dispose rescue nil
-    $switch_boot_sprite.dispose rescue nil
-    $switch_boot_sprite = nil
-  end
-  if defined?($loading_sprite) && $loading_sprite
-    $loading_sprite.bitmap&.dispose rescue nil
-    $loading_sprite.dispose rescue nil
-    $loading_sprite = nil
-  end
-  if defined?($loading_viewport) && $loading_viewport
-    $loading_viewport.dispose rescue nil
-    $loading_viewport = nil
-  end
-rescue Exception
-end
+# La pantalla de arranque sigue viva a proposito: la destruye Scene_Intro (con un fundido)
+# cuando ya tiene el titulo compuesto. Ver pbDisposeBootOverlay en preload.rb.
 
-# Reactivar recolección de basura tras finalizar la carga del motor
+# Reactivar la recoleccion de basura, desactivada en preload.rb:11 durante todo el arranque.
+# NO se llama a GC.start aqui: un marcado completo sobre el millon y pico de objetos vivos
+# que deja la carga cuesta entre 1 y 2 s en la consola, cae justo antes de la pantalla de
+# titulo y ademas no puede liberar casi nada, porque practicamente todo sigue referenciado.
+# Al reactivar el GC, la primera recoleccion ocurrira sola cuando toque, ya con el juego
+# dibujando.
 GC.enable rescue nil
-GC.start rescue nil
 
 loop do
   retval = mainFunction
