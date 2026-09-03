@@ -155,36 +155,6 @@ EOF
     sed -i 's/defined(SA_SIGINFO)/0/g' gc.c || true
     sed -i 's/#  error waitpid or wait4 is required./return (rb_pid_t)-1;/g' process.c || true
     sed -i '1i #include <poll.h>' thread_pthread.c || true
-    # Instrumentar ruby_setup e inits con logs detallados paso a paso
-cat << 'EOF' > patch_eval_setup.c
-#include <stdio.h>
-#include <time.h>
-/* Fichero PROPIO, no mkxp.log: alli escribe Debug() abriendo en modo "w" y truncaria
- * todo lo que se escriba aqui antes. Y handle persistente en vez de
- * fopen(append)+fflush+fclose por linea: la macro CALL(n) de inits.c emite DOS lineas
- * por cada Init_ de rb_call_inits, del orden de cientos, y en FAT cada apertura en
- * modo append recorre la cadena de clusters hasta el final, con coste creciente.
- * Eso convertia el propio log en una parte del tiempo de arranque que se pretendia medir. */
-static FILE *_rstep = NULL;
-static void log_ruby_step(const char *msg) {
-    struct timespec ts;
-    if (!_rstep) _rstep = fopen("sdmc:/switch/pokemon_anil/mkxp_ruby_init.log", "w");
-    if (_rstep) {
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        fprintf(_rstep, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
-    }
-}
-EOF
-    sed -i '1i #include "patch_eval_setup.c"' eval.c || true
-    sed -i 's/Init_BareVM();/log_ruby_step("  [ruby_setup 3] Init_BareVM"); Init_BareVM(); log_ruby_step("  [ruby_setup 3.1] Init_BareVM OK");/g' eval.c || true
-    sed -i 's/Init_heap();/log_ruby_step("  [ruby_setup 4] Init_heap"); Init_heap(); log_ruby_step("  [ruby_setup 4.1] Init_heap OK");/g' eval.c || true
-    sed -i 's/Init_vm_objects();/log_ruby_step("  [ruby_setup 5] Init_vm_objects"); Init_vm_objects(); log_ruby_step("  [ruby_setup 5.1] Init_vm_objects OK");/g' eval.c || true
-    sed -i 's/rb_call_inits();/log_ruby_step("  [ruby_setup 6] rb_call_inits"); rb_call_inits(); log_ruby_step("  [ruby_setup 6.1] rb_call_inits OK");/g' eval.c || true
-    sed -i 's/ruby_prog_init();/log_ruby_step("  [ruby_setup 7] ruby_prog_init"); ruby_prog_init(); log_ruby_step("  [ruby_setup 7.1] ruby_prog_init OK");/g' eval.c || true
-    sed -i '1i #include "patch_eval_setup.c"' inits.c || true
-    sed -i 's/#define CALL(n) {void Init_##n(void); Init_##n();}/#define CALL(n) {void Init_##n(void); log_ruby_step("    [init] " #n); Init_##n(); log_ruby_step("    [init OK] " #n);}/g' inits.c || true
-    sed -i 's/#define BUILTIN(n) CALL(builtin_##n)/#define BUILTIN(n) { log_ruby_step("    [builtin] " #n); CALL(builtin_##n); }/g' inits.c || true
-    sed -i '1i #include "patch_eval_setup.c"' cont.c || true
     python3 - << 'PYEOF'
 import re
 
@@ -194,11 +164,13 @@ with open("cont.c", "r") as f:
 # Eliminar completamente el bloque mprotect / guard page en cont.c
 code = re.sub(r'if\s*\(\s*mprotect\s*\([^)]*\)\s*<\s*0\s*\)\s*\{[^}]*\}', '/* guard page bypassed on switch */', code)
 
+# Hacer fiber_pool_initialize lazy (no reservar 21MB de memoria por adelantado al arrancar la VM)
+code = code.replace("fiber_pool_expand(fiber_pool, count);", "/* lazy pool */")
+
 # Predefinir rb_cFiber y rb_eFiberError al inicio de Init_Cont
 init_cont_pos = code.find("void\nInit_Cont(void)\n{")
 if init_cont_pos != -1:
     insert_code = """
-    log_ruby_step("      [cont] Init_Cont start");
     rb_cFiber = rb_define_class("Fiber", rb_cObject);
     rb_define_alloc_func(rb_cFiber, fiber_alloc);
     rb_eFiberError = rb_define_class("FiberError", rb_eStandardError);
@@ -207,9 +179,8 @@ if init_cont_pos != -1:
 
 with open("cont.c", "w") as f:
     f.write(code)
-print(">>> Parche cont.c aplicado exitosamente con Python")
+print(">>> Parche cont.c aplicado exitosamente con Python (lazy pool + guard page bypass)")
 PYEOF
-    sed -i 's/rb_provide("fiber.so");/rb_provide("fiber.so"); log_ruby_step("      [cont] Init_Cont complete");/g' cont.c || true
     CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
     LDFLAGS="-specs=$DEVKITPRO/libnx/switch.specs -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -L$DEVKITPRO/libnx/lib -L$DEVKITPRO/portlibs/switch/lib -lnx" \
     ./configure \
