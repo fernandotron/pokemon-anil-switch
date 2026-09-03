@@ -10,6 +10,11 @@ end
 $PRELOAD_RB_LOADED = true
 GC.disable rescue nil # Acelerar arranque eliminando pausas de GC durante compilacion de scripts
 
+# Reloj del arranque de Ruby. Se fija lo mas arriba posible para que el instante del primer
+# pixel se pueda medir de verdad en vez de estimarlo. El tiempo ABSOLUTO desde que arranco el
+# homebrew lo da mkxp.log, que cuenta desde SDL_Init; este cuenta desde que Ruby toma el control.
+$SWITCH_BOOT_T0 ||= (Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f)
+
 # 0. Renderizado instantáneo en el fotograma 0 (Feedback visual inmediato a < 15ms)
 module Graphics
   class << self
@@ -174,6 +179,12 @@ begin
       Graphics.transition(0) rescue nil
       6.times { Graphics.update rescue nil }
       Graphics.frame_reset rescue nil
+      # PRIMER PIXEL. Es el instante que hay que medir: hasta aqui la pantalla lleva negra
+      # desde que arranco el homebrew, y todo lo anterior es coste de C++ (SDL/GL, path cache,
+      # fuentes, VM de Ruby, lectura de Scripts.rxdata).
+      # Es relativo a $SWITCH_BOOT_T0 (arriba del fichero). El absoluto desde que arranco el
+      # homebrew lo da mkxp.log del motor, que cuenta desde SDL_Init.
+      $SWITCH_FIRST_PIXEL_MS = (((Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f) - $SWITCH_BOOT_T0) * 1000.0).to_i rescue nil
     end
   end
 rescue Exception => e_boot
@@ -182,7 +193,22 @@ end
 
 
 # 1.0 Inicialización del Logging Eficiente
-$mkxp_log_file ||= (File.open("mkxp_ruby.log", "a") rescue nil)
+# Se abre en "w", no en "a": en FAT/exFAT abrir en modo append obliga a recorrer la cadena de
+# clusters hasta el final, y un log que crece entre arranques encarece cada escritura. Ademas
+# interesa el log de ESTE arranque, no el historico acumulado.
+$mkxp_log_file ||= (File.open("mkxp_ruby.log", "w") rescue nil)
+
+# Reloj del arranque. Todas las lineas de log llevan los ms transcurridos desde aqui, para poder
+# leer el arranque como una linea temporal en vez de como una lista de mensajes.
+$SWITCH_BOOT_T0 ||= (Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f)
+
+def switch_boot_ms
+  t = (Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f)
+  ((t - $SWITCH_BOOT_T0) * 1000.0).to_i
+rescue Exception
+  0
+end
+
 $LOG_COMPAT_DEDUP ||= {}
 $LOG_COMPAT_COUNT ||= 0
 $LOG_COMPAT_MAX_LINES ||= 5000
@@ -217,7 +243,11 @@ def log_compat(msg)
 
   puts msg_str rescue nil if $SWITCH_VERBOSE
   if $mkxp_log_file
-    lines.each { |l| $mkxp_log_file.puts(l) rescue nil }
+    # Marca de tiempo en ms desde que empezo preload.rb. Convierte este log en una linea
+    # temporal del arranque: sin esto solo se sabe QUE paso, no CUANDO ni cuanto costo, y
+    # el arranque se ha estado diagnosticando a base de estimaciones en vez de medidas.
+    ms = switch_boot_ms
+    lines.each { |l| $mkxp_log_file.puts(sprintf("[%8d ms] %s", ms, l)) rescue nil }
     $mkxp_log_file.flush rescue nil
   end
 rescue
@@ -233,6 +263,7 @@ end
 log_compat("=================================================================")
 log_compat("[Switch Compatibility] *** PRELOAD BUILD 2026-PERFECT-60FPS-STABLE ***")
 log_compat("[Switch Compatibility] Iniciando preload.rb en Nintendo Switch...")
+log_compat("[PERF] Primer pixel en pantalla a los #{$SWITCH_FIRST_PIXEL_MS} ms desde que Ruby tomo el control") if defined?($SWITCH_FIRST_PIXEL_MS) && $SWITCH_FIRST_PIXEL_MS
 log_compat("=================================================================")
 
 # 1.05 Pre-indexación de Assets en RAM para 60 FPS sin I/O en MicroSD (Arranque Instantáneo)

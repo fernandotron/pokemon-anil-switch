@@ -9,17 +9,35 @@ aquí, o como paso `[consola]` según manda `AGENTS.md` §5.
 
 ---
 
-## ⚠️ Antes de medir nada: el `.nro` del repo está obsoleto
+## ⚠️ Antes de medir nada: el `.nro`
 
-`git log --oneline -- port.nro` devuelve **un solo commit**, el import inicial. Y
-`build_and_deploy_all.js:85` copia ese binario viejo a `ARCHIVOS_PARA_SWITCH/`.
+Esto se descubrió **después** de una primera prueba en consola en la que el arranque salió igual.
+Era la causa.
 
-**Consecuencia:** si descargas el NRO fresco de CI y *después* ejecutas el despliegue, el script te
-lo sobrescribe con el viejo. Como el arreglo que elimina los ~22 s de negro es **C++**, medirías sin
-él y concluirías que el cambio no sirvió de nada.
+**Había dos binarios y ninguno se regeneraba.** `port.nro` y `pokemon_anil.nro` eran copias byte a
+byte del mismo `.nro` del commit de import, y `build_and_deploy_all.js` desplegaba los dos tal cual:
 
-**Orden correcto:** ejecutar el despliegue primero, y copiar el `.nro` de CI (artefacto
-`PokemonAnil-Switch-NRO`) **al final**, sobrescribiendo.
+- `build_switch.sh` genera **sólo** `port.nro` (su `OUTPUT_NRO`)
+- CI publica **sólo** `port.nro`
+- `pokemon_anil.nro` no lo generaba **nada**, pero se copiaba a la tarjeta igual
+
+Quien lanzara `pokemon_anil.nro` ejecutaba el binario del commit de import, y **ningún cambio de C++
+le llegaba jamás**, sin ningún aviso. Cualquier medición de arranque sobre ese fichero da un falso
+negativo.
+
+**Corregido en este PR:** el despliegue escribe ahora el mismo `port.nro` bajo los dos nombres, así
+que da igual cuál abra el lanzador. Y si el binario que se despliega es el base del repositorio, el
+script lo dice a gritos por consola en vez de callárselo.
+
+**El orden sigue importando:** `build_and_deploy_all.js` copia el `.nro` **base**, así que
+sobrescribe cualquier binario fresco puesto antes.
+
+1. `node build_and_deploy_all.js`
+2. Copiar `ARCHIVOS_PARA_SWITCH/` a la tarjeta
+3. **Al final**, copiar encima el `port.nro` de CI — **con los dos nombres**
+
+**Comprobación de 10 segundos:** el binario base pesa **exactamente 19.091.512 bytes**. Si el de la
+tarjeta mide eso, es el viejo, se llame como se llame.
 
 ---
 

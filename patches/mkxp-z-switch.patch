@@ -1324,10 +1324,19 @@ index 7270e7d..9d3694e 100644
      {
          p.clear();
 diff --git a/src/util/debugwriter.h b/src/util/debugwriter.h
-index da12825..aa6fb63 100644
+index da12825..11818fe 100644
 --- a/src/util/debugwriter.h
 +++ b/src/util/debugwriter.h
-@@ -61,10 +61,19 @@ public:
+@@ -22,6 +22,8 @@
+ #ifndef DEBUGWRITER_H
+ #define DEBUGWRITER_H
+ 
++#include <SDL_timer.h>
++
+ #include <iostream>
+ #include <sstream>
+ #include <vector>
+@@ -61,10 +63,26 @@ public:
  
  	~Debug()
  	{
@@ -1340,11 +1349,18 @@ index da12825..aa6fb63 100644
 +		std::cerr << str << std::endl;
 +#endif
 +#if defined(__SWITCH__) || defined(__NX__)
-+		FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "a");
-+		if (f) {
-+			fprintf(f, "%s\n", str.c_str());
-+			fflush(f);
-+			fclose(f);
++		/* El handle se abre UNA vez y se queda abierto. Antes se hacia fopen(...,"a")
++		 * + fclose por CADA linea: en FAT/exFAT abrir en modo append obliga a recorrer
++		 * la cadena de clusters hasta el final, asi que el coste por linea CRECIA con
++		 * el tamano del log. Con cientos de lineas en el arranque eso es tiempo real,
++		 * y ademas contaminaba cualquier medicion hecha con este mismo log.
++		 *
++		 * El prefijo de milisegundos convierte cada linea que el motor YA emite en un
++		 * punto de perfilado: el log pasa a ser una linea temporal del arranque. */
++		static FILE *logFile = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "w");
++		if (logFile) {
++			fprintf(logFile, "[%8u ms] %s\n", (unsigned)SDL_GetTicks(), str.c_str());
++			fflush(logFile);
 +		}
  #endif
  	}
