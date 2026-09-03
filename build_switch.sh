@@ -95,6 +95,17 @@ if [ ! -f "$DEVKITPRO/portlibs/switch/lib/libiconv.a" ]; then
 fi
 
 # 2.5 Compilar Ruby 3.1 para Switch si no está instalado
+# Instrumentacion paso a paso del arranque de Ruby. APAGADA por defecto: mete cientos de
+# escrituras a microSD dentro de ruby_setup(). Para diagnosticar: RUBY_STEP_LOG=1 ./build_switch.sh
+RUBY_STEP_LOG="${RUBY_STEP_LOG:-0}"
+if [ "$RUBY_STEP_LOG" = "1" ]; then
+    RUBY_STEP_DEF="-DMKXPZ_RUBY_STEP_LOG"
+    echo "[AVISO] RUBY_STEP_LOG=1: se compila Ruby con instrumentacion paso a paso."
+    echo "        Esto ANADE tiempo de arranque. No usar para medir el arranque real."
+else
+    RUBY_STEP_DEF=""
+fi
+
 RUBY_STAMP_FILE="$DEVKITPRO/portlibs/switch/.ruby_build_stamp"
 CURRENT_RUBY_STAMP=$(md5sum "$0" "$PROJECT_ROOT"/patches/* 2>/dev/null | md5sum | cut -d' ' -f1)
 
@@ -159,12 +170,19 @@ EOF
 cat << 'EOF' > patch_eval_setup.c
 #include <stdio.h>
 #include <time.h>
-/* Fichero PROPIO, no mkxp.log: alli escribe Debug() abriendo en modo "w" y truncaria
- * todo lo que se escriba aqui antes. Y handle persistente en vez de
- * fopen(append)+fflush+fclose por linea: la macro CALL(n) de inits.c emite DOS lineas
- * por cada Init_ de rb_call_inits, del orden de cientos, y en FAT cada apertura en
- * modo append recorre la cadena de clusters hasta el final, con coste creciente.
- * Eso convertia el propio log en una parte del tiempo de arranque que se pretendia medir. */
+
+/* Instrumentacion paso a paso del arranque de Ruby.
+ *
+ * APAGADA POR DEFECTO, y el motivo es serio: los sed de mas abajo reescriben la macro
+ * CALL(n) de inits.c, asi que CADA Init_ de rb_call_inits emite DOS llamadas a esta
+ * funcion. Son cientos, dentro de ruby_setup(), y cada una escribia en la microSD.
+ * Medido en consola: el motor entero tarda 1,49 s en llegar a ruby_setup() y el arranque
+ * completo tarda 34 s, asi que ~32 s se van ahi dentro.
+ *
+ * Para diagnosticar: RUBY_STEP_LOG=1 ./build_switch.sh
+ * Escribe en sdmc:/switch/pokemon_anil/mkxp_ruby_init.log, fichero propio para no pisar
+ * mkxp.log, que tiene su propio escritor con handle persistente. */
+#ifdef MKXPZ_RUBY_STEP_LOG
 static FILE *_rstep = NULL;
 static void log_ruby_step(const char *msg) {
     struct timespec ts;
@@ -172,13 +190,14 @@ static void log_ruby_step(const char *msg) {
     if (_rstep) {
         clock_gettime(CLOCK_MONOTONIC, &ts);
         fprintf(_rstep, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
-        /* fflush por linea a proposito. Lo caro en FAT era el fopen(append)+fclose, que
-         * recorre la cadena de clusters hasta el final; esto es solo una escritura. Sin el,
-         * un cierre por error durante el arranque de Ruby se llevaria por delante justo las
-         * lineas que explican donde se colgo, que es cuando mas falta hacen. */
+        /* fflush por linea: lo caro es el fopen(append)+fclose, no esto, y sin el un
+         * cierre por error se llevaria justo las lineas que dicen donde se colgo. */
         fflush(_rstep);
     }
 }
+#else
+static inline void log_ruby_step(const char *msg) { (void)msg; }
+#endif
 EOF
     sed -i '1i #include "patch_eval_setup.c"' eval.c || true
     sed -i 's/Init_BareVM();/log_ruby_step("  [ruby_setup 3] Init_BareVM"); Init_BareVM(); log_ruby_step("  [ruby_setup 3.1] Init_BareVM OK");/g' eval.c || true
@@ -215,7 +234,7 @@ with open("cont.c", "w") as f:
 print(">>> Parche cont.c aplicado exitosamente con Python")
 PYEOF
     sed -i 's/rb_provide("fiber.so");/rb_provide("fiber.so"); log_ruby_step("      [cont] Init_Cont complete");/g' cont.c || true
-    CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
+    CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__ $RUBY_STEP_DEF" \
     LDFLAGS="-specs=$DEVKITPRO/libnx/switch.specs -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -L$DEVKITPRO/libnx/lib -L$DEVKITPRO/portlibs/switch/lib -lnx" \
     ./configure \
         --host=aarch64-none-elf \
