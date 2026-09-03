@@ -35,7 +35,7 @@ UIHandlers.add(:summary, :page_moves, {
   "name"      => "Movimientos",
   "suffix"    => "moves",
   "order"     => 40,
-  "options"   => [:moves, :tms],
+  "options"   => [:moves, :remember, :forget, :tms],
   "layout"    => proc { |pkmn, scene| scene.drawPageFour }
 })
 

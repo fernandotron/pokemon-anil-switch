@@ -261,8 +261,14 @@ function sub(texto, patron, reemplazo, nombre) {
 }
 
 let patchedCount = 0;
-for (let s of scripts) {
+for (let sIdx = 0; sIdx < scripts.length; sIdx++) {
+  let s = scripts[sIdx];
   let changed = false;
+
+  if (sIdx > 0 && sIdx < 420 && sIdx % 20 === 0) {
+    const pct = Math.floor(5 + (sIdx * 20 / 437));
+    s.code = `update_boot_progress(${pct}, "Cargando motor de juego (${pct}%)...") if defined?(update_boot_progress)\n` + s.code;
+  }
   
   if (s.code.includes('def pbSetResizeFactor')) {
     console.log('Patching pbSetResizeFactor in:', s.name);
@@ -2476,6 +2482,7 @@ def mainFunctionDebug
       begin
         current_scene.main
       rescue Exception => e
+        break if e.is_a?(SystemExit)
         if defined?(write_crash_report)
           write_crash_report(e, "Scene: #{current_scene.class}")
         else
@@ -2549,6 +2556,10 @@ rescue Exception => eg
     eg.backtrace.each { |line| log_compat("  #{line}") rescue nil }
   end
 end
+
+# 3.4 Carga del índice de recursos en memoria
+update_boot_progress(62, "Indexando recursos del juego...") if defined?(update_boot_progress)
+pbLoadSwitchAssetsIndex rescue nil
 
 # 3.5 Precarga de Animaciones de Combate (Elimina el retardo en la primera batalla contra entrenador)
 log_compat("[Main] 3.5. Precargando animaciones de combate...") rescue nil
@@ -2626,6 +2637,10 @@ begin
   end
 rescue Exception
 end
+
+# Reactivar recolección de basura tras finalizar la carga del motor
+GC.enable rescue nil
+GC.start rescue nil
 
 loop do
   retval = mainFunction

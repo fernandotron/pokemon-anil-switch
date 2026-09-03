@@ -60,13 +60,14 @@ def setBattleRule(*args)
       $game_temp.add_battle_rule(r, arg)
       r = nil
     else
-      case arg.downcase
+      arg_str = arg.to_s.downcase
+      case arg_str
       when "terrain", "weather", "environment", "environ", "backdrop",
            "battleback", "base", "outcome", "outcomevar"
         r = arg
         next
       end
-      if additionalRules.include?(arg.downcase)
+      if additionalRules.include?(arg_str)
         r = arg
         next
       end

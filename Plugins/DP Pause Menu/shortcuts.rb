@@ -246,8 +246,7 @@ class DP_PauseMenu
 
     @sprites[:helpful_text_txt] = TextSprite.new(@viewport2)
     @sprites[:helpful_text_txt].draw([
-        [_INTL('Nivel máx. actual: {1}', LevelCapsEX.level_cap), 24, Graphics.height - 45 - extra2, 0, base_color, shadow_color, true],
-        [_INTL('[-] Controles'), Graphics.width - 155, Graphics.height - 30, 0, base_color, shadow_color, true]
+        [_INTL('Nivel máx. actual: {1}', LevelCapsEX.level_cap), 24, Graphics.height - 45 - extra2, 0, base_color, shadow_color, true]
     ])
 
     if defined?(ChallengeModes) && ChallengeModes.on?(:MODOVIDAS) && $PokemonGlobal.challenge_lives && $PokemonGlobal.challenge_lives >= 0

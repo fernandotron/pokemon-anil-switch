@@ -27,6 +27,7 @@ class CustomizationMenu
         _INTL("{1} Modo VGC (dobles)", opciones_elegidas[:vgc] ? "[X]" : "[  ]"),
         _INTL("{1} Modo Inverso", opciones_elegidas[:inverso] ? "[X]" : "[  ]"),
         _INTL("{1} Modo Sin Grindeo", opciones_elegidas[:sin_grindeo] ? "[X]" : "[  ]"),
+        _INTL("{1} Modo Radical (difícil/sin objetos)", opciones_elegidas[:radical] ? "[X]" : "[  ]"),
         _INTL("Confirmar los elegidos")
       ]
       
@@ -48,7 +49,9 @@ class CustomizationMenu
         handle_inverse_mode
       when 5  # Modo Sin Grindeo
         handle_no_grinding_mode
-      when 6  # Confirmar los elegidos
+      when 6  # Modo Radical
+        handle_radical_mode
+      when 7  # Confirmar los elegidos
         if confirm_selection
           break
         end
@@ -74,6 +77,7 @@ class CustomizationMenu
     $game_switches[MODO_VGC] = false if $game_switches
     $game_switches[MODO_INVERSO] = false if $game_switches
     $game_switches[MODO_SIN_GRINDEO] = false if $game_switches
+    $game_switches[MODO_RADICAL] = false if $game_switches
     ChallengeModes.reset if (ChallengeModes.queued? rescue false)
     RandomizedChallenge.disable if (RandomizedChallenge.enabled? rescue false)
     MonotypeChallenge.disable if (MonotypeChallenge.enabled? rescue false)
@@ -87,7 +91,8 @@ class CustomizationMenu
       monotype: (MonotypeChallenge.enabled? rescue false),
       vgc: (($game_switches && $game_switches[MODO_VGC]) rescue false),
       inverso: (($game_switches && $game_switches[MODO_INVERSO]) rescue false),
-      sin_grindeo: (($game_switches && $game_switches[MODO_SIN_GRINDEO]) rescue false)
+      sin_grindeo: (($game_switches && $game_switches[MODO_SIN_GRINDEO]) rescue false),
+      radical: (($game_switches && $game_switches[MODO_RADICAL]) rescue false)
     }
   end
   
@@ -242,6 +247,14 @@ class CustomizationMenu
     $game_switches[MODO_SIN_GRINDEO] = (choice == 0)
   end
   
+  def handle_radical_mode
+    choice = pbMessage(
+      _INTL("¿Quieres activar el <b>MODO RADICAL</b>? Esto forzará el estilo de combate en modo <b>FIJO (Set)</b> y <b>prohibirá el uso de objetos curativos</b> en combates contra entrenadores para igualar las condiciones contra la IA."),
+      [_INTL("Sí"), _INTL("No")], -1
+    )
+    $game_switches[MODO_RADICAL] = (choice == 0)
+  end
+  
   def confirm_selection
     # Recopilar los modos elegidos
     modos_elegidos = []
@@ -253,6 +266,7 @@ class CustomizationMenu
     modos_elegidos.push(_INTL("Modo VGC")) if opciones[:vgc]
     modos_elegidos.push(_INTL("Modo Inverso")) if opciones[:inverso]
     modos_elegidos.push(_INTL("Modo Sin Grindeo")) if opciones[:sin_grindeo]
+    modos_elegidos.push(_INTL("Modo Radical")) if opciones[:radical]
     
     # Crear el mensaje con los modos elegidos
     if modos_elegidos.empty?

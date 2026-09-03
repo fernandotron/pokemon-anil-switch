@@ -8,6 +8,7 @@ if $PRELOAD_RB_LOADED
   log_compat("[Switch Compatibility] preload.rb ya fue evaluado anteriormente.") rescue nil
 end
 $PRELOAD_RB_LOADED = true
+GC.disable rescue nil # Acelerar arranque eliminando pausas de GC durante compilacion de scripts
 
 # 0. Renderizado instantáneo en el fotograma 0 (Feedback visual inmediato a < 15ms)
 module Graphics
@@ -103,9 +104,10 @@ begin
         $switch_boot_bar.z = $switch_boot_viewport.z + 10
       end
 
-      # 4. Renderizado inmediato del primer fotograma (4 pasadas para llenar el triple buffer EGL)
-      update_boot_progress(3, "Iniciando Pokémon Añil...")
-      4.times { Graphics.update rescue nil }
+      # 4. Renderizado inmediato del primer fotograma en pantalla
+      update_boot_progress(5, "Iniciando Pokémon Añil...")
+      Graphics.transition(0) rescue nil
+      6.times { Graphics.update rescue nil }
       Graphics.frame_reset rescue nil
     end
   end
@@ -173,21 +175,25 @@ $GRAPHICS_LOOKUP_TABLE ||= {}
 $AUDIO_LOOKUP_TABLE ||= {}
 $RESOLVE_AUDIO_MEMO_CACHE ||= {}
 $RESOLVED_BITMAP_CACHE ||= {}
+$SWITCH_ASSETS_INDEX_LOADED ||= false
 
-dat_file = ["Data/switch_assets_index.dat", "./Data/switch_assets_index.dat"].find { |p| File.exist?(p) }
-if dat_file && ($GRAPHICS_LOOKUP_TABLE.nil? || $GRAPHICS_LOOKUP_TABLE.empty?)
-  begin
-    raw = File.open(dat_file, "rb") { |f| f.read }
-    if raw && !raw.empty?
-      t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
-      $GRAPHICS_LOOKUP_TABLE, $AUDIO_LOOKUP_TABLE = Marshal.load(raw)
-      t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
-      log_compat(sprintf("[Switch Assets] Cargados %d graficos y %d audios desde .dat en %.3fs (Arranque Instantaneo).", ($GRAPHICS_LOOKUP_TABLE.length rescue 0), ($AUDIO_LOOKUP_TABLE.length rescue 0), (t1 - t0))) rescue nil
+def pbLoadSwitchAssetsIndex
+  return if $SWITCH_ASSETS_INDEX_LOADED
+  $SWITCH_ASSETS_INDEX_LOADED = true
+  dat_file = ["Data/switch_assets_index.dat", "./Data/switch_assets_index.dat"].find { |p| File.exist?(p) }
+  if dat_file && ($GRAPHICS_LOOKUP_TABLE.nil? || $GRAPHICS_LOOKUP_TABLE.empty?)
+    begin
+      raw = File.open(dat_file, "rb") { |f| f.read }
+      if raw && !raw.empty?
+        t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
+        $GRAPHICS_LOOKUP_TABLE, $AUDIO_LOOKUP_TABLE = Marshal.load(raw)
+        t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
+        log_compat(sprintf("[Switch Assets] Cargados %d graficos y %d audios desde .dat en %.3fs (Arranque Instantaneo).", ($GRAPHICS_LOOKUP_TABLE.length rescue 0), ($AUDIO_LOOKUP_TABLE.length rescue 0), (t1 - t0))) rescue nil
+      end
+    rescue Exception => e
+      log_compat("[Warning Switch Assets DAT] #{e.message}") rescue nil
     end
-  rescue Exception => e
-    log_compat("[Warning Switch Assets DAT] #{e.message}") rescue nil
   end
-  update_boot_progress(18, "Indexando recursos...") if defined?(update_boot_progress)
 end
 
 
@@ -823,6 +829,45 @@ module ::Input
     def scroll_v; 0; end
     def release?(*args); false; end
     def time?(*args); 0; end
+
+    def trigger_controls?
+      if defined?(::Input::Controller) && ::Input::Controller.connected?
+        return true if (::Input::Controller.triggerex?(:BACK) rescue false)
+      end
+      if ::Input.respond_to?(:triggerex?)
+        return true if (::Input.triggerex?(:MINUS) || ::Input.triggerex?(:KP_MINUS) rescue false)
+        return true if (::Input.triggerex?(:H) rescue false)
+      end
+      false
+    end
+
+    def remap_button(num)
+      layout = ($PokemonSystem&.button_layout || 0) rescue 0
+      if layout == 1 # Estilo PC / Xbox invertido: A y B intercambiados
+        if num == 13 # Input::USE / C
+          return 12  # Input::BACK / B
+        elsif num == 12 # Input::BACK / B
+          return 13  # Input::USE / C
+        end
+      end
+      num
+    end
+
+    alias __native_btn_trigger? trigger? unless method_defined?(:__native_btn_trigger?)
+    alias __native_btn_press? press? unless method_defined?(:__native_btn_press?)
+    alias __native_btn_repeat? repeat? unless method_defined?(:__native_btn_repeat?)
+
+    def trigger?(num)
+      __native_btn_trigger?(remap_button(num))
+    end
+
+    def press?(num)
+      __native_btn_press?(remap_button(num))
+    end
+
+    def repeat?(num)
+      __native_btn_repeat?(remap_button(num))
+    end
   end
 end
 
@@ -857,6 +902,19 @@ if defined?(Kernel::Input) && Kernel::Input != ::Input
   Kernel.send(:remove_const, :Input) rescue nil
 end
 Kernel.const_set(:Input, ::Input) unless Kernel.const_defined?(:Input) && Kernel.const_get(:Input) == ::Input rescue nil
+
+# Shims offline para Nintendo Switch (evita bloqueos de sockets y timeouts HTTP en el hilo de render)
+module ::PokeAPI
+  def self.get_data(*args)
+    nil
+  end
+end unless defined?(::PokeAPI)
+
+def pbCableClub(*args)
+  pbMessage(_INTL("La funcionalidad online del Club del Cable no está disponible en Nintendo Switch.")) rescue nil
+end unless defined?(pbCableClub)
+
+$FOLLOWER_SPRITE_MEMO ||= {}
 
 # 1.105 Sprite compatibilidad
 class ::Sprite
@@ -3387,12 +3445,12 @@ def pbGetCachedMap(map_id)
   return nil
 end
 
+Graphics.resize_screen(512, 384) rescue nil
 Graphics.fixed_aspect_ratio = false rescue nil
 Graphics.integer_scaling = false rescue nil
 Graphics.smooth_scaling = 3 rescue nil
 Graphics.fullscreen = true rescue nil
 log_compat("Stubs de compatibilidad inicializados correctamente.")
-update_boot_progress(6, "Cargando scripts del motor...") if defined?(update_boot_progress)
-2.times { Graphics.update rescue nil }
+update_boot_progress(22, "Cargando scripts del motor...") if defined?(update_boot_progress)
 
 

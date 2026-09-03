@@ -154,6 +154,15 @@ class DP_PauseMenu
         pbUpdateSceneMap
       end
     }]
+    # BOTÓN DE CONTROLES
+    @options << ["Controles", "controlesA", "controlesB", proc {
+      pbFadeOutIn(99999) do
+        scene = PokemonControls_Scene.new
+        screen = PokemonControlsScreen.new(scene)
+        screen.pbStartScreen
+        pbUpdateSceneMap
+      end
+    }]
     # BOTÓN DE SALIR
     @options << ["Salir", "exitA", "exitB", proc {
       if pbConfirmMessage(_INTL("¿Estás segur\\@ de que quieres volver a la pantalla de título?"))
@@ -260,6 +269,15 @@ class DP_PauseMenu
       elsif (Input.trigger?(Input::SPECIAL) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:D))) && $bag.has?(:RADAR) && (!RandomizedChallenge.enabled? || RandomizedChallenge.consistent_wild_encounters?)
         pbPlayDecisionSE
         pbStartRadar
+      elsif Input.trigger_controls?
+        pbPlayDecisionSE
+        pbFadeOutIn(99999) do
+          scene = PokemonControls_Scene.new
+          screen = PokemonControlsScreen.new(scene)
+          screen.pbStartScreen
+          pbUpdateSceneMap
+        end
+        draw_helpful_text
       end
       confirmed = true if Input.trigger?(Input::USE)
       if changed
