@@ -68,5 +68,11 @@ node build_and_deploy_all.js
 ```
 
 **Verification:**
-- Confirm `switch_release/switch/pokemon_anil/` contains updated `.rxdata`, `preload.rb`, `Game.ini`, and `pokemon_anil.nro`.
+- Confirm `switch_release/switch/pokemon_anil/` contains updated `.rxdata`, `preload.rb` and `Game.ini`.
+- The `.nro` is NOT built by the Node pipeline. `build_and_deploy_all.js` only copies the base
+  binary versioned in the repo, and writes it under both names (`port.nro` and `pokemon_anil.nro`)
+  so whichever one the homebrew launcher opens is the same file. Any change under `mkxp-z/` or in
+  `patches/mkxp-z-switch.patch` requires the CI artifact `PokemonAnil-Switch-NRO`, copied over the
+  deployed files **after** running the deploy — otherwise the deploy overwrites it and the change
+  silently never reaches the console.
 - Confirm `ARCHIVOS_PARA_SWITCH/` contains the synchronized files for user SD card transfer.

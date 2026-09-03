@@ -55,13 +55,26 @@ chmod +x build_switch.sh
 
 > **Nota sobre el binario `.nro`:** Los ficheros `.nro` versionados en el repositorio son binarios base. El ejecutable compilado al día con todos los parches más recientes se genera automáticamente en GitHub Actions y se puede descargar desde los artefactos de CI (**PokemonAnil-Switch-NRO**).
 
+> ⚠️ **El orden importa.** `build_and_deploy_all.js` copia el `.nro` **base** del repositorio, así que
+> sobrescribe cualquier binario fresco que hubieras puesto antes. Para probar un cambio de C++
+> (`mkxp-z/` o `patches/mkxp-z-switch.patch`):
+>
+> 1. Ejecuta `node build_and_deploy_all.js`
+> 2. Copia `ARCHIVOS_PARA_SWITCH/` a la tarjeta
+> 3. **Al final**, copia encima el `port.nro` del artefacto de CI
+>
+> Si lo haces al revés, medirás con el binario viejo y parecerá que el cambio no hizo nada. El
+> despliegue escribe el mismo binario con los dos nombres (`port.nro` y `pokemon_anil.nro`) para
+> que dé igual cuál abra tu lanzador; si sustituyes el de CI a mano, **sustituye los dos**.
+
 Copia los archivos a tu tarjeta MicroSD en la siguiente ruta:
 
 ```text
 sdmc:/
 └── switch/
-    └── port/
+    └── pokemon_anil/
         ├── port.nro              <-- Binario generado (o descargado de CI)
+        ├── pokemon_anil.nro      <-- Misma copia; algunos lanzadores abren este nombre
         ├── mkxp.json             <-- Renombrar mkxp.switch.json a mkxp.json
         ├── Game.ini              <-- Configuración del juego
         ├── preload.rb            <-- Script de compatibilidad

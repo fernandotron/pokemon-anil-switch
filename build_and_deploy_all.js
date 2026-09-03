@@ -81,12 +81,27 @@ const targets = [
 targets.forEach(dir => {
   fs.mkdirSync(path.join(dir, 'Data'), { recursive: true });
   
-  // Archivos raíz
-  ['preload.rb', 'mkxp.json', 'mkxp.switch.json', 'Game.ini', 'pokemon_anil.nro', 'port.nro', 'soundfont.sf2', 'icon_switch.png'].forEach(f => {
+  // Archivos raíz (los .nro van aparte, justo debajo)
+  ['preload.rb', 'mkxp.json', 'mkxp.switch.json', 'Game.ini', 'soundfont.sf2', 'icon_switch.png'].forEach(f => {
     if (fs.existsSync(f)) {
       copyAndTouch(f, path.join(dir, f));
     }
   });
+
+  // El binario: UNA sola fuente, port.nro, replicada a los dos nombres.
+  //
+  // pokemon_anil.nro NO lo genera nadie: build_switch.sh solo produce port.nro (su OUTPUT_NRO) y
+  // CI solo publica port.nro. Aun asi se desplegaba tal cual desde el repo, donde lleva congelado
+  // desde el commit de import. Resultado: quien lanzara ese nombre en la consola ejecutaba un
+  // binario viejo y NINGUN cambio de C++ le llegaba jamas, sin ningun aviso, haciendo que
+  // cualquier medicion de arranque diera un falso negativo.
+  //
+  // Copiando port.nro a los dos nombres, da igual cual lance el menu homebrew: siempre es el
+  // mismo binario.
+  if (fs.existsSync('port.nro')) {
+    copyAndTouch('port.nro', path.join(dir, 'port.nro'));
+    copyAndTouch('port.nro', path.join(dir, 'pokemon_anil.nro'));
+  }
 
   // Archivos de Data
   ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.dat', 'switch_assets_index.rb', 'PkmnAnimations.rxdata', 'Animations.rxdata', 'move2anim.dat'].forEach(f => {
@@ -135,6 +150,31 @@ if (fs.existsSync('ARCHIVOS_MODIFICADOS_SWITCH')) {
       copyAndTouch(s, path.join('ARCHIVOS_MODIFICADOS_SWITCH/Data', f));
     }
   });
+}
+
+// Aviso de binario base. Este script NO compila el .nro: solo copia el que hay en el repo, que es
+// el binario base del commit de import. Si alguien despliega, prueba en la consola y no ve el
+// efecto de un cambio de C++, es por esto. Sin este aviso el fallo es silencioso y se interpreta
+// como "el cambio no sirvio".
+const NRO_BASE_MD5 = '0ddf72b09e4137f2948378beaba6525b';
+if (fs.existsSync('port.nro')) {
+  const md5 = require('crypto').createHash('md5').update(fs.readFileSync('port.nro')).digest('hex');
+  if (md5 === NRO_BASE_MD5) {
+    const linea = '='.repeat(78);
+    console.warn('\n' + linea);
+    console.warn('[AVISO] El .nro desplegado es el BINARIO BASE del repositorio.');
+    console.warn('');
+    console.warn('  Este script no compila nada: solo copia port.nro tal cual. Los cambios en');
+    console.warn('  mkxp-z/ o en patches/mkxp-z-switch.patch NO estan incluidos en el.');
+    console.warn('');
+    console.warn('  Para probar cambios de C++ en la consola:');
+    console.warn('    1. Descarga el artefacto de CI "PokemonAnil-Switch-NRO"');
+    console.warn('    2. Copialo ENCIMA, DESPUES de este despliegue (si no, se lo lleva por delante)');
+    console.warn('');
+    console.warn('  Se despliega con los dos nombres (port.nro y pokemon_anil.nro) para que');
+    console.warn('  ambos apunten siempre al mismo binario, lances el que lances.');
+    console.warn(linea + '\n');
+  }
 }
 
 console.log('\n=== 7. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
