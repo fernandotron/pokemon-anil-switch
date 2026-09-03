@@ -286,7 +286,7 @@ module GameData
       next if !val.is_a?(Class)
       if val.const_defined?(:DATA_FILENAME, false)
         if defined?(update_boot_progress) && (idx % 3 == 0)
-          pct = 52 + (idx * 18 / [consts.length, 1].max)
+          pct = 64 + (idx * 8 / [consts.length, 1].max)
           update_boot_progress(pct, "Cargando datos (#{c})...")
         end
         val.load

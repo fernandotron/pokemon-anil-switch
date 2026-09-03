@@ -23,8 +23,21 @@ $switch_boot_bg = nil
 $switch_boot_logo = nil
 $switch_boot_bar = nil
 
+$switch_boot_pct = 0
+
 def update_boot_progress(pct, text = "")
   return unless defined?($switch_boot_bar) && $switch_boot_bar && $switch_boot_bar.bitmap && !$switch_boot_bar.bitmap.disposed?
+  # Clamp monotono. La barra la alimentan CUATRO emisores con bandas propias: preload.rb, las
+  # lineas que patch_scripts.js inyecta en las secciones, el bloque Main, y ademas
+  # 006_PluginManager.rb y 002_GameData.rb, que calculan su porcentaje con constantes escritas a
+  # mano. Basta con que uno de ellos se quede desincronizado para que la barra retroceda a la
+  # vista del jugador. Aqui se ignora cualquier valor menor que el ultimo pintado, de modo que la
+  # barra nunca puede ir hacia atras aunque algun emisor futuro se olvide de actualizar su banda.
+  # El TEXTO si se actualiza siempre: la fase que se esta ejecutando se sigue viendo.
+  pct = pct.to_i
+  pct = $switch_boot_pct if pct < $switch_boot_pct
+  pct = 100 if pct > 100
+  $switch_boot_pct = pct
   begin
     bm = $switch_boot_bar.bitmap
     bm.clear
@@ -59,6 +72,58 @@ def update_boot_progress(pct, text = "")
   rescue Exception => e
     log_compat("[BootProgress Error] #{e.message}") rescue nil
   end
+end
+
+# Descarta la pantalla de arranque. Una sola implementacion: antes estaba duplicada en dos
+# bloques de patch_scripts.js y el segundo era codigo muerto (las globales ya eran nil).
+# Es idempotente: llamarla dos veces no hace nada la segunda.
+# IMPORTANTE: no la llames antes de tener algo compuesto que la sustituya, o la pantalla se
+# queda en negro. La escena de titulo la invoca cuando ya ha construido sus bitmaps.
+def switch_dispose_sprite!(spr)
+  return nil if !spr
+  begin
+    bm = spr.bitmap
+    bm.dispose if bm && !bm.disposed?
+  rescue Exception
+  end
+  begin
+    spr.dispose
+  rescue Exception
+  end
+  nil
+end
+
+def pbDisposeBootOverlay(fade_frames = 0)
+  begin
+    # Graphics.transition solo hace algo si antes hubo un Graphics.freeze
+    # (mkxp-z/src/display/graphics.cpp: "if (!p->frozen) return;"). Sin este freeze el
+    # corte hacia la escena siguiente seria a negro seco en vez de un fundido.
+    Graphics.freeze if fade_frames > 0
+  rescue Exception
+  end
+  $switch_boot_bg = switch_dispose_sprite!($switch_boot_bg) if defined?($switch_boot_bg)
+  $switch_boot_logo = switch_dispose_sprite!($switch_boot_logo) if defined?($switch_boot_logo)
+  $switch_boot_bar = switch_dispose_sprite!($switch_boot_bar) if defined?($switch_boot_bar)
+  $loading_sprite = switch_dispose_sprite!($loading_sprite) if defined?($loading_sprite)
+  if defined?($switch_boot_viewport) && $switch_boot_viewport
+    begin
+      $switch_boot_viewport.dispose
+    rescue Exception
+    end
+    $switch_boot_viewport = nil
+  end
+  if defined?($loading_viewport) && $loading_viewport
+    begin
+      $loading_viewport.dispose
+    rescue Exception
+    end
+    $loading_viewport = nil
+  end
+  begin
+    Graphics.transition(fade_frames) if fade_frames > 0
+  rescue Exception
+  end
+  nil
 end
 
 begin
@@ -105,7 +170,7 @@ begin
       end
 
       # 4. Renderizado inmediato del primer fotograma en pantalla
-      update_boot_progress(5, "Iniciando Pokémon Añil...")
+      update_boot_progress(2, "Iniciando Pokémon Añil...")
       Graphics.transition(0) rescue nil
       6.times { Graphics.update rescue nil }
       Graphics.frame_reset rescue nil
@@ -2619,23 +2684,54 @@ module Kernel
       if src.include?("update_KGC_ScreenCapture")
         src = src.gsub(/alias\s+update_KGC_ScreenCapture\s+update/, "alias update_KGC_ScreenCapture update unless method_defined?(:update_KGC_ScreenCapture)")
       end
-      src = src.gsub(/module\s+Graphics\b/, 'module ::Graphics')
-      src = src.gsub(/module\s+Input\b/, 'module ::Input')
-      src = src.gsub(/module\s+Audio\b/, 'module ::Audio')
-      src = src.gsub(/class\s+(Rect|Color|Tone)\s*<\s*Object/m, 'class \1')
-      src = src.gsub(/class\s+(GameStats|Game_Temp|PokemonSystem)\s*<\s*\1/m, 'class \1')
-      src = src.gsub(/class\s+(ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/m, 'class \1')
-      src = src.gsub(/class\s+Player\b(?!\s*<\s*Trainer)/, 'class Trainer; end unless defined?(Trainer); class Player < Trainer')
-      src = src.gsub(/(?<!::)\bSaveData\.initialize_bootup_values\b/, '(SaveData.respond_to?(:initialize_bootup_values) ? SaveData.initialize_bootup_values : nil)')
-      src = src.gsub(/(?<!::)\bSaveData\.load_bootup_values\((.*?)\)/, '(SaveData.respond_to?(:load_bootup_values) ? SaveData.load_bootup_values(\1) : nil)')
-      src = src.gsub(/def\s+pbSetResizeFactor\b.*?\nend\b/m, "def pbSetResizeFactor(factor = 0); Graphics.fixed_aspect_ratio = (factor == 1) rescue nil; Graphics.integer_scaling = false rescue nil; Graphics.smooth_scaling = 3 rescue nil; Graphics.fullscreen = true rescue nil; end")
-      src = src.gsub(/Graphics\.fullscreen\s*=\s*(?:false|!\s*Graphics\.fullscreen)/, 'Graphics.fullscreen = true')
-      src = src.gsub(/Graphics\.scale\s*=\s*[^\n;]+/, '# Graphics.scale skipped on Switch')
-      src = src.gsub(/Graphics\.resize_screen\b[^\n;]*/, '# Graphics.resize_screen skipped on Switch')
-      src = src.gsub(/Graphics\.resize_window\b[^\n;]*/, '# Graphics.resize_window skipped on Switch')
-      src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommands\(/, 'next send(:pbShowCommands, ')
-      src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommandsWithHelp\(/, 'next send(:pbShowCommandsWithHelp, ')
-      src = src.gsub(/Kernel\.pb([A-Za-z0-9_]+)/, 'pb\1')
+      # Cada gsub va detras de una guarda String#include? con una subcadena que la expresion
+      # regular EXIGE obligatoriamente para poder casar. Son guardas superset: si la guarda
+      # falla, la regex tampoco podia casar, asi que la semantica es identica.
+      # Motivo: este eval intercepta la evaluacion de los 437 scripts del motor y los 320
+      # ficheros de plugin, unos 10,5 MB de fuente. Sin guardas, cada gsub recorre ese texto
+      # entero con Onigmo (~10-20 MB/s) y ademas devuelve una copia nueva del String aunque no
+      # haya ninguna coincidencia. include? es un memmem del orden de 1 GB/s y no copia nada.
+      src = src.gsub(/module\s+Graphics\b/, 'module ::Graphics') if src.include?("Graphics")
+      src = src.gsub(/module\s+Input\b/, 'module ::Input') if src.include?("Input")
+      src = src.gsub(/module\s+Audio\b/, 'module ::Audio') if src.include?("Audio")
+      src = src.gsub(/class\s+(Rect|Color|Tone)\s*<\s*Object/m, 'class \1') if src.include?("Object")
+      if src.include?("GameStats") || src.include?("Game_Temp") || src.include?("PokemonSystem")
+        src = src.gsub(/class\s+(GameStats|Game_Temp|PokemonSystem)\s*<\s*\1/m, 'class \1')
+      end
+      if src.include?("ScrollingSprite") || src.include?("RainbowSprite") || src.include?("TrailingSprite")
+        src = src.gsub(/class\s+(ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/m, 'class \1')
+      end
+      if src.include?("Player")
+        src = src.gsub(/class\s+Player\b(?!\s*<\s*Trainer)/, 'class Trainer; end unless defined?(Trainer); class Player < Trainer')
+      end
+      if src.include?("initialize_bootup_values")
+        src = src.gsub(/(?<!::)\bSaveData\.initialize_bootup_values\b/, '(SaveData.respond_to?(:initialize_bootup_values) ? SaveData.initialize_bootup_values : nil)')
+      end
+      if src.include?("load_bootup_values")
+        src = src.gsub(/(?<!::)\bSaveData\.load_bootup_values\((.*?)\)/, '(SaveData.respond_to?(:load_bootup_values) ? SaveData.load_bootup_values(\1) : nil)')
+      end
+      if src.include?("pbSetResizeFactor")
+        src = src.gsub(/def\s+pbSetResizeFactor\b.*?\nend\b/m, "def pbSetResizeFactor(factor = 0); Graphics.fixed_aspect_ratio = (factor == 1) rescue nil; Graphics.integer_scaling = false rescue nil; Graphics.smooth_scaling = 3 rescue nil; Graphics.fullscreen = true rescue nil; end")
+      end
+      if src.include?("fullscreen")
+        src = src.gsub(/Graphics\.fullscreen\s*=\s*(?:false|!\s*Graphics\.fullscreen)/, 'Graphics.fullscreen = true')
+      end
+      if src.include?("Graphics.scale")
+        src = src.gsub(/Graphics\.scale\s*=\s*[^\n;]+/, '# Graphics.scale skipped on Switch')
+      end
+      if src.include?("resize_screen")
+        src = src.gsub(/Graphics\.resize_screen\b[^\n;]*/, '# Graphics.resize_screen skipped on Switch')
+      end
+      if src.include?("resize_window")
+        src = src.gsub(/Graphics\.resize_window\b[^\n;]*/, '# Graphics.resize_window skipped on Switch')
+      end
+      if src.include?("pbShowCommands")
+        src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommands\(/, 'next send(:pbShowCommands, ')
+        src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommandsWithHelp\(/, 'next send(:pbShowCommandsWithHelp, ')
+      end
+      if src.include?("Kernel.pb")
+        src = src.gsub(/Kernel\.pb([A-Za-z0-9_]+)/, 'pb\1')
+      end
     end
 
     if filename && filename.is_a?(String) && (filename.include?("Plugins/") || filename.start_with?("["))
@@ -3451,6 +3547,6 @@ Graphics.integer_scaling = false rescue nil
 Graphics.smooth_scaling = 3 rescue nil
 Graphics.fullscreen = true rescue nil
 log_compat("Stubs de compatibilidad inicializados correctamente.")
-update_boot_progress(22, "Cargando scripts del motor...") if defined?(update_boot_progress)
+update_boot_progress(5, "Cargando scripts del motor...") if defined?(update_boot_progress)
 
 

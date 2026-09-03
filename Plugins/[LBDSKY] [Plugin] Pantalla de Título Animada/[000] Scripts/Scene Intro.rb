@@ -15,6 +15,11 @@ class Scene_Intro
   # load the title screen
   #-----------------------------------------------------------------------------
   def main
+    # Este transition SI hace falta, aunque en el arranque en frio no haga nada. Importa al
+    # VOLVER al titulo desde la partida: la escena anterior deja un Graphics.freeze pendiente, y
+    # sin descongelar aqui el ultimo fotograma del mapa se queda pegado en pantalla durante toda
+    # la construccion del titulo. En el arranque en frio no hay freeze pendiente y es un no-op
+    # inofensivo (mkxp-z/src/display/graphics.cpp: "if (!p->frozen) return;").
     Graphics.transition(10) rescue nil
     Input.update
     species = ModularTitle::SPECIES rescue :PIKACHU
@@ -23,7 +28,22 @@ class Scene_Intro
     @cry = species.nil? ? nil : (GameData::Species.cry_filename(species, ModularTitle::SPECIES_FORM) rescue nil)
     @skip = false
     self.cyclePics
+    # La pantalla de arranque de preload.rb sigue visible aqui, con su barra al 92%.
+    #
+    # Precision importante: ModularTitleScreen#initialize NO llama a Graphics.update en ningun
+    # momento, asi que la barra NO avanza durante la construccion: se queda congelada al 92%
+    # todo el tramo. Eso es lo que se puede conseguir sin reescribir ModularTitleScreen, y es
+    # intencionado. Lo que cambia respecto a antes no es que la barra se mueva, es QUE HAY ALGO
+    # en pantalla: el bloque Main destruia la overlay justo antes de entrar aqui, y estos
+    # segundos se pagaban con el televisor en negro. Eso era la "segunda pantalla de carga".
     @screen = ModularTitleScreen.new
+    update_boot_progress(100, "¡Listo!") if defined?(update_boot_progress)
+    # Se retira en seco, sin fundido: @screen.intro arranca con su propio destello, asi que
+    # fundir hacia un titulo ya terminado para que la intro lo borre acto seguido se ve como un
+    # parpadeo. La propia intro hace de transicion.
+    if defined?(pbDisposeBootOverlay)
+      pbDisposeBootOverlay(0)
+    end
     @screen.playBGM rescue nil
     @screen.intro rescue nil
     self.update
@@ -88,7 +108,10 @@ class Scene_Intro
     return if !pics || pics.empty?
     frames = 10
     sprite = Sprite.new
-    sprite.z = 999999
+    # Por encima de la pantalla de arranque de preload.rb, que ahora sigue viva durante esta
+    # secuencia ($switch_boot_viewport.z == 999999). Con el 999999 de antes el empate de z
+    # dejaba indefinido cual de los dos quedaba arriba.
+    sprite.z = 1000500
     sprite.opacity = 0
     for i in 0...pics.length
       bitmap = (pbBitmap("Graphics/Titles/#{pics[i]}") rescue nil)
