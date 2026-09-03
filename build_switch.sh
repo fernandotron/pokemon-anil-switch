@@ -168,35 +168,36 @@ EOF
     sed -i '1i #include <poll.h>' thread_pthread.c || true
     # Instrumentar ruby_setup e inits con logs detallados paso a paso
 cat << 'EOF' > patch_eval_setup.c
+/* Este fichero se inyecta como PRIMERA LINEA de eval.c, inits.c y cont.c, que son fuentes
+ * de Ruby. Ruby es muy sensible al orden de inclusion de cabeceras, asi que por defecto
+ * aqui NO se incluye absolutamente nada: solo una funcion vacia.
+ *
+ * Historia, para que no se repita: una version anterior ponia #include <time.h> en esta
+ * primera linea, por delante de las cabeceras propias de Ruby, y el juego dejo de arrancar
+ * (se colgaba dentro de ruby_setup, justo tras [MRI 2.1] en mkxp.log).
+ *
+ * Ademas la instrumentacion cuesta tiempo real: los sed de mas abajo reescriben la macro
+ * CALL(n) de inits.c para que CADA Init_ de rb_call_inits emita DOS llamadas, y son cientos,
+ * cada una escribiendo en la microSD dentro de ruby_setup().
+ *
+ * Para diagnosticar:  RUBY_STEP_LOG=1 ./build_switch.sh
+ * (borra antes sdmc:/switch/pokemon_anil/mkxp_ruby_init.log: se abre en modo append porque
+ *  este fichero se compila en tres unidades distintas y cada una tendria su propio handle) */
+#ifdef MKXPZ_RUBY_STEP_LOG
 #include <stdio.h>
 #include <time.h>
-
-/* Instrumentacion paso a paso del arranque de Ruby.
- *
- * APAGADA POR DEFECTO, y el motivo es serio: los sed de mas abajo reescriben la macro
- * CALL(n) de inits.c, asi que CADA Init_ de rb_call_inits emite DOS llamadas a esta
- * funcion. Son cientos, dentro de ruby_setup(), y cada una escribia en la microSD.
- * Medido en consola: el motor entero tarda 1,49 s en llegar a ruby_setup() y el arranque
- * completo tarda 34 s, asi que ~32 s se van ahi dentro.
- *
- * Para diagnosticar: RUBY_STEP_LOG=1 ./build_switch.sh
- * Escribe en sdmc:/switch/pokemon_anil/mkxp_ruby_init.log, fichero propio para no pisar
- * mkxp.log, que tiene su propio escritor con handle persistente. */
-#ifdef MKXPZ_RUBY_STEP_LOG
-static FILE *_rstep = NULL;
 static void log_ruby_step(const char *msg) {
     struct timespec ts;
-    if (!_rstep) _rstep = fopen("sdmc:/switch/pokemon_anil/mkxp_ruby_init.log", "w");
-    if (_rstep) {
+    FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp_ruby_init.log", "a");
+    if (f) {
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        fprintf(_rstep, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
-        /* fflush por linea: lo caro es el fopen(append)+fclose, no esto, y sin el un
-         * cierre por error se llevaria justo las lineas que dicen donde se colgo. */
-        fflush(_rstep);
+        fprintf(f, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
+        fclose(f);
     }
 }
 #else
-static inline void log_ruby_step(const char *msg) { (void)msg; }
+/* Sin cabeceras y sin estado: no se inyecta nada en las fuentes de Ruby. */
+static void log_ruby_step(const char *msg) { (void)msg; }
 #endif
 EOF
     sed -i '1i #include "patch_eval_setup.c"' eval.c || true
