@@ -1300,14 +1300,22 @@ index 41fda3d..5cac6d0 100644
      
  bool systemImpl::isWine() {
 diff --git a/src/util/boost-hash.h b/src/util/boost-hash.h
-index 7270e7d..42600bc 100644
+index 7270e7d..9d3694e 100644
 --- a/src/util/boost-hash.h
 +++ b/src/util/boost-hash.h
-@@ -94,6 +94,11 @@ public:
+@@ -27,6 +27,7 @@
+ #include <map>
+ #include <set>
+ 
++#include <cstddef>
+ #include <utility>
+ 
+ /* Wrappers around the boost unordered template classes,
+@@ -94,6 +95,11 @@ public:
  		return p.cend();
  	}
      
-+    inline size_t size() const
++    inline std::size_t size() const
 +    {
 +        return p.size();
 +    }
