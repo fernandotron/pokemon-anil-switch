@@ -95,17 +95,6 @@ if [ ! -f "$DEVKITPRO/portlibs/switch/lib/libiconv.a" ]; then
 fi
 
 # 2.5 Compilar Ruby 3.1 para Switch si no está instalado
-# Instrumentacion paso a paso del arranque de Ruby. APAGADA por defecto: mete cientos de
-# escrituras a microSD dentro de ruby_setup(). Para diagnosticar: RUBY_STEP_LOG=1 ./build_switch.sh
-RUBY_STEP_LOG="${RUBY_STEP_LOG:-0}"
-if [ "$RUBY_STEP_LOG" = "1" ]; then
-    RUBY_STEP_DEF="-DMKXPZ_RUBY_STEP_LOG"
-    echo "[AVISO] RUBY_STEP_LOG=1: se compila Ruby con instrumentacion paso a paso."
-    echo "        Esto ANADE tiempo de arranque. No usar para medir el arranque real."
-else
-    RUBY_STEP_DEF=""
-fi
-
 RUBY_STAMP_FILE="$DEVKITPRO/portlibs/switch/.ruby_build_stamp"
 CURRENT_RUBY_STAMP=$(md5sum "$0" "$PROJECT_ROOT"/patches/* 2>/dev/null | md5sum | cut -d' ' -f1)
 
@@ -167,38 +156,16 @@ EOF
     sed -i 's/#  error waitpid or wait4 is required./return (rb_pid_t)-1;/g' process.c || true
     sed -i '1i #include <poll.h>' thread_pthread.c || true
     # Instrumentar ruby_setup e inits con logs detallados paso a paso
-cat << 'EOF' > patch_eval_setup.c
-/* Este fichero se inyecta como PRIMERA LINEA de eval.c, inits.c y cont.c, que son fuentes
- * de Ruby. Ruby es muy sensible al orden de inclusion de cabeceras, asi que por defecto
- * aqui NO se incluye absolutamente nada: solo una funcion vacia.
- *
- * Historia, para que no se repita: una version anterior ponia #include <time.h> en esta
- * primera linea, por delante de las cabeceras propias de Ruby, y el juego dejo de arrancar
- * (se colgaba dentro de ruby_setup, justo tras [MRI 2.1] en mkxp.log).
- *
- * Ademas la instrumentacion cuesta tiempo real: los sed de mas abajo reescriben la macro
- * CALL(n) de inits.c para que CADA Init_ de rb_call_inits emita DOS llamadas, y son cientos,
- * cada una escribiendo en la microSD dentro de ruby_setup().
- *
- * Para diagnosticar:  RUBY_STEP_LOG=1 ./build_switch.sh
- * (borra antes sdmc:/switch/pokemon_anil/mkxp_ruby_init.log: se abre en modo append porque
- *  este fichero se compila en tres unidades distintas y cada una tendria su propio handle) */
-#ifdef MKXPZ_RUBY_STEP_LOG
+    cat << 'EOF' > patch_eval_setup.c
 #include <stdio.h>
-#include <time.h>
 static void log_ruby_step(const char *msg) {
-    struct timespec ts;
-    FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp_ruby_init.log", "a");
+    FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "a");
     if (f) {
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        fprintf(f, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
+        fprintf(f, "%s\n", msg);
+        fflush(f);
         fclose(f);
     }
 }
-#else
-/* Sin cabeceras y sin estado: no se inyecta nada en las fuentes de Ruby. */
-static void log_ruby_step(const char *msg) { (void)msg; }
-#endif
 EOF
     sed -i '1i #include "patch_eval_setup.c"' eval.c || true
     sed -i 's/Init_BareVM();/log_ruby_step("  [ruby_setup 3] Init_BareVM"); Init_BareVM(); log_ruby_step("  [ruby_setup 3.1] Init_BareVM OK");/g' eval.c || true
@@ -235,7 +202,7 @@ with open("cont.c", "w") as f:
 print(">>> Parche cont.c aplicado exitosamente con Python")
 PYEOF
     sed -i 's/rb_provide("fiber.so");/rb_provide("fiber.so"); log_ruby_step("      [cont] Init_Cont complete");/g' cont.c || true
-    CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__ $RUBY_STEP_DEF" \
+    CFLAGS="-O3 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -I$DEVKITPRO/libnx/include -I$DEVKITPRO/portlibs/switch/include -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-function-declaration -Wno-error -std=gnu99 -D__SWITCH__ -D__NX__" \
     LDFLAGS="-specs=$DEVKITPRO/libnx/switch.specs -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -L$DEVKITPRO/libnx/lib -L$DEVKITPRO/portlibs/switch/lib -lnx" \
     ./configure \
         --host=aarch64-none-elf \
