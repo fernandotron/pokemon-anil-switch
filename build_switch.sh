@@ -172,6 +172,11 @@ static void log_ruby_step(const char *msg) {
     if (_rstep) {
         clock_gettime(CLOCK_MONOTONIC, &ts);
         fprintf(_rstep, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
+        /* fflush por linea a proposito. Lo caro en FAT era el fopen(append)+fclose, que
+         * recorre la cadena de clusters hasta el final; esto es solo una escritura. Sin el,
+         * un cierre por error durante el arranque de Ruby se llevaria por delante justo las
+         * lineas que explican donde se colgo, que es cuando mas falta hacen. */
+        fflush(_rstep);
     }
 }
 EOF
