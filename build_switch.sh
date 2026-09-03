@@ -156,22 +156,14 @@ EOF
     sed -i 's/#  error waitpid or wait4 is required./return (rb_pid_t)-1;/g' process.c || true
     sed -i '1i #include <poll.h>' thread_pthread.c || true
     # Instrumentar ruby_setup e inits con logs detallados paso a paso
-cat << 'EOF' > patch_eval_setup.c
+    cat << 'EOF' > patch_eval_setup.c
 #include <stdio.h>
-#include <time.h>
-/* Fichero PROPIO, no mkxp.log: alli escribe Debug() abriendo en modo "w" y truncaria
- * todo lo que se escriba aqui antes. Y handle persistente en vez de
- * fopen(append)+fflush+fclose por linea: la macro CALL(n) de inits.c emite DOS lineas
- * por cada Init_ de rb_call_inits, del orden de cientos, y en FAT cada apertura en
- * modo append recorre la cadena de clusters hasta el final, con coste creciente.
- * Eso convertia el propio log en una parte del tiempo de arranque que se pretendia medir. */
-static FILE *_rstep = NULL;
 static void log_ruby_step(const char *msg) {
-    struct timespec ts;
-    if (!_rstep) _rstep = fopen("sdmc:/switch/pokemon_anil/mkxp_ruby_init.log", "w");
-    if (_rstep) {
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        fprintf(_rstep, "[%8lu ms] %s\n", (unsigned long)(ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL), msg);
+    FILE *f = fopen("sdmc:/switch/pokemon_anil/mkxp.log", "a");
+    if (f) {
+        fprintf(f, "%s\n", msg);
+        fflush(f);
+        fclose(f);
     }
 }
 EOF
