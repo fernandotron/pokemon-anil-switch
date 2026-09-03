@@ -52,17 +52,16 @@ class BitmapSprite < Sprite
     return if !@text_themes[theme]
     base_color, shadow_color = @text_themes[theme]
     string_size = self.bitmap.text_size(string)
-    string_width = string_size.width + 1
-    string_height = string_size.height + 1
+    string_width = string_size.width + 4
+    string_height = [string_size.height + 12, 32].max
+    draw_y = text_y - 4
     if shadow_color && shadow_color.alpha > 0
       self.bitmap.font.color = shadow_color
-      self.bitmap.draw_text(text_x + 2, text_y, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x, text_y + 2, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x + 2, text_y + 2, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x + 2, draw_y + 2, string_width, string_height, string, 0)
     end
     if base_color && base_color.alpha > 0
       self.bitmap.font.color = base_color
-      self.bitmap.draw_text(text_x, text_y, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x, draw_y, string_width, string_height, string, 0)
     end
   end
   
@@ -71,22 +70,19 @@ class BitmapSprite < Sprite
     return if !@text_themes[theme]
     base_color, shadow_color = @text_themes[theme]
     string_size = self.bitmap.text_size(string)
-    string_width = string_size.width + 1
-    string_height = string_size.height + 1
+    string_width = string_size.width + 4
+    string_height = [string_size.height + 12, 32].max
+    draw_y = text_y - 4
     if shadow_color && shadow_color.alpha > 0
       self.bitmap.font.color = shadow_color
-      self.bitmap.draw_text(text_x - 2, text_y - 2, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x, text_y - 2, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x + 2, text_y - 2, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x - 2, text_y, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x + 2, text_y, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x - 2, text_y + 2, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x, text_y + 2, string_width, string_height, string, 0)
-      self.bitmap.draw_text(text_x + 2, text_y + 2, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x - 1, draw_y - 1, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x + 1, draw_y - 1, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x - 1, draw_y + 1, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x + 1, draw_y + 1, string_width, string_height, string, 0)
     end
     if base_color && base_color.alpha > 0
       self.bitmap.font.color = base_color
-      self.bitmap.draw_text(text_x, text_y, string_width, string_height, string, 0)
+      self.bitmap.draw_text(text_x, draw_y, string_width, string_height, string, 0)
     end
   end
  
@@ -96,10 +92,11 @@ class BitmapSprite < Sprite
     base_color = @text_themes[theme][0]
     return if !base_color || base_color.alpha == 0
     string_size = self.bitmap.text_size(string)
-    string_width = string_size.width + 1
-    string_height = string_size.height + 1
+    string_width = string_size.width + 4
+    string_height = [string_size.height + 12, 32].max
+    draw_y = text_y - 4
     self.bitmap.font.color = base_color
-    self.bitmap.draw_text(text_x, text_y, string_width, string_height, string, 0)
+    self.bitmap.draw_text(text_x, draw_y, string_width, string_height, string, 0)
   end
   
   #-----------------------------------------------------------------------------

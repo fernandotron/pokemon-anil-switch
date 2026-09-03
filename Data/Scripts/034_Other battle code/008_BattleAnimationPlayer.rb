@@ -428,27 +428,52 @@ class PBAnimation < Array
   end
 
   def length
-    @array.length
+    return @array.length if @array
+    return super rescue 0
   end
 
-  def each
-    @array.each { |i| yield i }
+  def size
+    return @array.size if @array
+    return super rescue 0
+  end
+
+  def empty?
+    return @array.empty? if @array
+    return super rescue true
+  end
+
+  def each(&block)
+    return @array.each(&block) if @array
+    return super(&block) rescue nil
   end
 
   def [](i)
-    @array[i]
+    return @array[i] if @array
+    return super(i) rescue nil
   end
 
   def []=(i, value)
-    @array[i] = value
+    if @array
+      @array[i] = value
+    else
+      super(i, value) rescue nil
+    end
   end
 
   def insert(*arg)
-    @array.insert(*arg)
+    if @array
+      @array.insert(*arg)
+    else
+      super(*arg) rescue nil
+    end
   end
 
   def delete_at(*arg)
-    @array.delete_at(*arg)
+    if @array
+      @array.delete_at(*arg)
+    else
+      super(*arg) rescue nil
+    end
   end
 
   def resize(len)

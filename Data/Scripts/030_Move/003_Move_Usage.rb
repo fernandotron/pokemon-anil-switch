@@ -208,15 +208,15 @@ class Battle::Move
       elsif target.effects[PBEffects::Endure]
         target.damageState.endured = true
         damage -= 1
+      elsif target.hasActiveItem?(:FOCUSBAND) && @battle.pbRandom(100) < 10
+        target.damageState.focusBand = true
+        damage -= 1
       elsif damage == target.totalhp
         if target.hasActiveAbility?(:STURDY) && !@battle.moldBreaker
           target.damageState.sturdy = true
           damage -= 1
         elsif target.hasActiveItem?(:FOCUSSASH) && target.hp == target.totalhp
           target.damageState.focusSash = true
-          damage -= 1
-        elsif target.hasActiveItem?(:FOCUSBAND) && @battle.pbRandom(100) < 10
-          target.damageState.focusBand = true
           damage -= 1
         elsif Settings::AFFECTION_EFFECTS && @battle.internalBattle &&
               target.pbOwnedByPlayer? && !target.mega?

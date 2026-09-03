@@ -172,7 +172,16 @@ def pbResolveBitmap(x)
             $GRAPHICS_LOOKUP_TABLE["graphics/ui/" + clean_noext + ".png"] ||
             $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_k] ||
             $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_noext] ||
-            $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_noext + ".png"]
+            $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_noext + ".png"] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/trainers/" + clean_k] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/trainers/" + clean_noext] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/trainers/" + clean_noext + ".png"] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/transitions/" + clean_k] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/transitions/" + clean_noext] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/transitions/" + clean_noext + ".png"] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/titles/" + clean_k] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/titles/" + clean_noext] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/titles/" + clean_noext + ".png"]
     if found
       $RESOLVED_BITMAP_CACHE[key] = found
       return found

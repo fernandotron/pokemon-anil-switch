@@ -104,6 +104,8 @@ class DamageNumberSprite
   
   def dispose
     return if @disposed
+    @bmp.dispose if @bmp && !@bmp.disposed? rescue nil
+    @sprite.bitmap.dispose if @sprite&.bitmap && !@sprite.bitmap.disposed? rescue nil
     @sprite.dispose if @sprite && !@sprite.disposed?
     @viewport.dispose if @viewport && !@viewport.disposed?
     @disposed = true

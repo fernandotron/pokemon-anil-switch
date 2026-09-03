@@ -38,31 +38,20 @@ end
 #===============================================================================
 def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
-  $LAST_ANIM_LOAD_FRAME ||= 0
-  current_frame = (Graphics.frame_count rescue 0)
-  if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
-    fallback = PBAnimations.new(0)
-    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
-    return fallback
-  end
-  $LAST_ANIM_LOAD_FRAME = current_frame
-
   begin
-    $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+    data = load_data("Data/PkmnAnimations.rxdata")
+    if data && (data.is_a?(PBAnimations) || data.is_a?(Array)) && data.length > 0
+      $PokemonBattleAnimations = data
+      if defined?($game_temp) && $game_temp
+        $game_temp.battle_animations_data = $PokemonBattleAnimations
+      end
+      log_compat("[Animaciones] PkmnAnimations.rxdata cargado con exito: #{data.length} animaciones.") rescue nil
+      return $PokemonBattleAnimations
+    end
   rescue Exception => e
     log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
-    $PokemonBattleAnimations = nil
   end
-  if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
-    $PokemonBattleAnimations = nil
-    fallback = PBAnimations.new(0)
-    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
-    return fallback
-  end
-  if defined?($game_temp) && $game_temp
-    $game_temp.battle_animations_data = $PokemonBattleAnimations
-  end
+  $PokemonBattleAnimations ||= PBAnimations.new(0)
   return $PokemonBattleAnimations
 end
 

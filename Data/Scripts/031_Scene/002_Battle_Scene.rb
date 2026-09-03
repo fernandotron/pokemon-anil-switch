@@ -311,8 +311,13 @@ class Battle::Scene
   #=============================================================================
   def pbAddSprite(id, x, y, filename, viewport)
     sprite = @sprites[id] || IconSprite.new(x, y, viewport)
-    if filename && File.exists?(filename + '.png')
-      sprite.setBitmap(filename) rescue nil
+    if filename && !filename.to_s.empty?
+      resolved = pbResolveBitmap(filename)
+      if resolved
+        sprite.setBitmap(resolved) rescue nil
+      else
+        sprite.setBitmap(filename) rescue nil
+      end
     end
     @sprites[id] = sprite
     return sprite

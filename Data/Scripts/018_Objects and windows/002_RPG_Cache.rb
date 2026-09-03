@@ -124,7 +124,23 @@ class BitmapWrapper < Bitmap
   end
 
   def initialize(*arg)
-    super
+    begin
+      super(*arg)
+    rescue ArgumentError
+      if arg.length == 2
+        super(arg[0].to_i, arg[1].to_i) rescue super(32, 32)
+      elsif arg.length == 1
+        super(arg[0].to_s) rescue super(32, 32)
+      else
+        super(32, 32) rescue nil
+      end
+    rescue Exception => e
+      log_compat("[BitmapWrapper Fallback] #{e.class}: #{e.message} (#{arg.inspect})") rescue nil
+      begin
+        super(32, 32)
+      rescue Exception
+      end
+    end
     @refcount = 1
   end
 

@@ -453,6 +453,11 @@ class PokemonLoadScreen
             screen = PokemonOptionScreen.new(scene)
             screen.pbStartScreen(true)
           end
+          if show_continue && @selected_file
+            @save_data[:pokemon_system] = $PokemonSystem
+            SaveData.dump_to_file(SaveData.get_full_path(@selected_file), @save_data) rescue nil
+          end
+          SaveData.save_options rescue nil
         when cmd_language
           @scene.pbEndScene
           $PokemonSystem.language = pbChooseLanguage
@@ -744,6 +749,7 @@ module Game
     else
       SaveData.load_bootup_values(save_data)
     end
+    SaveData.load_options rescue nil
     # Set resize factor
     sz = ($PokemonSystem && $PokemonSystem.respond_to?(:screensize) && $PokemonSystem.screensize) ? [$PokemonSystem.screensize, 4].min : 0
     pbSetResizeFactor(sz)
@@ -751,6 +757,9 @@ module Game
     if !Settings::LANGUAGES.empty?
       $PokemonSystem.language = pbChooseLanguage if save_data.empty? && Settings::LANGUAGES.length >= 2
       MessageTypes.load_message_files(Settings::LANGUAGES[$PokemonSystem.language][1])
+    end
+    if defined?(SwitchAssetOptimizer)
+      SwitchAssetOptimizer.prewarm_all rescue nil
     end
   end
 

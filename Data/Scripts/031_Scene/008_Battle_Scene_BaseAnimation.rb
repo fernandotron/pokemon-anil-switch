@@ -93,7 +93,7 @@ module Battle::Scene::Animation::BallAnimationMixin
     file_path = sprintf("Graphics/Battle animations/ball_%s", poke_ball)
     ball = addNewSprite(ballX, ballY, file_path, PictureOrigin::CENTER)
     @ballSprite = @pictureSprites.last
-    if @ballSprite.bitmap.width >= @ballSprite.bitmap.height
+    if @ballSprite&.bitmap && !@ballSprite.bitmap.disposed? && @ballSprite.bitmap.width >= @ballSprite.bitmap.height
       @ballSprite.src_rect.width = @ballSprite.bitmap.height / 2
       ball.setSrcSize(0, @ballSprite.bitmap.height / 2, @ballSprite.bitmap.height)
     end

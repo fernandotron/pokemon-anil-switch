@@ -75,9 +75,12 @@ end
 #-------------------------------------------------------------------------------
 class PokemonPokedex_Scene
   def setIconBitmap(species)
+    return if @current_icon_species == species && @sprites["icon"]&.bitmap
+    @current_icon_species = species
+    return if !species
     gender, form, _shiny = $player.pokedex.last_form_seen(species)
     @sprites["icon"].setSpeciesBitmap(species, gender, form, false)
-    species_id = (species) ? GameData::Species.get_species_form(species, form)&.id : nil
+    species_id = GameData::Species.get_species_form(species, form)&.id rescue nil
     @sprites["icon"].pbSetDisplay([112, 196, 224, 216], species_id)
   end
 end
@@ -135,8 +138,11 @@ end
 #===============================================================================
 # Used in calculating auto-positioning for sprites in various UI's.
 #-------------------------------------------------------------------------------
+$FIND_CENTER_CACHE ||= {}
 def findCenter(bitmap)
   return [0, 0] if !bitmap
+  cache_key = (bitmap.respond_to?(:path) && bitmap.path) ? bitmap.path : bitmap.object_id
+  return $FIND_CENTER_CACHE[cache_key] if $FIND_CENTER_CACHE.key?(cache_key)
   width = bitmap.width
   height = bitmap.height
   coords = []
@@ -160,8 +166,11 @@ def findCenter(bitmap)
       end
     end
   end
-  return [0, 0] if coords.length < 4 || coords.any?(&:nil?)
-  offsetX = ((coords[1] - coords[0]) / 2).ceil
-  offsetY = ((coords[3] - coords[2]) / 2).ceil
-  return [offsetX, offsetY]
+  coords[0] = 0 if !coords[0]
+  coords[1] = width if !coords[1]
+  coords[2] = 0 if !coords[2]
+  coords[3] = height if !coords[3]
+  res = [(coords[0] + coords[1]) / 2, (coords[2] + coords[3]) / 2]
+  $FIND_CENTER_CACHE[cache_key] = res
+  return res
 end

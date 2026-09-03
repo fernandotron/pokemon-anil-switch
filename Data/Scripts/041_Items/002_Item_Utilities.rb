@@ -886,7 +886,9 @@ def pbChooseApricorn(var = 0)
   return ret
 end
 
-def pbChooseFossil(var: 0, exclude: [])
+def pbChooseFossil(*args, **kwargs)
+  var = kwargs[:var] || (args[0].is_a?(Integer) ? args[0] : 0)
+  exclude = kwargs[:exclude] || (args[1].is_a?(Array) ? args[1] : [])
   ret = nil
   pbFadeOutIn do
     scene = PokemonBag_Scene.new

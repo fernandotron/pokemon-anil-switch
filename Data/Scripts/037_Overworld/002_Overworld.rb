@@ -59,7 +59,9 @@ EventHandlers.add(:on_frame_update, :cue_bgm_after_delay,
     next if $game_temp.cue_bgm_delay.nil?
     next if System.uptime - $game_temp.cue_bgm_timer_start < $game_temp.cue_bgm_delay
     $game_temp.cue_bgm_delay = nil
-    pbBGMPlay($game_temp.cue_bgm) if $game_system.getPlayingBGM.nil?
+    bgm_to_play = $game_temp.cue_bgm
+    $game_temp.cue_bgm = nil
+    pbBGMPlay(bgm_to_play) if bgm_to_play
   }
 )
 
@@ -449,15 +451,8 @@ end
 def pbCueBGM(bgm, seconds, volume = nil, pitch = nil)
   return if !bgm
   bgm = pbResolveAudioFile(bgm, volume, pitch)
-  playingBGM = $game_system.playing_bgm
+  playingBGM = $game_system&.playing_bgm
   if !playingBGM || playingBGM.name != bgm.name || playingBGM.pitch != bgm.pitch
-    pbBGMFade(seconds)
-    $game_temp.cue_bgm = bgm
-    if !$game_temp.cue_bgm_delay
-      $game_temp.cue_bgm_delay = seconds * 0.6
-      $game_temp.cue_bgm_timer_start = System.uptime
-    end
-  elsif playingBGM
     pbBGMPlay(bgm)
   end
 end
@@ -467,7 +462,7 @@ def pbAutoplayOnTransition
   if $PokemonGlobal&.surfing && surfbgm
     pbBGMPlay(surfbgm)
   else
-    $game_map&.autoplayAsCue rescue nil
+    $game_map&.autoplay rescue nil
   end
 end
 

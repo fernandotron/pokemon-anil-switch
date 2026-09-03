@@ -10,10 +10,7 @@ module Game
     $data_tilesets      = load_data(File.join("Data", "Tilesets.rxdata"))
     $data_common_events = load_data(File.join("Data", "CommonEvents.rxdata"))
     $data_system        = load_data(File.join("Data", "System.rxdata"))
-    if pbRgssExists?("Data/PkmnAnimations.rxdata")
-      $PokemonBattleAnimations ||= (load_data("Data/PkmnAnimations.rxdata") rescue nil)
-      $game_temp.battle_animations_data = $PokemonBattleAnimations if $game_temp
-    end
+    # Carga perezosa (lazy load): PkmnAnimations.rxdata se carga bajo demanda en el primer combate vía pbLoadBattleAnimations
     log_compat("[Game.initialize] 3. GameData.load_all...") rescue nil
     GameData.load_all
     log_compat("[Game.initialize] 4. Comprobando mapa inicial #{$data_system ? $data_system.start_map_id : 'nil'}...") rescue nil

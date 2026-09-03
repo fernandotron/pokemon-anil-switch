@@ -139,6 +139,8 @@ class MostrarPokemonAnimado
   def dispose
     @sprites.each_value(&:dispose)
     @viewport.dispose
+    @estado = :disposed
+    $poke_animado = nil if defined?($poke_animado) && $poke_animado == self
   end
 end
 

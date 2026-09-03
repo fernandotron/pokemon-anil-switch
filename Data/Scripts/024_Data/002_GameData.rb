@@ -280,16 +280,18 @@ module GameData
   # A bulk loader method for all data stored in .dat files in the Data folder.
   #=============================================================================
   def self.load_all
-    self.constants.each do |c|
-      next if !self.const_defined?(c, false)
+    consts = self.constants.select { |c| self.const_defined?(c, false) }
+    consts.each_with_index do |c, idx|
       val = self.const_get(c)
       next if !val.is_a?(Class)
       if val.const_defined?(:DATA_FILENAME, false)
-        log_compat("[GameData.load_all] -> #{c} (#{val::DATA_FILENAME})") rescue nil
+        if defined?(update_boot_progress) && (idx % 3 == 0)
+          pct = 52 + (idx * 18 / [consts.length, 1].max)
+          update_boot_progress(pct, "Cargando datos (#{c})...")
+        end
         val.load
       end
     end
-    log_compat("[GameData.load_all] OK: Todos los datos cargados.") rescue nil
   end
 
   def self.get_all_data_filenames

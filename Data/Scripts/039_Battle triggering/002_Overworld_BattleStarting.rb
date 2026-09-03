@@ -429,7 +429,14 @@ class WildBattle
     # Perform the battle itself
     outcome = 0
     pbBattleAnimation(pbGetWildBattleBGM(foe_party), (foe_party.length == 1) ? 0 : 2, foe_party) do
-      pbSceneStandby { outcome = battle.pbStartBattle }
+      pbSceneStandby do
+        begin
+          outcome = battle.pbStartBattle
+        rescue Exception => e
+          log_compat("[WildBattle CRASH] #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
+          outcome = 1
+        end
+      end
       BattleCreationHelperMethods.after_battle(outcome, can_lose)
     end
     Input.update
@@ -532,6 +539,7 @@ class TrainerBattle
     EventHandlers.trigger(:on_start_battle)
     # Generate information for the foes
     foe_trainers, foe_items, foe_party, foe_party_starts = TrainerBattle.generate_foes(*args)
+    log_compat("[TrainerBattle] Iniciando combate contra: #{foe_trainers.map { |t| t.full_name rescue t.to_s }.join(', ')}") rescue nil
     # Generate information for the player and partner trainer(s)
     player_trainers, ally_items, player_party, player_party_starts = BattleCreationHelperMethods.set_up_player_trainers(foe_party)
     # Create the battle scene (the visual side of it)
@@ -549,7 +557,14 @@ class TrainerBattle
     # Perform the battle itself
     outcome = 0
     pbBattleAnimation(pbGetTrainerBattleBGM(foe_trainers), (battle.singleBattle?) ? 1 : 3, foe_trainers) do
-      pbSceneStandby { outcome = battle.pbStartBattle }
+      pbSceneStandby do
+        begin
+          outcome = battle.pbStartBattle
+        rescue Exception => e
+          log_compat("[TrainerBattle CRASH] #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
+          outcome = 1
+        end
+      end
       BattleCreationHelperMethods.after_battle(outcome, can_lose)
     end
     Input.update

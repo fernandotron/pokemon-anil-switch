@@ -28,29 +28,28 @@ module Transitions
       POS_Y_TEXTO        = 276-84+20 # Posición vertical del nombre.
 
       def initialize_bitmaps
-      @bar_bitmap   = RPG::Cache.transition("custom_vsBar")
-      @vs_1_bitmap  = RPG::Cache.transition("custom_vs1")
-      @vs_2_bitmap  = RPG::Cache.transition("custom_vs2")
-      @foe_bitmap   = RPG::Cache.transition("custom_vs_#{$game_temp.transition_animation_data[0]}")
-      @background   = RPG::Cache.transition("custom_background_#{$game_temp.transition_animation_data[0]}")
-      @black_bitmap = RPG::Cache.transition("black_half")
-      dispose if !@bar_bitmap || !@vs_1_bitmap || !@vs_2_bitmap || !@foe_bitmap || !@background || !@black_bitmap 
+        tr_type = $game_temp.transition_animation_data[0]
+        bg_name = "custom_background_#{tr_type}"
+        if !pbResolveBitmap("Graphics/Transitions/#{bg_name}") && pbResolveBitmap("Graphics/Transitions/custom_background_LIDER8REVNACHA") && tr_type == :LIDER8REVANCHA
+          bg_name = "custom_background_LIDER8REVNACHA"
+        end
+        @bar_bitmap   = RPG::Cache.transition("custom_vsBar")
+        @vs_1_bitmap  = RPG::Cache.transition("custom_vs1")
+        @vs_2_bitmap  = RPG::Cache.transition("custom_vs2")
+        @foe_bitmap   = RPG::Cache.transition("custom_vs_#{tr_type}")
+        @background   = RPG::Cache.transition(bg_name)
+        @black_bitmap = RPG::Cache.transition("black_half")
+        dispose if !@bar_bitmap || !@vs_1_bitmap || !@vs_2_bitmap || !@foe_bitmap || !@background || !@black_bitmap 
       end
 
       def initialize_sprites
-      @flash_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
-      @flash_viewport.z     = 99999
-      @flash_viewport.color = Color.new(255, 255, 255, 0)
-      # Background black
-      @rear_black_sprite = new_sprite(0, 0, @black_bitmap)
-      @rear_black_sprite.z       = 1
-      @rear_black_sprite.zoom_y  = 2.0
-      @rear_black_sprite.opacity = 224
-      @rear_black_sprite.visible = false
-      # Background
-      @rear_black_sprite = new_sprite(0, 0, @background)
-      @rear_black_sprite.z       = 1
-      @rear_black_sprite.visible = false
+        @flash_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
+        @flash_viewport.z     = 99999
+        @flash_viewport.color = Color.new(255, 255, 255, 0)
+        # Background
+        @rear_black_sprite = new_sprite(0, 0, @background)
+        @rear_black_sprite.z       = 1
+        @rear_black_sprite.visible = false
       # Bar sprites (need 2 of them to make them loop around)
       ((Graphics.width.to_f / @bar_bitmap.width).ceil + 1).times do |i|
           spr = new_sprite(@bar_bitmap.width * i, BAR_Y, @bar_bitmap)
@@ -58,7 +57,12 @@ module Transitions
           @sprites.push(spr)
       end
       # Overworld sprite
-      @bar_mask_sprite = new_sprite(0, 0, @overworld_bitmap.clone)
+      mask_bmp = nil
+      if @overworld_bitmap && !@overworld_bitmap.disposed?
+        mask_bmp = Bitmap.new(@overworld_bitmap.width, @overworld_bitmap.height)
+        mask_bmp.blt(0, 0, @overworld_bitmap, Rect.new(0, 0, @overworld_bitmap.width, @overworld_bitmap.height))
+      end
+      @bar_mask_sprite = new_sprite(0, 0, mask_bmp)
       @bar_mask_sprite.z = 3
       # VS logo
       @vs_x = 144
@@ -126,13 +130,14 @@ module Transitions
       @foe_sprite&.dispose
       @text_sprite&.dispose
       @black_sprite&.dispose
-      # Dispose bitmaps
-      @bar_bitmap&.dispose
-      @vs_1_bitmap&.dispose
-      @vs_2_bitmap&.dispose
-      @foe_bitmap&.dispose
-      @background&.dispose
-      @black_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      @bar_mask_sprite&.bitmap&.dispose
+      # @bar_bitmap&.dispose
+      # @vs_1_bitmap&.dispose
+      # @vs_2_bitmap&.dispose
+      # @foe_bitmap&.dispose
+      # @background&.dispose
+      # @black_bitmap&.dispose
       # Dispose viewport
       @flash_viewport&.dispose
       end
@@ -256,7 +261,12 @@ module Transitions
             @sprites.push(spr)
         end
         # Overworld sprite
-        @bar_mask_sprite = new_sprite(0, 0, @overworld_bitmap.clone)
+        mask_bmp = nil
+        if @overworld_bitmap && !@overworld_bitmap.disposed?
+          mask_bmp = Bitmap.new(@overworld_bitmap.width, @overworld_bitmap.height)
+          mask_bmp.blt(0, 0, @overworld_bitmap, Rect.new(0, 0, @overworld_bitmap.width, @overworld_bitmap.height))
+        end
+        @bar_mask_sprite = new_sprite(0, 0, mask_bmp)
         @bar_mask_sprite.z = 3
         # VS logo
         @vs_x = 144
@@ -317,13 +327,14 @@ module Transitions
         @foe_sprite&.dispose
         @text_sprite&.dispose
         @black_sprite&.dispose
-        # Dispose bitmaps
-        @bar_bitmap&.dispose
-        @vs_1_bitmap&.dispose
-        @vs_2_bitmap&.dispose
-        @foe_bitmap&.dispose
-        @background&.dispose
-        @black_bitmap&.dispose
+        # Dispose bitmaps (managed by RPG::Cache)
+        @bar_mask_sprite&.bitmap&.dispose
+        # @bar_bitmap&.dispose
+        # @vs_1_bitmap&.dispose
+        # @vs_2_bitmap&.dispose
+        # @foe_bitmap&.dispose
+        # @background&.dispose
+        # @black_bitmap&.dispose
         # Dispose viewport
         @flash_viewport&.dispose
       end
@@ -418,8 +429,9 @@ SpecialBattleIntroAnimations.register("vs_trainer_animation_custom", 60,   # Pri
     proc { |battle_type, foe, location|   # Condition
         next false if battle_type.even? || foe.length != 1   # Trainer battle against 1 trainer
         tr_type = foe[0].trainer_type
+        bg_type = (tr_type == :LIDER8REVANCHA && !pbResolveBitmap("Graphics/Transitions/custom_background_#{tr_type}")) ? :LIDER8REVNACHA : tr_type
         next pbResolveBitmap("Graphics/Transitions/custom_vs_#{tr_type}") &&
-        pbResolveBitmap("Graphics/Transitions/custom_background_#{tr_type}")
+             pbResolveBitmap("Graphics/Transitions/custom_background_#{bg_type}")
         },
         proc { |viewport, battle_type, foe, location|   # Animation
         $game_temp.transition_animation_data = [foe[0].trainer_type, foe[0].name]
@@ -455,14 +467,9 @@ module Graphics
   @@transition = nil
   STOP_WHILE_TRANSITION = true
 
-  unless defined?(transition_KGC_SpecialTransition)
-    class << Graphics
-      alias transition_KGC_SpecialTransition transition
-    end
-
-    class << Graphics
-      alias update_KGC_SpecialTransition update
-    end
+  class << Graphics
+    alias transition_KGC_SpecialTransition transition unless method_defined?(:transition_KGC_SpecialTransition)
+    alias update_KGC_SpecialTransition update unless method_defined?(:update_KGC_SpecialTransition)
   end
 
   def self.update
@@ -500,11 +507,35 @@ module Graphics
   end
 
   # duration is in 1/20ths of a second
-  def self.transition(duration = 6, filename = "", vague = 20)
-    duration = 6
+  def self.transition(duration = 8, filename = "", vague = 20)
+    duration = duration.floor
+    if judge_special_transition(duration, filename)
+      duration = 0
+      filename = ""
+    end
+    duration *= Graphics.frame_rate / 20   # For default fade-in animation, must be in frames
     begin
-      transition_KGC_SpecialTransition(duration, "", vague)
+      transition_KGC_SpecialTransition(duration, filename, vague)
     rescue Exception
+      transition_KGC_SpecialTransition(duration, "", vague) if filename != ""
+    end
+    if STOP_WHILE_TRANSITION && !@_interrupt_transition
+      timeout_start = (System.uptime rescue Time.now.to_f)
+      begin
+        while @@transition && !@@transition.disposed?
+          update
+          if ((System.uptime rescue Time.now.to_f) - timeout_start) > 6.0
+            log_compat("[Transition Timeout] Forzando finalizacion de transicion.") rescue nil
+            @@transition.dispose rescue nil
+            @@transition = nil
+            break
+          end
+        end
+      rescue Exception => e
+        log_compat("[Transition Loop Error] #{e.class}: #{e.message}") rescue nil
+        @@transition&.dispose rescue nil
+        @@transition = nil
+      end
     end
   end
 

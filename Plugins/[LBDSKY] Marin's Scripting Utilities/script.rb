@@ -1007,6 +1007,9 @@ end
  
 class Bitmap
   def save_to_png(filename)
+    if respond_to?(:to_file)
+      return to_file(filename) rescue nil
+    end
     f = ByteWriter.new(filename)
    
     #============================= Writing header ===============================#

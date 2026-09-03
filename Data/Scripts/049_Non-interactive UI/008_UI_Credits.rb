@@ -198,9 +198,10 @@ class Scene_Credits
     viewport.color = Color.black   # Ensure screen is black
     text_viewport.color = Color.black   # Ensure screen is black
     Graphics.transition(8, "fadetoblack")
-    $game_temp.background_bitmap.dispose
-    @background_sprite.dispose
-    @credit_sprites.each { |s| s&.dispose }
+    $game_temp.background_bitmap&.dispose
+    @background_sprite&.bitmap&.dispose
+    @background_sprite&.dispose
+    @credit_sprites.each { |s| s.bitmap&.dispose if s.respond_to?(:bitmap); s&.dispose }
     viewport.dispose
     text_viewport.dispose
     $PokemonGlobal.creditsPlayed = true

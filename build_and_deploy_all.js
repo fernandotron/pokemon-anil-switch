@@ -120,6 +120,23 @@ targets.forEach(dir => {
   }
 });
 
+// Sincronizar carpeta ligera de actualización modificada
+if (fs.existsSync('ARCHIVOS_MODIFICADOS_SWITCH')) {
+  console.log('[Despliegue] Sincronizando carpeta ligera ARCHIVOS_MODIFICADOS_SWITCH...');
+  fs.mkdirSync('ARCHIVOS_MODIFICADOS_SWITCH/Data', { recursive: true });
+  ['preload.rb', 'mkxp.json', 'mkxp.switch.json'].forEach(f => {
+    if (fs.existsSync(f)) {
+      copyAndTouch(f, path.join('ARCHIVOS_MODIFICADOS_SWITCH', f));
+    }
+  });
+  ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.dat', 'switch_assets_index.rb'].forEach(f => {
+    const s = path.join('Data', f);
+    if (fs.existsSync(s)) {
+      copyAndTouch(s, path.join('ARCHIVOS_MODIFICADOS_SWITCH/Data', f));
+    }
+  });
+}
+
 console.log('\n=== 7. VERIFICACIÓN DE ARCHIVOS EN ARCHIVOS_PARA_SWITCH ===');
 function list(dir, base = '') {
   for (const f of fs.readdirSync(dir)) {

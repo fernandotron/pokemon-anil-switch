@@ -127,50 +127,70 @@ SaveData.register(:stats) do
 end
 
 module SaveData
+  OPTIONS_FILE_PATH = "options.dat"
+
   def self.save_options
     return if !$PokemonSystem
     begin
-      opts = {
-        :screensize => $PokemonSystem.screensize,
-        :textspeed => $PokemonSystem.textspeed,
-        :volume => ($PokemonSystem.volume rescue 80),
-        :sevolume => ($PokemonSystem.sevolume rescue 80),
-        :bgmvolume => ($PokemonSystem.bgmvolume rescue 80),
-        :textskin => $PokemonSystem.textskin,
-        :salvajes_visibles_en_ow => ($PokemonSystem.salvajes_visibles_en_ow rescue 0),
-        :vsync => $PokemonSystem.vsync,
-        :autotile_animations => $PokemonSystem.autotile_animations,
-        :battlescene => ($PokemonSystem.battlescene rescue 0),
-        :battlestyle => ($PokemonSystem.battlestyle rescue 0),
-        :show_pokemon_on_change => ($PokemonSystem.show_pokemon_on_change rescue 0)
-      }
-      File.open("Data/options.dat", "wb") do |f|
-        Marshal.dump(opts, f)
+      opts = {}
+      $PokemonSystem.instance_variables.each do |ivar|
+        name = ivar.to_s.sub(/^@/, '').to_sym
+        opts[name] = $PokemonSystem.instance_variable_get(ivar)
+      end
+      
+      paths = [
+        defined?($SavePath) && $SavePath ? "#{$SavePath}options.dat" : nil,
+        OPTIONS_FILE_PATH,
+        "Data/options.dat"
+      ].compact.uniq
+
+      paths.each do |file_path|
+        begin
+          tmp_path = file_path + ".tmp"
+          File.open(tmp_path, "wb") { |f| Marshal.dump(opts, f) }
+          if File.size(tmp_path) > 0
+            File.rename(tmp_path, file_path) rescue (File.open(file_path, "wb") { |f| Marshal.dump(opts, f) } rescue nil)
+            switch_invalidate_file_cache(file_path) rescue nil
+            $SWITCH_FILE_EXIST_CACHE&.delete(file_path)
+          end
+          File.delete(tmp_path) if File.exist?(tmp_path) rescue nil
+        rescue Exception
+        end
       end
     rescue Exception => e
+      log_compat("[SaveData.save_options] Error: #{e.class} - #{e.message}") rescue nil
     end
   end
 
   def self.load_options
-    return if !File.exist?("Data/options.dat") || !$PokemonSystem
+    return if !$PokemonSystem
+    paths = [
+      defined?($SavePath) && $SavePath ? "#{$SavePath}options.dat" : nil,
+      OPTIONS_FILE_PATH,
+      "Data/options.dat"
+    ].compact.uniq
+
+    file_path = paths.find { |p| File.file?(p) }
+    return if !file_path
     begin
-      opts = File.open("Data/options.dat", "rb") { |f| Marshal.load(f) }
+      opts = File.open(file_path, "rb") { |f| Marshal.load(f) }
       if opts.is_a?(Hash)
-        $PokemonSystem.screensize = opts[:screensize] if opts.key?(:screensize)
-        $PokemonSystem.textspeed = opts[:textspeed] if opts.key?(:textspeed)
-        $PokemonSystem.volume = opts[:volume] if opts.key?(:volume) && $PokemonSystem.respond_to?(:volume=)
-        $PokemonSystem.sevolume = opts[:sevolume] if opts.key?(:sevolume) && $PokemonSystem.respond_to?(:sevolume=)
-        $PokemonSystem.bgmvolume = opts[:bgmvolume] if opts.key?(:bgmvolume) && $PokemonSystem.respond_to?(:bgmvolume=)
-        $PokemonSystem.textskin = opts[:textskin] if opts.key?(:textskin)
-        $PokemonSystem.salvajes_visibles_en_ow = opts[:salvajes_visibles_en_ow] if opts.key?(:salvajes_visibles_en_ow) && $PokemonSystem.respond_to?(:salvajes_visibles_en_ow=)
-        $PokemonSystem.vsync = opts[:vsync] if opts.key?(:vsync)
-        $PokemonSystem.autotile_animations = opts[:autotile_animations] if opts.key?(:autotile_animations)
-        $PokemonSystem.battlescene = opts[:battlescene] if opts.key?(:battlescene) && $PokemonSystem.respond_to?(:battlescene=)
-        $PokemonSystem.battlestyle = opts[:battlestyle] if opts.key?(:battlestyle) && $PokemonSystem.respond_to?(:battlestyle=)
-        $PokemonSystem.show_pokemon_on_change = opts[:show_pokemon_on_change] if opts.key?(:show_pokemon_on_change) && $PokemonSystem.respond_to?(:show_pokemon_on_change=)
-        pbSetResizeFactor($PokemonSystem.screensize) rescue nil
+        opts.each do |k, v|
+          setter = "#{k}="
+          if $PokemonSystem.respond_to?(setter)
+            $PokemonSystem.send(setter, v)
+          else
+            $PokemonSystem.instance_variable_set("@#{k}", v)
+          end
+        end
+        sz = ($PokemonSystem.screensize rescue 0) || 0
+        pbSetResizeFactor([sz, 4].min) rescue nil
+        if defined?(MessageConfig) && $PokemonSystem.respond_to?(:textspeed)
+          MessageConfig.pbSetTextSpeed(MessageConfig.pbSettingToTextSpeed($PokemonSystem.textspeed)) rescue nil
+        end
       end
     rescue Exception => e
+      log_compat("[SaveData.load_options] Error: #{e.class} - #{e.message}") rescue nil
     end
   end
 end
