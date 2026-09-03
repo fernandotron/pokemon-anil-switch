@@ -26,7 +26,7 @@
     "syncToRefreshrate": false,
     "fixedFramerate": 0,
     "subImageFix": true,
-    "preloadScript": ["preload.rb"],
+    "preloadScript": [],
 
     // Fuentes y sustituciones para evitar textos deformados o borrosos
     "defaultFontFamily": "Power Green",

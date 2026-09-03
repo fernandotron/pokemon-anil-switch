@@ -1,7 +1,7 @@
 {
   "windowTitle": "Pokémon Añil 4.0",
   "rgssVersion": 1,
-  "preloadScript": ["preload.rb"],
+  "preloadScript": [],
   "defScreenW": 512,
   "defScreenH": 384,
   "fullscreen": true,

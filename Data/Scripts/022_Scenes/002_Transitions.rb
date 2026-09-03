@@ -5,14 +5,9 @@ module Graphics
   @@transition = nil
   STOP_WHILE_TRANSITION = true
 
-  unless defined?(transition_KGC_SpecialTransition)
-    class << Graphics
-      alias transition_KGC_SpecialTransition transition
-    end
-
-    class << Graphics
-      alias update_KGC_SpecialTransition update
-    end
+  class << Graphics
+    alias transition_KGC_SpecialTransition transition unless method_defined?(:transition_KGC_SpecialTransition)
+    alias update_KGC_SpecialTransition update unless method_defined?(:update_KGC_SpecialTransition)
   end
 
   # duration is in 1/20ths of a second
@@ -29,8 +24,21 @@ module Graphics
       transition_KGC_SpecialTransition(duration, "", vague) if filename != ""
     end
     if STOP_WHILE_TRANSITION && !@_interrupt_transition
-      while @@transition && !@@transition.disposed?
-        update
+      timeout_start = (System.uptime rescue Time.now.to_f)
+      begin
+        while @@transition && !@@transition.disposed?
+          update
+          if ((System.uptime rescue Time.now.to_f) - timeout_start) > 6.0
+            log_compat("[Transition Timeout] Forzando finalizacion de transicion.") rescue nil
+            @@transition.dispose rescue nil
+            @@transition = nil
+            break
+          end
+        end
+      rescue Exception => e
+        log_compat("[Transition Loop Error] #{e.class}: #{e.message}") rescue nil
+        @@transition&.dispose rescue nil
+        @@transition = nil
       end
     end
   end
@@ -145,9 +153,9 @@ module Transitions
     def dispose
       return if disposed?
       dispose_all
-      @sprites.each { |s| s&.dispose }
-      @sprites.clear
-      @overworld_sprite.dispose
+      @sprites&.each { |s| s&.dispose }
+      @sprites&.clear
+      @overworld_sprite&.dispose
       @overworld_bitmap&.dispose
       @viewport&.dispose
       @disposed = true
@@ -639,10 +647,10 @@ module Transitions
       @bubbles_sprite&.dispose
       @splash_sprite&.dispose
       @black_sprite&.dispose
-      # Dispose bitmaps
-      @bubble_bitmap&.dispose
-      @splash_bitmap&.dispose
-      @black_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @bubble_bitmap&.dispose
+      # @splash_bitmap&.dispose
+      # @black_bitmap&.dispose
     end
 
     def update_anim
@@ -715,9 +723,9 @@ module Transitions
         @ball_sprites.each { |s| s&.dispose }
         @ball_sprites.clear
       end
-      # Dispose bitmaps
-      @black_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -801,9 +809,9 @@ module Transitions
         @ball_sprites.each { |s| s&.dispose }
         @ball_sprites.clear
       end
-      # Dispose bitmaps
-      @black_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -903,9 +911,9 @@ module Transitions
         @ball_sprites.each { |s| s&.dispose }
         @ball_sprites.clear
       end
-      # Dispose bitmaps
-      @black_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -975,10 +983,10 @@ module Transitions
     def dispose_all
       # Dispose sprites
       @ball_sprite&.dispose
-      # Dispose bitmaps
-      @black_bitmap&.dispose
-      @curve_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_bitmap&.dispose
+      # @curve_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -1061,9 +1069,9 @@ module Transitions
         @black_trail_sprites.each { |s| s&.dispose }
         @black_trail_sprites.clear
       end
-      # Dispose bitmaps
-      @black_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -1132,9 +1140,9 @@ module Transitions
       # Dispose sprites
       @ball_sprite&.dispose
       @black_sprite&.dispose
-      # Dispose bitmaps
-      @black_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -1204,12 +1212,12 @@ module Transitions
       # Dispose sprites
       @ball_sprites.each { |s| s&.dispose }
       @ball_sprites.clear
-      # Dispose bitmaps
-      @black_1_bitmap&.dispose
-      @black_2_bitmap&.dispose
-      @black_3_bitmap&.dispose
-      @black_4_bitmap&.dispose
-      @ball_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_1_bitmap&.dispose
+      # @black_2_bitmap&.dispose
+      # @black_3_bitmap&.dispose
+      # @black_4_bitmap&.dispose
+      # @ball_bitmap&.dispose
     end
 
     def update_anim
@@ -1340,12 +1348,12 @@ module Transitions
       @foe_sprite&.dispose
       @text_sprite&.dispose
       @black_sprite&.dispose
-      # Dispose bitmaps
-      @bar_bitmap&.dispose
-      @vs_1_bitmap&.dispose
-      @vs_2_bitmap&.dispose
-      @foe_bitmap&.dispose
-      @black_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @bar_bitmap&.dispose
+      # @vs_1_bitmap&.dispose
+      # @vs_2_bitmap&.dispose
+      # @foe_bitmap&.dispose
+      # @black_bitmap&.dispose
       # Dispose viewport
       @flash_viewport&.dispose
     end
@@ -1556,13 +1564,13 @@ module Transitions
       @vs_1_sprite&.dispose
       @vs_2_sprite&.dispose
       @black_sprite&.dispose
-      # Dispose bitmaps
-      @bar_bitmap&.dispose
-      @vs_1_bitmap&.dispose
-      @vs_2_bitmap&.dispose
-      @player_bitmap&.dispose
-      @foe_bitmap&.dispose
-      @black_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @bar_bitmap&.dispose
+      # @vs_1_bitmap&.dispose
+      # @vs_2_bitmap&.dispose
+      # @player_bitmap&.dispose
+      # @foe_bitmap&.dispose
+      # @black_bitmap&.dispose
       # Dispose viewport
       @flash_viewport&.dispose
     end
@@ -1720,12 +1728,12 @@ module Transitions
       # Dispose sprites
       @rocket_sprites.each { |s| s&.dispose }
       @rocket_sprites.clear
-      # Dispose bitmaps
-      @black_1_bitmap&.dispose
-      @black_2_bitmap&.dispose
-      @black_3_bitmap&.dispose
-      @black_4_bitmap&.dispose
-      @rocket_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @black_1_bitmap&.dispose
+      # @black_2_bitmap&.dispose
+      # @black_3_bitmap&.dispose
+      # @black_4_bitmap&.dispose
+      # @rocket_bitmap&.dispose
     end
 
     def update_anim
@@ -1840,12 +1848,12 @@ module Transitions
       @foe_sprite&.dispose
       @text_sprite&.dispose
       @black_sprite&.dispose
-      # Dispose bitmaps
-      @strobes_bitmap&.dispose
-      @bg_1_bitmap&.dispose
-      @bg_2_bitmap&.dispose
-      @foe_bitmap&.dispose
-      @black_bitmap&.dispose
+      # Dispose bitmaps (managed by RPG::Cache)
+      # @strobes_bitmap&.dispose
+      # @bg_1_bitmap&.dispose
+      # @bg_2_bitmap&.dispose
+      # @foe_bitmap&.dispose
+      # @black_bitmap&.dispose
       # Dispose viewport
       @flash_viewport&.dispose
     end

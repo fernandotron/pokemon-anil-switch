@@ -640,30 +640,29 @@ module PluginManager
         next
       end
       self.register(meta) rescue nil
-      Graphics.update rescue nil if (p_idx % 10 == 0)
+      if defined?(update_boot_progress)
+        pct = 28 + (p_idx * 20 / [scripts.length, 1].max)
+        sname = meta[:name] || name rescue "Extensiones"
+        update_boot_progress(pct, "Cargando plugins (#{sname})...")
+      elsif p_idx % 2 == 0
+        Graphics.update rescue nil
+      end
       script.each do |scr|
         sname = scr[0].to_s.gsub("\\", "/").split("/")[-1]
         fname = "[#{name}] #{sname}"
+        raw = scr[1]
+        next if !raw || !raw.is_a?(String)
         begin
-          raw = scr[1]
-          if raw.is_a?(String)
-            if raw.bytesize > 2 && raw.getbyte(0) == 0x78
-              begin
-                code = Zlib::Inflate.inflate(raw.b)
-              rescue
-                code = (Zlib::Inflate.inflate(raw.dup.force_encoding(Encoding::BINARY)) rescue raw)
-              end
-            else
-              code = raw
-            end
-            code = code.dup.force_encoding(Encoding::UTF_8)
-            code = code.scrub("") unless code.valid_encoding? rescue code
-            code.gsub!("\t", "  ")
-            eval(code, TOPLEVEL_BINDING, fname)
-            total_loaded += 1
+          if raw.bytesize > 2 && raw.getbyte(0) == 0x78
+            code = Zlib::Inflate.inflate(raw.b) rescue (Zlib::Inflate.inflate(raw.dup.force_encoding(Encoding::BINARY)) rescue raw)
+          else
+            code = raw
           end
+          code = code.force_encoding(Encoding::UTF_8)
+          eval(code, TOPLEVEL_BINDING, fname)
+          total_loaded += 1
         rescue Exception => e
-          log_compat("[Plugin Load Error] #{name} (#{sname}): #{e.class} - #{e.message}\n  #{e.backtrace&.join("\n  ")}") rescue nil
+          log_compat("[Plugin Load Error] #{name} (#{sname}): #{e.class} - #{e.message}") rescue nil
         end
       end
     end

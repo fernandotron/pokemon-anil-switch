@@ -124,9 +124,11 @@ targets.forEach(dir => {
 if (fs.existsSync('ARCHIVOS_MODIFICADOS_SWITCH')) {
   console.log('[Despliegue] Sincronizando carpeta ligera ARCHIVOS_MODIFICADOS_SWITCH...');
   fs.mkdirSync('ARCHIVOS_MODIFICADOS_SWITCH/Data', { recursive: true });
-  if (fs.existsSync('preload.rb')) {
-    copyAndTouch('preload.rb', 'ARCHIVOS_MODIFICADOS_SWITCH/preload.rb');
-  }
+  ['preload.rb', 'mkxp.json', 'mkxp.switch.json'].forEach(f => {
+    if (fs.existsSync(f)) {
+      copyAndTouch(f, path.join('ARCHIVOS_MODIFICADOS_SWITCH', f));
+    }
+  });
   ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.dat', 'switch_assets_index.rb'].forEach(f => {
     const s = path.join('Data', f);
     if (fs.existsSync(s)) {

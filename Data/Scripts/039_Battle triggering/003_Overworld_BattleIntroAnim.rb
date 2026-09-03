@@ -52,8 +52,11 @@ def pbSceneStandby
   $scene.disposeSpritesets if $scene.is_a?(Scene_Map)
   RPG::Cache.clear
   Graphics.frame_reset
-  yield
-  $scene.createSpritesets if $scene.is_a?(Scene_Map)
+  begin
+    yield
+  ensure
+    $scene.createSpritesets if $scene.is_a?(Scene_Map)
+  end
 end
 
 def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
@@ -88,103 +91,125 @@ def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
   elsif !$game_map.metadata&.outdoor_map
     location = 1
   end
-  # Check for custom battle intro animations
-  handled = false
-  SpecialBattleIntroAnimations.each do |name, priority, condition, animation|
-    next if !condition.call(battletype, foe, location)
-    animation.call(viewport, battletype, foe, location)
-    handled = true
-    break
-  end
-  # Default battle intro animation
-  if !handled
-    # Determine which animation is played
-    anim = ""
-    if PBDayNight.isDay?
-      case battletype
-      when 0, 2   # Wild, double wild
-        anim = ["SnakeSquares", "DiagonalBubbleTL", "DiagonalBubbleBR", "RisingSplash"][location]
-      when 1      # Trainer
-        anim = ["TwoBallPass", "ThreeBallDown", "BallDown", "WavyThreeBallUp"][location]
-      when 3      # Double trainer
-        anim = "FourBallBurst"
-      end
-    else
-      case battletype
-      when 0, 2   # Wild, double wild
-        anim = ["SnakeSquares", "DiagonalBubbleBR", "DiagonalBubbleBR", "RisingSplash"][location]
-      when 1      # Trainer
-        anim = ["SpinBallSplit", "BallDown", "BallDown", "WavySpinBall"][location]
-      when 3      # Double trainer
-        anim = "FourBallBurst"
-      end
+  begin
+    # Check for custom battle intro animations
+    handled = false
+    SpecialBattleIntroAnimations.each do |name, priority, condition, animation|
+      next if !condition.call(battletype, foe, location)
+      animation.call(viewport, battletype, foe, location)
+      handled = true
+      break
     end
-    pbBattleAnimationCore(anim, viewport, location)
+    # Default battle intro animation
+    if !handled
+      # Determine which animation is played
+      anim = ""
+      if PBDayNight.isDay?
+        case battletype
+        when 0, 2   # Wild, double wild
+          anim = ["SnakeSquares", "DiagonalBubbleTL", "DiagonalBubbleBR", "RisingSplash"][location]
+        when 1      # Trainer
+          anim = ["TwoBallPass", "ThreeBallDown", "BallDown", "WavyThreeBallUp"][location]
+        when 3      # Double trainer
+          anim = "FourBallBurst"
+        end
+      else
+        case battletype
+        when 0, 2   # Wild, double wild
+          anim = ["SnakeSquares", "DiagonalBubbleBR", "DiagonalBubbleBR", "RisingSplash"][location]
+        when 1      # Trainer
+          anim = ["SpinBallSplit", "BallDown", "BallDown", "WavySpinBall"][location]
+        when 3      # Double trainer
+          anim = "FourBallBurst"
+        end
+      end
+      pbBattleAnimationCore(anim, viewport, location)
+    end
+  rescue Exception => e
+    log_compat("[BattleIntroAnim Error] #{e.class}: #{e.message}") rescue nil
+    viewport.color = Color.black rescue nil
+    Graphics.transition(10) rescue nil
   end
   pbPushFade
-  # Yield to the battle scene
-  yield if block_given?
-  # After the battle
-  pbPopFade
-  if $game_system.is_a?(Game_System)
-    $game_system.bgm_resume(playingBGM)
-    $game_system.bgs_resume(playingBGS)
+  # Hide intro animation viewport during battle to prevent any black screen occlusion
+  viewport.visible = false
+  viewport.color = Color.new(0, 0, 0, 0) rescue nil
+  begin
+    # Yield to the battle scene
+    yield if block_given?
+  ensure
+    viewport.visible = true
+    # After the battle
+    pbPopFade
+    if $game_system.is_a?(Game_System)
+      $game_system.bgm_resume(playingBGM)
+      $game_system.bgs_resume(playingBGS)
+    end
+    $game_temp.memorized_bgm            = nil
+    $game_temp.memorized_bgm_position   = 0
+    $PokemonGlobal.nextBattleBGM        = nil
+    $PokemonGlobal.nextBattleVictoryBGM = nil
+    $PokemonGlobal.nextBattleCaptureME  = nil
+    $PokemonGlobal.nextBattleBack       = nil
+    $PokemonEncounters.reset_step_count
+    # Fade back to the overworld in 0.4 seconds
+    viewport.color = Color.black
+    timer_start = (System.uptime rescue Time.now.to_f)
+    loop do
+      Graphics.update rescue nil
+      Input.update rescue nil
+      pbUpdateSceneMap rescue nil
+      now = (System.uptime rescue Time.now.to_f)
+      viewport.color.alpha = 255 * [1 - ((now - timer_start) / 0.4), 0].max
+      break if viewport.color.alpha <= 0 || (now - timer_start) >= 0.5
+    end
+    viewport.dispose rescue nil
+    $game_temp.in_battle = false
   end
-  $game_temp.memorized_bgm            = nil
-  $game_temp.memorized_bgm_position   = 0
-  $PokemonGlobal.nextBattleBGM        = nil
-  $PokemonGlobal.nextBattleVictoryBGM = nil
-  $PokemonGlobal.nextBattleCaptureME  = nil
-  $PokemonGlobal.nextBattleBack       = nil
-  $PokemonEncounters.reset_step_count
-  # Fade back to the overworld in 0.4 seconds
-  viewport.color = Color.black
-  timer_start = System.uptime
-  loop do
-    Graphics.update
-    Input.update
-    pbUpdateSceneMap
-    viewport.color.alpha = 255 * (1 - ((System.uptime - timer_start) / 0.4))
-    break if viewport.color.alpha <= 0
-  end
-  viewport.dispose
-  $game_temp.in_battle = false
 end
 
 def pbBattleAnimationCore(anim, viewport, location, num_flashes = 2)
-  # Initial screen flashing
-  if num_flashes > 0
-    c = (location == 2 || PBDayNight.isNight?) ? 0 : 255   # Dark=black, light=white
-    viewport.color = Color.new(c, c, c)   # Fade to black/white a few times
-    half_flash_time = 0.2   # seconds
-    num_flashes.times do   # 2 flashes
-      fade_out = false
-      timer_start = System.uptime
-      loop do
-        if fade_out
-          viewport.color.alpha = lerp(255, 0, half_flash_time, timer_start, System.uptime)
-        else
-          viewport.color.alpha = lerp(0, 255, half_flash_time, timer_start, System.uptime)
-        end
-        Graphics.update
-        pbUpdateSceneMap
-        break if fade_out && viewport.color.alpha <= 0
-        if !fade_out && viewport.color.alpha >= 255
-          fade_out = true
-          timer_start = System.uptime
+  begin
+    # Initial screen flashing
+    if num_flashes > 0
+      c = (location == 2 || PBDayNight.isNight?) ? 0 : 255   # Dark=black, light=white
+      viewport.color = Color.new(c, c, c)   # Fade to black/white a few times
+      half_flash_time = 0.2   # seconds
+      num_flashes.times do   # 2 flashes
+        fade_out = false
+        timer_start = (System.uptime rescue Time.now.to_f)
+        loop do
+          now = (System.uptime rescue Time.now.to_f)
+          if fade_out
+            viewport.color.alpha = lerp(255, 0, half_flash_time, timer_start, now)
+          else
+            viewport.color.alpha = lerp(0, 255, half_flash_time, timer_start, now)
+          end
+          Graphics.update
+          pbUpdateSceneMap
+          break if fade_out && viewport.color.alpha <= 0
+          if !fade_out && viewport.color.alpha >= 255
+            fade_out = true
+            timer_start = (System.uptime rescue Time.now.to_f)
+          end
+          break if (now - timer_start) > 2.0
         end
       end
     end
+    # Take screenshot of game, for use in some animations
+    $game_temp.background_bitmap&.dispose
+    $game_temp.background_bitmap = (Graphics.snap_to_bitmap rescue nil)
+    # Play main animation
+    Graphics.freeze rescue nil
+    viewport.color = Color.black   # Ensure screen is black
+    Graphics.transition(25, "Graphics/Transitions/" + anim.to_s)
+    # Slight pause after animation before starting up the battle scene
+    pbWait(0.1) rescue nil
+  rescue Exception => e
+    log_compat("[pbBattleAnimationCore Error] #{e.class}: #{e.message}") rescue nil
+    viewport.color = Color.black rescue nil
+    Graphics.transition(10) rescue nil
   end
-  # Take screenshot of game, for use in some animations
-  $game_temp.background_bitmap&.dispose
-  $game_temp.background_bitmap = Graphics.snap_to_bitmap
-  # Play main animation
-  Graphics.freeze
-  viewport.color = Color.black   # Ensure screen is black
-  Graphics.transition(25, "Graphics/Transitions/" + anim)
-  # Slight pause after animation before starting up the battle scene
-  pbWait(0.1)
 end
 
 #===============================================================================

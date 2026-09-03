@@ -2,6 +2,119 @@
 # Nintendo Switch (Horizon OS) & Modern Ruby Compatibility Shims for mkxp-z
 # ==============================================================================
 
+# Guard against duplicate preload execution (mkxp-z C++ patch + mkxp.json preloadScript)
+$PRELOAD_RB_LOADED ||= false
+if $PRELOAD_RB_LOADED
+  log_compat("[Switch Compatibility] preload.rb ya fue evaluado anteriormente.") rescue nil
+end
+$PRELOAD_RB_LOADED = true
+
+# 0. Renderizado instantáneo en el fotograma 0 (Feedback visual inmediato a < 15ms)
+module Graphics
+  class << self
+    def width; 512; end unless method_defined?(:width)
+    def height; 384; end unless method_defined?(:height)
+  end
+end
+
+$switch_boot_viewport = nil
+$switch_boot_bg = nil
+$switch_boot_logo = nil
+$switch_boot_bar = nil
+
+def update_boot_progress(pct, text = "")
+  return unless defined?($switch_boot_bar) && $switch_boot_bar && $switch_boot_bar.bitmap && !$switch_boot_bar.bitmap.disposed?
+  begin
+    bm = $switch_boot_bar.bitmap
+    bm.clear
+    bar_w = 340
+    bar_h = 10
+    bar_x = (512 - bar_w) / 2
+    bar_y = 318
+    # Borde y fondo oscuro de la barra
+    bm.fill_rect(bar_x - 2, bar_y - 2, bar_w + 4, bar_h + 4, Color.new(20, 30, 50, 200))
+    bm.fill_rect(bar_x - 1, bar_y - 1, bar_w + 2, bar_h + 2, Color.new(70, 110, 180, 240))
+    bm.fill_rect(bar_x, bar_y, bar_w, bar_h, Color.new(15, 20, 32, 255))
+    # Relleno del progreso (azul Añil con brillo)
+    fill_w = [([pct.to_i, 0].max * bar_w) / 100, bar_w].min
+    if fill_w > 0
+      bm.fill_rect(bar_x, bar_y, fill_w, bar_h, Color.new(45, 130, 245, 255))
+      bm.fill_rect(bar_x, bar_y, fill_w, 2, Color.new(120, 180, 255, 255))
+    end
+    # Texto de estado
+    if bm.font
+      bm.font.size = 17 rescue nil
+      bm.font.bold = true rescue nil
+      bm.font.color = Color.new(235, 242, 255, 255) rescue nil
+    end
+    bm.draw_text(0, 334, 512, 22, text.to_s, 1) rescue nil
+    if bm.font
+      bm.font.size = 14 rescue nil
+      bm.font.bold = false rescue nil
+      bm.font.color = Color.new(160, 185, 225, 255) rescue nil
+    end
+    bm.draw_text(0, 356, 512, 18, "#{pct}%", 1) rescue nil
+    Graphics.update rescue nil
+  rescue Exception => e
+    log_compat("[BootProgress Error] #{e.message}") rescue nil
+  end
+end
+
+begin
+  if defined?(Graphics) && Graphics.respond_to?(:update)
+    vw = (Graphics.width rescue 512) || 512
+    vh = (Graphics.height rescue 384) || 384
+    $switch_boot_viewport = Viewport.new(0, 0, vw, vh) rescue nil
+    if $switch_boot_viewport
+      $switch_boot_viewport.z = 999999
+
+      # 1. Fondo principal del juego (title.png o splash2.png o fondo azul oscuro)
+      bg_file = ["Graphics/Titles/title.png", "Graphics/Titles/title", "Graphics/Titles/splash2.png", "Graphics/Titles/splash2"].find do |p|
+        File.exist?(p) || File.exist?("./#{p}") rescue false
+      end
+      $switch_boot_bg = Sprite.new($switch_boot_viewport) rescue nil
+      if $switch_boot_bg
+        $switch_boot_bg.bitmap = Bitmap.new(bg_file) if bg_file rescue nil
+        if $switch_boot_bg.bitmap.nil?
+          $switch_boot_bg.bitmap = Bitmap.new(vw, vh) rescue nil
+          $switch_boot_bg.bitmap.fill_rect(0, 0, vw, vh, Color.new(14, 22, 40)) rescue nil
+        end
+      end
+
+      # 2. Logotipo Pokémon Añil 4.0 centrado
+      logo_file = ["Graphics/Titles/logo1.png", "Graphics/Titles/logo1"].find do |p|
+        File.exist?(p) || File.exist?("./#{p}") rescue false
+      end
+      $switch_boot_logo = Sprite.new($switch_boot_viewport) rescue nil
+      if $switch_boot_logo && logo_file
+        $switch_boot_logo.bitmap = Bitmap.new(logo_file) rescue nil
+        if $switch_boot_logo.bitmap
+          lw = $switch_boot_logo.bitmap.width
+          lh = $switch_boot_logo.bitmap.height
+          $switch_boot_logo.x = (vw - lw) / 2
+          $switch_boot_logo.y = 18
+        end
+      end
+
+      # 3. Sprite para la barra de carga y texto dinámico
+      $switch_boot_bar = Sprite.new($switch_boot_viewport) rescue nil
+      if $switch_boot_bar
+        $switch_boot_bar.bitmap = Bitmap.new(vw, vh) rescue nil
+        $switch_boot_bar.z = $switch_boot_viewport.z + 10
+      end
+
+      # 4. Renderizado inmediato del primer fotograma en pantalla
+      update_boot_progress(5, "Iniciando Pokémon Añil...")
+      Graphics.transition(0) rescue nil
+      Graphics.update rescue nil
+      Graphics.frame_reset rescue nil
+    end
+  end
+rescue Exception => e_boot
+  log_compat("[Switch Boot Error] #{e_boot.message}") rescue nil
+end
+
+
 # 1.0 Inicialización del Logging Eficiente
 $mkxp_log_file ||= (File.open("mkxp_ruby.log", "a") rescue nil)
 $LOG_COMPAT_DEDUP ||= {}
@@ -63,7 +176,7 @@ $RESOLVE_AUDIO_MEMO_CACHE ||= {}
 $RESOLVED_BITMAP_CACHE ||= {}
 
 dat_file = ["Data/switch_assets_index.dat", "./Data/switch_assets_index.dat"].find { |p| File.exist?(p) }
-if dat_file
+if dat_file && ($GRAPHICS_LOOKUP_TABLE.nil? || $GRAPHICS_LOOKUP_TABLE.empty?)
   begin
     raw = File.open(dat_file, "rb") { |f| f.read }
     if raw && !raw.empty?
@@ -75,7 +188,10 @@ if dat_file
   rescue Exception => e
     log_compat("[Warning Switch Assets DAT] #{e.message}") rescue nil
   end
+  update_boot_progress(18, "Indexando recursos...") if defined?(update_boot_progress)
 end
+
+
 
 
 # 1.1 Soporte de Encoding para Ruby 3.x
@@ -541,12 +657,29 @@ module ::Game
       if defined?(SaveData) && SaveData.respond_to?(:initialize_bootup_values)
         SaveData.initialize_bootup_values rescue nil
       end
+      if defined?(SaveData) && SaveData.respond_to?(:load_options)
+        SaveData.load_options rescue nil
+      end
       if defined?(SwitchAssetOptimizer)
         SwitchAssetOptimizer.prewarm_all rescue nil
       end
     rescue Exception => e
       log_compat("[Warning set_up_system] #{e.class}: #{e.message}") rescue nil
     end
+  end
+end
+
+def pbPlayMovie(filename)
+  log_compat("[Movie Shim] pbPlayMovie: #{filename} omitido de forma segura en Switch.") rescue nil
+  Graphics.freeze rescue nil
+  Graphics.transition(10) rescue nil
+end unless defined?(pbPlayMovie)
+
+module Graphics
+  class << self
+    def play_movie(filename)
+      log_compat("[Movie Shim] Graphics.play_movie: #{filename} omitido de forma segura en Switch.") rescue nil
+    end unless method_defined?(:play_movie)
   end
 end
 
@@ -953,6 +1086,24 @@ class ::Bitmap
   class << self
     def max_size
       4096
+    end
+
+    unless method_defined?(:__switch_bitmap_orig_new)
+      alias __switch_bitmap_orig_new new
+      def new(*args)
+        begin
+          __switch_bitmap_orig_new(*args)
+        rescue Exception => e
+          log_compat("[Bitmap.new Fallback] Error al cargar Bitmap #{args.inspect}: #{e.class} - #{e.message}") rescue nil
+          if args.length == 2 && args[0].is_a?(Numeric) && args[1].is_a?(Numeric)
+            w = [[args[0].to_i, 1].max, 4096].min
+            h = [[args[1].to_i, 1].max, 4096].min
+            __switch_bitmap_orig_new(w, h) rescue __switch_bitmap_orig_new(32, 32)
+          else
+            __switch_bitmap_orig_new(32, 32)
+          end
+        end
+      end
     end
   end
 
@@ -1443,11 +1594,24 @@ module ::Audio
         file = ["Audio/BGM/Title.ogg", "Audio/BGM/title_frlg.ogg", "Audio/BGM/title_origin.ogg", "Audio/BGM/title_bw.ogg"].find { |f| File.exist?(f) } || "Audio/BGM/Title.ogg"
       end
       vol = [(volume || 100).to_i, 1].max # Asegurar que volumen nunca quede en 0
+      pit = (pitch || 100).to_i
+
+      __switch_native_bgm_stop rescue nil
       if track
-        __switch_native_bgm_play(file, vol, (pitch || 100).to_i, (pos || 0.0).to_f, track) rescue (__switch_native_bgm_play(file, vol, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil)
+        __switch_native_bgm_play(file, vol, pit, (pos || 0.0).to_f, track) rescue (__switch_native_bgm_play(file, vol, pit, (pos || 0.0).to_f) rescue nil)
       else
-        __switch_native_bgm_play(file, vol, (pitch || 100).to_i, (pos || 0.0).to_f) rescue nil
+        __switch_native_bgm_play(file, vol, pit, (pos || 0.0).to_f) rescue nil
       end
+    rescue Exception
+    end
+
+    def bgm_stop(track = nil)
+      __switch_native_bgm_stop(track) rescue (__switch_native_bgm_stop rescue nil)
+    rescue Exception
+    end
+
+    def bgm_fade(time, track = nil)
+      __switch_native_bgm_fade(time, track) rescue (__switch_native_bgm_fade(time) rescue nil)
     rescue Exception
     end
 
@@ -1502,17 +1666,7 @@ def warmup_audio_buffers!
   $CORE_AUDIO_BUFFERS_WARMED = true
 
   common_ses = [
-    "GUI menu open", "GUI menu close", "GUI sel cursor", "GUI sel decision",
-    "GUI sel cancel", "GUI sel buzzer", "GUI naming tab swap start", "GUI naming tab swap end",
-    "GUI storage show party panel", "GUI storage hide party panel", "GUI summary change page",
-    "GUI party switch", "GUI trainer card open", "GUI trainer card flip", "GUI bag cursor",
-    "Player jump", "jump", "Player bump", "Door enter", "Door exit", "Door open", "Door close",
-    "Ledge jump", "Bicycle", "Cut", "Rock Smash", "Headbutt", "Fly", "Surf",
-    "pkmn_ball", "Recall", "Battle throw", "Battle ball drop", "Battle ball hit",
-    "Battle ball shake", "Battle recall", "Battle damage normal", "Battle damage super",
-    "Battle damage weak", "Battle flee", "Pkmn faint", "Battle exp full", "Battle stat up",
-    "Battle stat down", "Item get", "Key item get", "Item obtain", "Mining item get",
-    "Voltorb Flip point", "Voltorb Flip mark", "Voltorb Flip win"
+    "GUI menu open", "GUI sel cursor", "GUI sel decision", "GUI sel cancel"
   ]
 
   common_ses.each do |se_name|
@@ -1627,45 +1781,11 @@ class PBAnimations < Array
 end unless defined?(PBAnimations)
 
 def warmup_core_switch_audio!
-  core_sounds = [
-    "Player jump", "jump", "Player bump",
-    "GUI sel cursor", "GUI sel decision", "GUI sel cancel", "GUI sel buzzer",
-    "GUI menu open", "GUI menu close", "GUI save choice", "GUI bag pocket", "GUI bag cursor",
-    "Door enter", "Door exit", "Door slide", "pkmn_ball", "Recall",
-    "Battle ball throw", "Battle throw", "Battle ball hit", "Battle ball drop", "Battle ball shake",
-    "Battle ball capture", "Battle critical catch throw", "Battle jump to ball",
-    "Battle damage normal", "Battle damage super", "Battle damage weak", "Battle flee",
-    "Battle recall", "Battle exp", "Battle ball burst", "Battle faint",
-    "itemget", "Item get", "Voltorb Flip point", "Audio/ME/Item get.wav"
-  ]
-  core_sounds.each do |s|
-    resolved = ::Audio.resolve_audio_file(s, nil, "Audio/SE")
-    if resolved && !resolved.empty?
-      ::Audio.__switch_native_se_play(resolved, 0, 100) rescue nil
-    end
-  end
-  ::Audio.se_stop rescue nil
-  log_compat("[Switch Audio] Pre-calentados #{core_sounds.length} efectos basicos de UI/movimiento/captura en OpenAL RAM.") rescue nil
-rescue Exception => e
-  log_compat("[Warning warmup_core_switch_audio] #{e.message}") rescue nil
+  # No-op en arranque para velocidad instantánea
 end
 
 def prewarm_pause_menu_graphics!
-  return unless defined?(RPG::Cache)
-  dp_icons = [
-    "bgTop", "bgMid", "bgBtm", "selector",
-    "pokedexA", "pokedexB",
-    "pokemonA", "pokemonB",
-    "bagA", "bagBm", "bagBf",
-    "PlayercardA", "PlayercardB",
-    "saveA", "saveBm", "saveBf",
-    "optionsA", "optionsB",
-    "exitA", "exitB"
-  ]
-  dp_icons.each do |ic|
-    RPG::Cache.load_bitmap("Graphics/Pictures/DP Pause Menu/", ic) rescue nil
-  end
-rescue Exception
+  # No-op en arranque para velocidad instantánea
 end
 
 warmup_core_switch_audio!
@@ -1680,10 +1800,10 @@ end
 
 class PokemonSystem
   def battlescene
-    0
+    @battlescene || 0
   end
   def battlescene=(val)
-    @battlescene = 0
+    @battlescene = (val || 0).to_i
   end
   def battlestyle
     @battlestyle || 0
@@ -2018,6 +2138,14 @@ class ::File
         end
       end
 
+      if defined?($GRAPHICS_LOOKUP_TABLE) && $GRAPHICS_LOOKUP_TABLE && $GRAPHICS_LOOKUP_TABLE.length > 0
+        p_down = p.downcase
+        if $GRAPHICS_LOOKUP_TABLE.has_key?(p_down) || $GRAPHICS_LOOKUP_TABLE.has_key?(p_down.sub(/\A\.\//, ""))
+          $FILE_EXIST_CACHE[p] = true
+          return true
+        end
+      end
+
       if defined?($RESOLVED_BITMAP_CACHE) && $RESOLVED_BITMAP_CACHE && $RESOLVED_BITMAP_CACHE.has_key?(p)
         res = !!$RESOLVED_BITMAP_CACHE[p]
         $FILE_EXIST_CACHE[p] = res
@@ -2026,7 +2154,7 @@ class ::File
 
       res = (open(p, "rb") { true } rescue false)
       res = ::Dir.exist?(p) if !res
-      writable = (p =~ /\.(rxdata|bak|sav|log|txt)$/i && !p.start_with?("Data/"))
+      writable = (p =~ /\.(rxdata|bak|sav|log|txt|dat|tmp)$/i || p.include?("options"))
       $FILE_EXIST_CACHE[p] = res if !writable
       res
     end
@@ -2406,12 +2534,12 @@ module Kernel
       return $ORIGINAL_KERNEL_EVAL.call(src)
     end
 
-    # Si el primer argumento es un Binding explícito, usarlo; si no, usar TOPLEVEL_BINDING
-    if args.length > 0 && args[0].is_a?(Binding)
-      target_binding = args.shift
-    else
-      target_binding = TOPLEVEL_BINDING
+    # Si el primer argumento es un Binding explícito o nil, procesarlo; de lo contrario usar TOPLEVEL_BINDING
+    if args.length > 0 && (args[0].is_a?(Binding) || args[0].nil?)
+      b = args.shift
+      target_binding = b if b.is_a?(Binding)
     end
+    target_binding ||= TOPLEVEL_BINDING
 
     filename = (args[0].is_a?(String) ? args[0] : "(eval)")
     lineno = (args[1].is_a?(Integer) ? args[1] : 1)
@@ -3012,135 +3140,19 @@ module ::SwitchAssetOptimizer
 
   class << self
     def preload_battle_animations
-      return if @anims_preloaded
-      @anims_preloaded = true
-      
-      log_compat("[SwitchAssetOptimizer] Pre-cargando Data/PkmnAnimations.rxdata y move2anim.dat en memoria...")
-      $PokemonBattleAnimations ||= (load_data("Data/PkmnAnimations.rxdata") rescue nil)
-      $PokemonMoveToAnim ||= (load_data("Data/move2anim.dat") rescue nil) || []
-      if $PokemonBattleAnimations
-        log_compat("[SwitchAssetOptimizer] PkmnAnimations.rxdata (#{$PokemonBattleAnimations.length rescue 0} animaciones) precargado en RAM.")
-      end
-    rescue Exception => e
-      log_compat("[SwitchAssetOptimizer Error Anims] #{e.class}: #{e.message}")
+      # Lazy load on first battle via pbLoadBattleAnimations to avoid 15MB parse lag during boot
     end
 
     def prewarm_battle(battle)
       return if !battle
-      # 1. Preload active moves graphics of all battlers
-      $PokemonBattleAnimations ||= (load_data("Data/PkmnAnimations.rxdata") rescue nil)
-      if defined?($PokemonBattleAnimations) && $PokemonBattleAnimations && battle.respond_to?(:battlers) && battle.battlers
-        battle.battlers.compact.each do |b|
-          next if !b.respond_to?(:moves) || !b.moves
-          b.moves.each do |m|
-            next if !m
-            begin
-              anim_id = pbFindMoveAnimation(m.id, b.index, 0) rescue nil
-              if anim_id && $PokemonBattleAnimations[anim_id[0]]
-                anim = $PokemonBattleAnimations[anim_id[0]]
-                if anim.graphic && !anim.graphic.empty?
-                  pbGetAnimation(anim.graphic, anim.hue || 0) rescue nil
-                end
-              end
-            rescue Exception
-            end
-          end
-        end
+      begin
+        $PokemonBattleAnimations ||= pbLoadBattleAnimations rescue nil
+      rescue Exception
       end
-    rescue Exception => e
-      log_compat("[SwitchAssetOptimizer Error prewarm_battle] #{e.message}") rescue nil
     end
 
     def prewarm_all
-      build_audio_cache!
-      preload_battle_animations
-
-      # Pre-decode common SEs into fast audio buffers in RAM (volume 0)
-      COMMON_SE_FILES.each do |se|
-        real_path = pbResolveAudioSE(se) rescue nil
-        if real_path
-          Audio.se_play(real_path, 0, 100) rescue nil
-        end
-      end
-      Audio.se_stop rescue nil
-
-      # Pre-warm common overworld animations (dust, grass rustle, emotes, ball effects)
-      $data_animations ||= (load_data("Data/Animations.rxdata") rescue nil)
-      if $data_animations
-        $data_animations.compact.each do |anim|
-          next if !anim || !anim.animation_name || anim.animation_name.empty?
-          pbGetAnimation(anim.animation_name, anim.animation_hue || 0) rescue nil
-          if anim.respond_to?(:timings) && anim.timings
-            anim.timings.each do |t|
-              if t.se && t.se.name && !t.se.name.empty?
-                real_path = pbResolveAudioSE(t.se.name) rescue nil
-                Audio.se_play(real_path, 0, 100) if real_path rescue nil
-              end
-            end
-          end
-        end
-        Audio.se_stop rescue nil
-      end
-
-      # Pre-warm common battle particles and sendout graphics
-      [
-        "Graphics/Battle animations/ballBurst_particle",
-        "Graphics/Battle animations/ballBurst_particle_s",
-        "Graphics/Battle animations/ballBurst_ray",
-        "Graphics/Battle animations/ballBurst_ring1",
-        "Graphics/Battle animations/ballBurst_ring2",
-        "Graphics/Battle animations/ballBurst_ring3",
-        "Graphics/Battle animations/ballBurst_dazzle",
-        "Graphics/Battle animations/ballBurst_bubble",
-        "Graphics/Battle animations/ballBurst_diamond",
-        "Graphics/Animations/003-Attack01",
-        "Graphics/Animations/004-Attack02",
-        "Graphics/Animations/015-Fire01",
-        "Graphics/Animations/016-Ice01",
-        "Graphics/Animations/017-Thunder01",
-        "Graphics/Animations/018-Water01",
-        "Graphics/Animations/anim sheet",
-        "Graphics/Animations/Common-BallOpen",
-        "Graphics/Animations/Common-BallRecall"
-      ].each do |anim_path|
-        pbGetAnimation(anim_path, 0) rescue nil
-      end
-
-      # Pre-warm pause menu in RPG::Cache for instant opening
-      [
-        "Graphics/Pictures/DP Pause Menu/bgTop",
-        "Graphics/Pictures/DP Pause Menu/bgMid",
-        "Graphics/Pictures/DP Pause Menu/bgBtm",
-        "Graphics/Pictures/DP Pause Menu/bgTop_short",
-        "Graphics/Pictures/DP Pause Menu/bgMid_short",
-        "Graphics/Pictures/DP Pause Menu/bgBtm_short",
-        "Graphics/Pictures/DP Pause Menu/selector",
-        "Graphics/Pictures/DP Pause Menu/pokedexA",
-        "Graphics/Pictures/DP Pause Menu/pokedexB",
-        "Graphics/Pictures/DP Pause Menu/pokemonA",
-        "Graphics/Pictures/DP Pause Menu/pokemonB",
-        "Graphics/Pictures/DP Pause Menu/bagA",
-        "Graphics/Pictures/DP Pause Menu/bagBm",
-        "Graphics/Pictures/DP Pause Menu/bagBf",
-        "Graphics/Pictures/DP Pause Menu/PlayercardA",
-        "Graphics/Pictures/DP Pause Menu/PlayercardB",
-        "Graphics/Pictures/DP Pause Menu/saveA",
-        "Graphics/Pictures/DP Pause Menu/saveBm",
-        "Graphics/Pictures/DP Pause Menu/saveBf",
-        "Graphics/Pictures/DP Pause Menu/optionsA",
-        "Graphics/Pictures/DP Pause Menu/optionsB",
-        "Graphics/Pictures/DP Pause Menu/exitA",
-        "Graphics/Pictures/DP Pause Menu/exitB"
-      ].each do |bmp_path|
-        RPG::Cache.load_bitmap("", bmp_path) rescue nil
-      end
-
-      # Pre-warm overworld shadows
-      [
-        "defaultShadow", "smallShadow", "mediumShadow", "largeShadow"
-      ].each do |shdw|
-        RPG::Cache.load_bitmap("Graphics/Characters/Shadows/", shdw) rescue nil
-      end
+      # Non-blocking bootup: audio and graphics lookup tables are already in RAM via .dat
     end
   end
 end
@@ -3184,7 +3196,16 @@ def pbResolveBitmap(x)
             $GRAPHICS_LOOKUP_TABLE["graphics/ui/" + clean_noext + ".png"] ||
             $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_k] ||
             $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_noext] ||
-            $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_noext + ".png"]
+            $GRAPHICS_LOOKUP_TABLE["graphics/autotiles/" + clean_noext + ".png"] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/trainers/" + clean_k] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/trainers/" + clean_noext] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/trainers/" + clean_noext + ".png"] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/transitions/" + clean_k] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/transitions/" + clean_noext] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/transitions/" + clean_noext + ".png"] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/titles/" + clean_k] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/titles/" + clean_noext] ||
+            $GRAPHICS_LOOKUP_TABLE["graphics/titles/" + clean_noext + ".png"]
     if found
       $RESOLVED_BITMAP_CACHE[key] = found
       return found
@@ -3312,31 +3333,20 @@ end
 
 def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
-  $LAST_ANIM_LOAD_FRAME ||= 0
-  current_frame = (Graphics.frame_count rescue 0)
-  if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
-    fallback = PBAnimations.new(0)
-    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
-    return fallback
-  end
-  $LAST_ANIM_LOAD_FRAME = current_frame
-
   begin
-    $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+    data = load_data("Data/PkmnAnimations.rxdata")
+    if data && (data.is_a?(PBAnimations) || data.is_a?(Array)) && data.length > 0
+      $PokemonBattleAnimations = data
+      if defined?($game_temp) && $game_temp
+        $game_temp.battle_animations_data = $PokemonBattleAnimations
+      end
+      log_compat("[Animaciones] PkmnAnimations.rxdata cargado con exito: #{data.length} animaciones.") rescue nil
+      return $PokemonBattleAnimations
+    end
   rescue Exception => e
     log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
-    $PokemonBattleAnimations = nil
   end
-  if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
-    $PokemonBattleAnimations = nil
-    fallback = PBAnimations.new(0)
-    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
-    return fallback
-  end
-  if defined?($game_temp) && $game_temp
-    $game_temp.battle_animations_data = $PokemonBattleAnimations
-  end
+  $PokemonBattleAnimations ||= PBAnimations.new(0)
   return $PokemonBattleAnimations
 end
 
@@ -3384,4 +3394,6 @@ Graphics.integer_scaling = false rescue nil
 Graphics.smooth_scaling = 3 rescue nil
 Graphics.fullscreen = true rescue nil
 log_compat("Stubs de compatibilidad inicializados correctamente.")
+update_boot_progress(22, "Cargando scripts del motor...") if defined?(update_boot_progress)
+
 

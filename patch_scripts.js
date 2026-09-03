@@ -281,6 +281,13 @@ end`, 'pbSetResizeFactor');
     s.code = s.code.replace(/class\s*<<\s*Input[\s\S]*?alias\s*update_KGC_ScreenCapture\s*update[\s\S]*?end/g, 'class << Input; alias update_KGC_ScreenCapture update unless method_defined?(:update_KGC_ScreenCapture); end');
     changed = true;
   }
+
+  if (s.code.includes('transition_KGC_SpecialTransition')) {
+    console.log('Patching transition_KGC_SpecialTransition in:', s.name);
+    s.code = s.code.replace(/unless\s+defined\?\(transition_KGC_SpecialTransition\)[\s\S]*?class\s*<<\s*Graphics[\s\S]*?alias\s+transition_KGC_SpecialTransition\s+transition[\s\S]*?alias\s+update_KGC_SpecialTransition\s+update[\s\S]*?end\s*end/g,
+      'class << Graphics\n    alias transition_KGC_SpecialTransition transition unless method_defined?(:transition_KGC_SpecialTransition)\n    alias update_KGC_SpecialTransition update unless method_defined?(:update_KGC_SpecialTransition)\n  end');
+    changed = true;
+  }
   
   if (s.name.includes('MKXP_Compatibility') || s.code.includes('mkxp_draw_text')) {
     console.log('Patching MKXP_Compatibility in:', s.name);
@@ -734,12 +741,16 @@ class PBAnimation < Array
   attr_accessor :id, :name, :graphic, :hue, :position, :speed, :array, :timing, :scope
 
   def speed; @speed || 20; end
+  def timing; @timing ||= []; end
   def initialize(size = 1)
     @id = -1; @name = ""; @graphic = ""; @hue = 0; @position = 4; @array = []; @timing = []; @scope = 0
   end
-  def length; @array.length; end
-  def [](i); @array[i]; end
-  def []=(i, v); @array[i] = v; end
+  def length; return @array.length if @array; return super rescue 0; end
+  def size; return @array.size if @array; return super rescue 0; end
+  def empty?; return @array.empty? if @array; return super rescue true; end
+  def [](i); return @array[i] if @array; return super(i) rescue nil; end
+  def []=(i, v); if @array; @array[i] = v; else; super(i, v) rescue nil; end; end
+  def each(&block); return @array.each(&block) if @array; return super(&block) rescue nil; end
 end unless defined?(PBAnimation)
 
 class PBAnimations < Array
@@ -747,11 +758,15 @@ class PBAnimations < Array
   def initialize(size = 1)
     @array = []; @selected = 0
   end
-  def length; @array.length; end
-  def [](i); @array[i]; end
-  def []=(i, v); @array[i] = v; end
+  def length; return @array.length if @array; return super rescue 0; end
+  def size; return @array.size if @array; return super rescue 0; end
+  def empty?; return @array.empty? if @array; return super rescue true; end
+  def [](i); return @array[i] if @array; return super(i) rescue nil; end
+  def []=(i, v); if @array; @array[i] = v; else; super(i, v) rescue nil; end; end
+  def each(&block); return @array.each(&block) if @array; return super(&block) rescue nil; end
   def get_from_name(name)
-    @array.each { |i| return i if i&.name == name }
+    list = @array || self
+    list.each { |i| return i if i&.name == name }
     return nil
   end
 end unless defined?(PBAnimations)
@@ -871,29 +886,7 @@ end # SWITCH_CORE_RGSS_PATCHED
 
   if (s.name.includes('RPG_Cache') || s.code.includes('class BitmapWrapper')) {
     console.log('Patching BitmapWrapper in:', s.name);
-    s.code = s.code.replace(/class BitmapWrapper < Bitmap[\s\S]*?def initialize\(\*arg\)[\s\S]*?end/m, `class BitmapWrapper < ::Bitmap
-  attr_reader   :refcount
-  attr_accessor :never_dispose
-
-  def dispose
-    return if self.disposed?
-    @refcount -= 1
-    super if @refcount <= 0 && !never_dispose
-  end
-
-  def initialize(*arg)
-    begin
-      super(*arg)
-    rescue ArgumentError
-      if arg.length == 2
-        super(arg[0].to_i, arg[1].to_i) rescue nil
-      elsif arg.length == 1
-        super(arg[0].to_s) rescue nil
-      end
-    rescue Exception
-    end
-    @refcount = 1
-  end`);
+    s.code = s.code.replace(/class\s+BitmapWrapper\s+<\s+Bitmap\b/g, 'class BitmapWrapper < ::Bitmap');
     changed = true;
   }
 
@@ -2179,31 +2172,20 @@ end unless defined?(PBAnimations)`
       /def pbLoadBattleAnimations[\s\S]*?def pbLoadMoveToAnim[\s\S]*?\nend\s*\n\s*(?=#={10,})/m,
 `def pbLoadBattleAnimations
   return $PokemonBattleAnimations if $PokemonBattleAnimations && ($PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.is_a?(Array)) && $PokemonBattleAnimations.length > 0
-  $LAST_ANIM_LOAD_FRAME ||= 0
-  current_frame = (Graphics.frame_count rescue 0)
-  if current_frame > 0 && (current_frame - $LAST_ANIM_LOAD_FRAME).abs < 40 && $LAST_ANIM_LOAD_FRAME > 0
-    fallback = PBAnimations.new(0)
-    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
-    return fallback
-  end
-  $LAST_ANIM_LOAD_FRAME = current_frame
-
   begin
-    $PokemonBattleAnimations = load_data("Data/PkmnAnimations.rxdata")
+    data = load_data("Data/PkmnAnimations.rxdata")
+    if data && (data.is_a?(PBAnimations) || data.is_a?(Array)) && data.length > 0
+      $PokemonBattleAnimations = data
+      if defined?($game_temp) && $game_temp
+        $game_temp.battle_animations_data = $PokemonBattleAnimations
+      end
+      log_compat("[Animaciones] PkmnAnimations.rxdata cargado con exito: #{data.length} animaciones.") rescue nil
+      return $PokemonBattleAnimations
+    end
   rescue Exception => e
     log_compat("[Animaciones] Fallo al cargar PkmnAnimations.rxdata: #{e.class}: #{e.message}") rescue nil
-    $PokemonBattleAnimations = nil
   end
-  if !$PokemonBattleAnimations.is_a?(PBAnimations) || $PokemonBattleAnimations.length <= 0
-    log_compat("[Animaciones] Tipo inesperado o vacio: #{$PokemonBattleAnimations.class}") rescue nil
-    $PokemonBattleAnimations = nil
-    fallback = PBAnimations.new(0)
-    fallback.array.clear if fallback.respond_to?(:array) && fallback.array
-    return fallback
-  end
-  if defined?($game_temp) && $game_temp
-    $game_temp.battle_animations_data = $PokemonBattleAnimations
-  end
+  $PokemonBattleAnimations ||= PBAnimations.new(0)
   return $PokemonBattleAnimations
 end
  
@@ -2453,9 +2435,29 @@ def mainFunctionDebug
   begin
     # Descartar pantalla de carga visual antes del título
     begin
+      if defined?($switch_boot_bg) && $switch_boot_bg
+        $switch_boot_bg.bitmap&.dispose rescue nil
+        $switch_boot_bg.dispose rescue nil
+        $switch_boot_bg = nil
+      end
+      if defined?($switch_boot_logo) && $switch_boot_logo
+        $switch_boot_logo.bitmap&.dispose rescue nil
+        $switch_boot_logo.dispose rescue nil
+        $switch_boot_logo = nil
+      end
+      if defined?($switch_boot_bar) && $switch_boot_bar
+        $switch_boot_bar.bitmap&.dispose rescue nil
+        $switch_boot_bar.dispose rescue nil
+        $switch_boot_bar = nil
+      end
+      if defined?($switch_boot_viewport) && $switch_boot_viewport
+        $switch_boot_viewport.dispose rescue nil
+        $switch_boot_viewport = nil
+      end
       if $loading_sprite
+        $loading_sprite.bitmap&.dispose rescue nil
         $loading_sprite.dispose rescue nil
-        $loading_viewport.dispose rescue nil
+        $loading_viewport&.dispose rescue nil
         $loading_sprite = nil
         $loading_viewport = nil
       end
@@ -2522,38 +2524,22 @@ end
 # Iniciar música inmediatamente al arrancar
 Audio.bgm_play("Audio/BGM/Title.ogg", 100, 100) rescue nil
 
-# 0. Pantalla de carga visual inmediata (para que nunca haya pantalla negra en la Switch)
-$loading_viewport = nil
-$loading_sprite = nil
-begin
-  $loading_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height) rescue nil
-  if $loading_viewport
-    $loading_viewport.z = 999999
-    $loading_sprite = Sprite.new($loading_viewport) rescue nil
-    if $loading_sprite
-      splash_file = pbResolveBitmap("Graphics/Titles/splash") || pbResolveBitmap("Graphics/Titles/splash1") || pbResolveBitmap("Graphics/Titles/title")
-      if splash_file
-        $loading_sprite.bitmap = Bitmap.new(splash_file) rescue nil
-      else
-        $loading_sprite.bitmap = Bitmap.new(Graphics.width, Graphics.height) rescue nil
-        $loading_sprite.bitmap.fill_rect(0, 0, Graphics.width, Graphics.height, Color.new(20, 24, 35)) rescue nil
-      end
-      Graphics.update rescue nil
-      Graphics.transition(0) rescue nil
-    end
-  end
-rescue Exception => e_splash
-  log_compat("[Warning Splash] #{e_splash.message}") rescue nil
-end
+# 1. Progreso inicial del sistema
+update_boot_progress(25, "Iniciando sistema...") if defined?(update_boot_progress)
 
 # Inicialización única del sistema fuera del bucle de escenas
 log_compat("[Main] 1. Cargando mensajes...") rescue puts("[Main] 1. Cargando mensajes...")
 MessageTypes.load_default_messages if FileTest.exist?("Data/messages_core.dat") rescue nil
 
+# 2. Plugins
 log_compat("[Main] 2. Ejecutando Plugins...") rescue puts("[Main] 2. Ejecutando Plugins...")
+update_boot_progress(28, "Cargando plugins y extensiones...") if defined?(update_boot_progress)
 PluginManager.runPlugins rescue nil
+update_boot_progress(50, "Plugins cargados con éxito...") if defined?(update_boot_progress)
 
+# 3. Base de datos y Game
 log_compat("[Main] 3. Inicializando Game...") rescue puts("[Main] 3. Inicializando Game...")
+update_boot_progress(52, "Cargando base de datos del juego...") if defined?(update_boot_progress)
 begin
   $data_system ||= load_data("Data/System.rxdata") rescue nil
   Game.initialize
@@ -2564,7 +2550,23 @@ rescue Exception => eg
   end
 end
 
+# 3.5 Precarga de Animaciones de Combate (Elimina el retardo en la primera batalla contra entrenador)
+log_compat("[Main] 3.5. Precargando animaciones de combate...") rescue nil
+update_boot_progress(72, "Precargando animaciones de combate...") if defined?(update_boot_progress)
+begin
+  t_anim0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
+  $PokemonBattleAnimations = pbLoadBattleAnimations rescue nil
+  $PokemonMoveToAnim = pbLoadMoveToAnim rescue nil
+  t_anim1 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
+  log_compat(sprintf("[Animaciones] Precarga de combate completada en %.2fs", (t_anim1 - t_anim0))) rescue nil
+rescue Exception => e_anim
+  log_compat("[Warning Animaciones Preload] #{e_anim.class}: #{e_anim.message}") rescue nil
+end
+update_boot_progress(88, "Animaciones cargadas con éxito...") if defined?(update_boot_progress)
+
+# 4. Configuración de sistema y guardado
 log_compat("[Main] 4. Configurando sistema...") rescue puts("[Main] 4. Configurando sistema...")
+update_boot_progress(92, "Configurando sistema y opciones...") if defined?(update_boot_progress)
 begin
   SaveData.initialize_bootup_values rescue nil
   Game.set_up_system
@@ -2576,11 +2578,54 @@ rescue Exception => e
   end
 end
 
+# 5. Variables globales
 log_compat("[Main] 5. Variables globales...") rescue nil
 $data_system ||= load_data("Data/System.rxdata") rescue nil
 $PokemonSystem ||= PokemonSystem.new rescue nil
+SaveData.load_options rescue nil
 $game_system ||= Game_System.new rescue nil
 $game_temp ||= Game_Temp.new rescue nil
+
+update_boot_progress(100, "¡Listo!") if defined?(update_boot_progress)
+Graphics.update rescue nil
+
+# Descartar pantalla de arranque visual
+begin
+  if defined?($switch_boot_bg) && $switch_boot_bg
+    $switch_boot_bg.bitmap&.dispose rescue nil
+    $switch_boot_bg.dispose rescue nil
+    $switch_boot_bg = nil
+  end
+  if defined?($switch_boot_logo) && $switch_boot_logo
+    $switch_boot_logo.bitmap&.dispose rescue nil
+    $switch_boot_logo.dispose rescue nil
+    $switch_boot_logo = nil
+  end
+  if defined?($switch_boot_bar) && $switch_boot_bar
+    $switch_boot_bar.bitmap&.dispose rescue nil
+    $switch_boot_bar.dispose rescue nil
+    $switch_boot_bar = nil
+  end
+  if defined?($switch_boot_viewport) && $switch_boot_viewport
+    $switch_boot_viewport.dispose rescue nil
+    $switch_boot_viewport = nil
+  end
+  if defined?($switch_boot_sprite) && $switch_boot_sprite
+    $switch_boot_sprite.bitmap&.dispose rescue nil
+    $switch_boot_sprite.dispose rescue nil
+    $switch_boot_sprite = nil
+  end
+  if defined?($loading_sprite) && $loading_sprite
+    $loading_sprite.bitmap&.dispose rescue nil
+    $loading_sprite.dispose rescue nil
+    $loading_sprite = nil
+  end
+  if defined?($loading_viewport) && $loading_viewport
+    $loading_viewport.dispose rescue nil
+    $loading_viewport = nil
+  end
+rescue Exception
+end
 
 loop do
   retval = mainFunction

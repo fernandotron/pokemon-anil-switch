@@ -78,6 +78,8 @@ class Scene_Map
 
   def transfer_player(cancel_swimming = true)
     $game_temp.player_transferring = false
+    $game_temp.cue_bgm_delay = nil if $game_temp
+    $game_temp.cue_bgm = nil if $game_temp
     pbCancelVehicles($game_temp.player_new_map_id, cancel_swimming)
     autofade($game_temp.player_new_map_id)
     pbBridgeOff

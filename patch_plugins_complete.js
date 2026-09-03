@@ -213,6 +213,10 @@ root.elements.forEach(pluginNode => {
           console.log('  -> Using updated Scene_Intro from disk in plugin:', pluginName, fileName);
           code = code.replace(/Graphics\.transition\(0\)/g, 'Graphics.transition(10) rescue nil');
         }
+        if (code.includes('transition_KGC_SpecialTransition')) {
+          code = code.replace(/unless\s+defined\?\(transition_KGC_SpecialTransition\)[\s\S]*?class\s*<<\s*Graphics[\s\S]*?alias\s+transition_KGC_SpecialTransition\s+transition[\s\S]*?alias\s+update_KGC_SpecialTransition\s+update[\s\S]*?end\s*end/g,
+            'class << Graphics\n    alias transition_KGC_SpecialTransition transition unless method_defined?(:transition_KGC_SpecialTransition)\n    alias update_KGC_SpecialTransition update unless method_defined?(:update_KGC_SpecialTransition)\n  end');
+        }
         const codeBuf = Buffer.from(code, 'utf-8');
         fileNode.elements[1] = {
           type: 'ivar_str',

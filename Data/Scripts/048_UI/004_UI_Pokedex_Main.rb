@@ -11,10 +11,27 @@ class Window_Pokedex < Window_DrawableCommand
     self.baseColor   = Color.new(88, 88, 80)
     self.shadowColor = Color.new(168, 184, 184)
     self.windowskin  = nil
+    @hold_counter    = 0
+    @ignore_input    = true
   end
 
   def commands=(value)
     @commands = value
+    if @commands
+      @commands.each do |cmd|
+        sp = cmd[:species]
+        num = cmd[:number]
+        num -= 1 if cmd[:shift]
+        cmd[:cached_num] = sprintf("%03d", num)
+        if $player.seen?(sp)
+          cmd[:cached_name] = cmd[:name]
+          cmd[:cached_status] = $player.owned?(sp) ? :owned : :seen
+        else
+          cmd[:cached_name] = "----------"
+          cmd[:cached_status] = :unseen
+        end
+      end
+    end
     refresh
   end
 
@@ -35,25 +52,18 @@ class Window_Pokedex < Window_DrawableCommand
   def drawItem(index, _count, rect)
     return if index >= self.top_row + self.page_item_max
     rect = Rect.new(rect.x + 16, rect.y, rect.width - 16, rect.height)
-    species     = @commands[index][:species]
-    indexNumber = @commands[index][:number]
-    indexNumber -= 1 if @commands[index][:shift]
-    if $player.seen?(species)
-      if $player.owned?(species)
-        pbCopyBitmap(self.contents, @pokeballOwn.bitmap, rect.x - 6, rect.y + 10)
-      else
-        pbCopyBitmap(self.contents, @pokeballSeen.bitmap, rect.x - 6, rect.y + 10)
-      end
-      num_text = sprintf("%03d", indexNumber)
-      name_text = @commands[index][:name]
-    else
-      num_text = sprintf("%03d", indexNumber)
-      name_text = "----------"
+    cmd = @commands[index]
+    return if !cmd
+    status = cmd[:cached_status]
+    if status == :owned
+      pbCopyBitmap(self.contents, @pokeballOwn.bitmap, rect.x - 6, rect.y + 10)
+    elsif status == :seen
+      pbCopyBitmap(self.contents, @pokeballSeen.bitmap, rect.x - 6, rect.y + 10)
     end
     pbDrawShadowText(self.contents, rect.x + 36, rect.y + 6, rect.width, rect.height,
-                     num_text, self.baseColor, self.shadowColor)
+                     cmd[:cached_num] || "", self.baseColor, self.shadowColor)
     pbDrawShadowText(self.contents, rect.x + 84, rect.y + 6, rect.width, rect.height,
-                     name_text, self.baseColor, self.shadowColor)
+                     cmd[:cached_name] || "", self.baseColor, self.shadowColor)
   end
 
   def refresh
@@ -71,9 +81,38 @@ class Window_Pokedex < Window_DrawableCommand
   end
 
   def update
+    old_index = self.index
+    if self.active && @item_max > 0
+      jump_size = self.page_item_max
+      if Input.trigger?(Input::LEFT)
+        self.index = [self.index - jump_size, 0].max
+      elsif Input.trigger?(Input::RIGHT)
+        self.index = [self.index + jump_size, @item_max - 1].min
+      elsif Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::AUX1)
+        self.index = [self.index - (jump_size * 2), 0].max
+      elsif Input.trigger?(Input::JUMPDOWN) || Input.trigger?(Input::AUX2)
+        self.index = [self.index + (jump_size * 2), @item_max - 1].min
+      elsif Input.press?(Input::DOWN)
+        @hold_counter += 1
+        if @hold_counter == 1 || (@hold_counter > 12 && @hold_counter % 2 == 0)
+          self.index = (self.index + 1) % @item_max
+        end
+      elsif Input.press?(Input::UP)
+        @hold_counter += 1
+        if @hold_counter == 1 || (@hold_counter > 12 && @hold_counter % 2 == 0)
+          self.index = (self.index - 1 + @item_max) % @item_max
+        end
+      else
+        @hold_counter = 0
+      end
+    end
+    if old_index != self.index
+      pbPlayCursorSE
+      update_cursor_rect
+    end
     super
-    @uparrow.visible   = false
-    @downarrow.visible = false
+    @uparrow.visible   = false if @uparrow
+    @downarrow.visible = false if @downarrow
   end
 end
 
@@ -469,10 +508,12 @@ class PokemonPokedex_Scene
       textpos.push([_INTL("Resultados:"), 112, 314, :center, base, shadow])
       textpos.push([@dexlist.length.to_s, 112, 346, :center, base, shadow])
     else
+      @cached_seen_count ||= $player.pokedex.seen_count(pbGetPokedexRegion).to_s
+      @cached_owned_count ||= $player.pokedex.owned_count(pbGetPokedexRegion).to_s
       textpos.push([_INTL("Avistados:"), 26, 314, :left, base, shadow])
-      textpos.push([$player.pokedex.seen_count(pbGetPokedexRegion).to_s, 136, 314, :left, base, shadow])
+      textpos.push([@cached_seen_count, 136, 314, :left, base, shadow])
       textpos.push([_INTL("Capturados:"), 26, 346, :left, base, shadow])
-      textpos.push([$player.pokedex.owned_count(pbGetPokedexRegion).to_s, 152, 346, :left, base, shadow])
+      textpos.push([@cached_owned_count, 152, 346, :left, base, shadow])
     end
     # Draw all text
     pbDrawTextPositions(overlay, textpos)

@@ -55,6 +55,8 @@ module SwitchPreloadManager
     # 3. Precarga ultrarrápida de los participantes, gritos, sprites y animaciones del combate
     def preload_battle_participants(battle)
       return if !battle
+      return if @last_preloaded_battle_id == battle.object_id
+      @last_preloaded_battle_id = battle.object_id
       # Preload battle sendout SEs into OpenAL buffers
       ["Audio/SE/Battle throw", "Audio/SE/Battle ball drop", "Audio/SE/Battle ball hit", "Audio/SE/pkmn_ball", "Audio/SE/Recall"].each do |se|
         ::Audio.se_play(se, 0, 100) rescue nil
@@ -83,7 +85,6 @@ module SwitchPreloadManager
           end
         end
       end
-      ::Audio.se_stop rescue nil
     rescue Exception => e
     end
 
@@ -201,9 +202,15 @@ module SwitchPreloadManager
           move2anim = pbLoadMoveToAnim rescue nil
           animations = (defined?($PokemonBattleAnimations) && $PokemonBattleAnimations) || pbLoadBattleAnimations rescue nil
           if move2anim && animations
-            anim_details = move2anim.find { |a| a[0] == move_id }
-            if anim_details && animations[anim_details[1]]
-              anim = animations[anim_details[1]]
+            anim_id = nil
+            if move2anim.is_a?(Array) && move2anim[0].is_a?(Hash)
+              anim_id = (move2anim[0][move_id] rescue nil) || (move2anim[1][move_id] rescue nil)
+            elsif move2anim.is_a?(Array)
+              found = move2anim.find { |a| a && a[0] == move_id }
+              anim_id = found[1] if found
+            end
+            if anim_id && animations && animations[anim_id]
+              anim = animations[anim_id]
               if anim.graphic && !anim.graphic.empty?
                 pbGetAnimation(anim.graphic, anim.hue || 0) rescue nil
               end

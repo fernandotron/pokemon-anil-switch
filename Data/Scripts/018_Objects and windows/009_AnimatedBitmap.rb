@@ -146,7 +146,7 @@ class GifBitmap
     begin
       @bitmap = RPG::Cache.load_bitmap(dir, filename, hue)
       @bitmap = nil if @bitmap && @bitmap.respond_to?(:disposed?) && @bitmap.disposed?
-    rescue
+    rescue Exception
       @bitmap = nil
     end
     @bitmap = Bitmap.new(32, 32) if @bitmap.nil? || (@bitmap.respond_to?(:disposed?) && @bitmap.disposed?)

@@ -176,19 +176,13 @@ module BoxAutoSortOverride
   end
 end
 
-# Wait briefly and then override ALL storage classes
-Thread.new do
-  sleep(2) # Wait 2 seconds for all plugins to load
-  
-  # Standard Storage Screen
-  if defined?(PokemonStorageScreen)
-    PokemonStorageScreen.prepend(BoxAutoSortOverride)
-  end
-  
-  # BW Storage Screen
-  if defined?(PokemonStorageScreenBW)
-    PokemonStorageScreenBW.prepend(BoxAutoSortOverride)
-  end
+# Apply override directly to all storage classes
+if defined?(PokemonStorageScreen)
+  PokemonStorageScreen.prepend(BoxAutoSortOverride)
+end
+
+if defined?(PokemonStorageScreenBW)
+  PokemonStorageScreenBW.prepend(BoxAutoSortOverride)
 end
 
 # =============================================================================
