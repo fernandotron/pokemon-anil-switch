@@ -6,7 +6,7 @@
   "defScreenH": 384,
   "fullscreen": true,
   "winResizable": false,
-  "fixedAspectRatio": false,
+  "fixedAspectRatio": true,
   "integerScalingActive": false,
   "integerScalingLastMile": false,
   "smoothScaling": 3,

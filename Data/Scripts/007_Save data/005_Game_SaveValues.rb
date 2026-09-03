@@ -183,7 +183,8 @@ module SaveData
             $PokemonSystem.instance_variable_set("@#{k}", v)
           end
         end
-        sz = ($PokemonSystem.screensize rescue 0) || 0
+        sz = ($PokemonSystem.screensize rescue 1)
+        sz = 1 if sz.nil?
         pbSetResizeFactor([sz, 4].min) rescue nil
         if defined?(MessageConfig) && $PokemonSystem.respond_to?(:textspeed)
           MessageConfig.pbSetTextSpeed(MessageConfig.pbSettingToTextSpeed($PokemonSystem.textspeed)) rescue nil

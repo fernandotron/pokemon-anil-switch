@@ -725,12 +725,24 @@ MenuHandlers.add(:options_menu, :screen_size, {
   "order"       => 120,
   "type"        => EnumOption,
   "condition"   => proc { next true },
-  "parameters"  => [_INTL("Completa (16:9)"), _INTL("Original (4:3)")],
+  "parameters"  => [_INTL("Original (4:3)"), _INTL("Completa (16:9)")],
   "description" => _INTL("Elige el tamaño y formato de pantalla en la consola."),
-  "get_proc"    => proc { next ($PokemonSystem.screensize == 1 ? 1 : 0) },
+  "get_proc"    => proc { next ($PokemonSystem.screensize == 0 ? 1 : 0) },
   "set_proc"    => proc { |value, _scene|
-    $PokemonSystem.screensize = value
-    pbSetResizeFactor(value)
+    sz = (value == 0 ? 1 : 0)
+    $PokemonSystem.screensize = sz
+    pbSetResizeFactor(sz)
+    begin
+      if FileTest.exist?("mkxp.json")
+        content = File.read("mkxp.json")
+        new_val = (sz == 1) ? 'true' : 'false'
+        if content.match?(/"fixedAspectRatio":\s*(true|false)/)
+          new_content = content.sub(/"fixedAspectRatio":\s*(true|false)/, "\"fixedAspectRatio\": #{new_val}")
+          File.write("mkxp.json", new_content)
+        end
+      end
+    rescue Exception
+    end
   }
 })
 

@@ -82,7 +82,7 @@ targets.forEach(dir => {
   fs.mkdirSync(path.join(dir, 'Data'), { recursive: true });
   
   // Archivos raíz (los .nro van aparte, justo debajo)
-  ['preload.rb', 'mkxp.json', 'mkxp.switch.json', 'Game.ini', 'soundfont.sf2', 'icon_switch.png'].forEach(f => {
+  ['preload.rb', 'mkxp.json', 'mkxp.switch.json', 'Game.ini', 'soundfont.sf2', 'icon_switch.png', 'icon_switch_512.png'].forEach(f => {
     if (fs.existsSync(f)) {
       copyAndTouch(f, path.join(dir, f));
     }

@@ -187,6 +187,9 @@ class DeluxeBitmapWrapper
     return false if @speed <= 0
     timer = System.uptime
     delay = ((@speed / 2.0) * Settings::ANIMATION_FRAME_DELAY).round / 1000.0
+    if timer < @last_uptime || (timer - @last_uptime) > 5.0
+      @last_uptime = timer
+    end
     return if timer - @last_uptime < delay
     (@reversed) ? @frame_idx -= 1 : @frame_idx += 1
     @frame_idx = 0 if @frame_idx >= @total_frames

@@ -12,7 +12,6 @@ if $PRELOAD_RB_LOADED
   log_compat("[Switch Compatibility] preload.rb ya fue evaluado anteriormente.") rescue nil
 end
 $PRELOAD_RB_LOADED = true
-GC.disable rescue nil # Acelerar arranque eliminando pausas de GC durante compilacion de scripts
 
 # Reloj del arranque de Ruby. Se fija lo mas arriba posible para que el instante del primer
 # pixel se pueda medir de verdad en vez de estimarlo. El tiempo ABSOLUTO desde que arranco el
@@ -2160,7 +2159,7 @@ module ::Graphics
   end
 end
 
-def pbSetResizeFactor(factor = 0)
+def pbSetResizeFactor(factor = 1)
   if factor == 1
     Graphics.fixed_aspect_ratio = true rescue nil
   else
@@ -2756,7 +2755,7 @@ module Kernel
         src = src.gsub(/(?<!::)\bSaveData\.load_bootup_values\((.*?)\)/, '(SaveData.respond_to?(:load_bootup_values) ? SaveData.load_bootup_values(\1) : nil)')
       end
       if src.include?("pbSetResizeFactor")
-        src = src.gsub(/def\s+pbSetResizeFactor\b.*?\nend\b/m, "def pbSetResizeFactor(factor = 0); Graphics.fixed_aspect_ratio = (factor == 1) rescue nil; Graphics.integer_scaling = false rescue nil; Graphics.smooth_scaling = 3 rescue nil; Graphics.fullscreen = true rescue nil; end")
+        src = src.gsub(/def\s+pbSetResizeFactor\b.*?\nend\b/m, "def pbSetResizeFactor(factor = 1); Graphics.fixed_aspect_ratio = (factor == 1) rescue nil; Graphics.integer_scaling = false rescue nil; Graphics.smooth_scaling = 3 rescue nil; Graphics.fullscreen = true rescue nil; end")
       end
       if src.include?("fullscreen")
         src = src.gsub(/Graphics\.fullscreen\s*=\s*(?:false|!\s*Graphics\.fullscreen)/, 'Graphics.fullscreen = true')
@@ -3586,8 +3585,21 @@ def pbGetCachedMap(map_id)
   return nil
 end
 
+opt_fixed = true
+begin
+  opt_paths = ["options.dat", "Data/options.dat", "SaveData/options.dat"]
+  opt_file = opt_paths.find { |p| File.file?(p) rescue false }
+  if opt_file
+    opts = File.open(opt_file, "rb") { |f| Marshal.load(f) } rescue nil
+    if opts.is_a?(Hash) && opts.key?(:screensize)
+      opt_fixed = (opts[:screensize] == 1)
+    end
+  end
+rescue Exception
+end
+
 Graphics.resize_screen(512, 384) rescue nil
-Graphics.fixed_aspect_ratio = false rescue nil
+Graphics.fixed_aspect_ratio = opt_fixed rescue nil
 Graphics.integer_scaling = false rescue nil
 Graphics.smooth_scaling = 3 rescue nil
 Graphics.fullscreen = true rescue nil

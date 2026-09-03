@@ -14,7 +14,7 @@
     // fixedAspectRatio = false -> Escala 16:9 ocupando el 100% de la pantalla (1280x720 estirado)
     "fullscreen": true,
     "winResizable": false,
-    "fixedAspectRatio": false,
+    "fixedAspectRatio": true,
     "integerScalingActive": false,
     "integerScalingLastMile": false,
     "smoothScaling": 3,

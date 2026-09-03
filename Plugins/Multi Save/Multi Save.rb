@@ -784,7 +784,7 @@ module Game
     end
     SaveData.load_options rescue nil
     # Set resize factor
-    sz = ($PokemonSystem && $PokemonSystem.respond_to?(:screensize) && $PokemonSystem.screensize) ? [$PokemonSystem.screensize, 4].min : 0
+    sz = ($PokemonSystem && $PokemonSystem.respond_to?(:screensize) && !$PokemonSystem.screensize.nil?) ? [$PokemonSystem.screensize, 4].min : 1
     pbSetResizeFactor(sz)
     # Set language (and choose language if there is no save file)
     if !Settings::LANGUAGES.empty?

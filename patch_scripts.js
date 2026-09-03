@@ -319,7 +319,7 @@ for (let sIdx = 0; sIdx < scripts.length; sIdx++) {
 
   if (s.code.includes('def pbSetResizeFactor')) {
     console.log('Patching pbSetResizeFactor in:', s.name);
-    s.code = sub(s.code, /def pbSetResizeFactor[\s\S]*?\bend\b/m, `def pbSetResizeFactor(factor = 0)
+    s.code = sub(s.code, /def pbSetResizeFactor[\s\S]*?\bend\b/m, `def pbSetResizeFactor(factor = 1)
   Graphics.fixed_aspect_ratio = (factor == 1) rescue nil
   Graphics.integer_scaling = false rescue nil
   Graphics.smooth_scaling = 3 rescue nil
@@ -838,7 +838,7 @@ module Graphics
   end
 end
 
-def pbSetResizeFactor(factor = 0)
+def pbSetResizeFactor(factor = 1)
   Graphics.fixed_aspect_ratio = (factor == 1) rescue nil
   Graphics.integer_scaling = false rescue nil
   Graphics.smooth_scaling = 3 rescue nil
@@ -1055,13 +1055,30 @@ end # SWITCH_CORE_RGSS_PATCHED
     console.log('Patching Turbo System.uptime in:', s.name);
     s.code = s.code.replace(/module\s+System[\s\S]*?def\s+self\.uptime[\s\S]*?end\r?\nend/m,
 `module System
+  @last_real_time = nil
+  @accumulated_time = 0.0
+
   class << self
     def unscaled_uptime
-      (Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f)
+      (Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue (Time.now.to_f rescue 0.0))
     end
+
+    def real_uptime
+      unscaled_uptime
+    end
+
     def uptime
-      mult = (defined?(SPEEDUP_STAGES) && defined?($GameSpeed) && SPEEDUP_STAGES[$GameSpeed]) ? SPEEDUP_STAGES[$GameSpeed] : 1
-      mult * unscaled_uptime
+      current_real = unscaled_uptime
+      @last_real_time ||= current_real
+      @accumulated_time ||= 0.0
+      delta = current_real - @last_real_time
+      delta = 0.0 if delta < 0
+      delta = 0.05 if delta > 0.05
+      @last_real_time = current_real
+
+      speed = (defined?(SPEEDUP_STAGES) && defined?($GameSpeed) && $GameSpeed && SPEEDUP_STAGES[$GameSpeed]) ? SPEEDUP_STAGES[$GameSpeed] : 1
+      @accumulated_time += delta * speed
+      @accumulated_time
     end
   end
 end`);
@@ -1123,7 +1140,7 @@ end`);
     $PokemonSystem ||= PokemonSystem.new rescue nil
     SaveData.load_options rescue nil
     log_compat("[set_up_system] e. configurando pantalla...") rescue nil
-    pbSetResizeFactor([$PokemonSystem.screensize, 4].min) rescue nil
+    pbSetResizeFactor([($PokemonSystem.screensize rescue 1) || 1, 4].min) rescue nil
     log_compat("[set_up_system] f. completado con exito!") rescue nil
   end
 

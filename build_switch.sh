@@ -22,7 +22,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="$PROJECT_ROOT/build-switch"
 OUTPUT_NRO="$PROJECT_ROOT/port.nro"
 NACP_FILE="$PROJECT_ROOT/port.nacp"
-ICON_FILE="$PROJECT_ROOT/icon.jpg"
+ICON_FILE="$PROJECT_ROOT/icon_switch.png"
 
 echo "=== [2/6] Preparando dependencias y código fuente de mkxp-z ==="
 

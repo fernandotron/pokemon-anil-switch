@@ -40,7 +40,7 @@ module Graphics
   end
 end
 
-def pbSetResizeFactor(factor = 0)
+def pbSetResizeFactor(factor = 1)
   Graphics.fixed_aspect_ratio = (factor == 1) rescue nil
   Graphics.integer_scaling = false rescue nil
   Graphics.smooth_scaling = 3 rescue nil
