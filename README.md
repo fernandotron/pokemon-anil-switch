@@ -21,7 +21,7 @@ Todas las descargas oficiales se alojan directamente en la sección de **[GitHub
 
 | Paquete | Archivo | Tamaño | Descripción | Enlace |
 | :--- | :--- | :--- | :--- | :---: |
-| 👑 **Pack Completo (Recomendado)** | `Pokemon Anil 4.0.rar` | **~580 MB** | **Todo incluido:** Juego completo estructurado para microSD, Forwarder NSP, guía de instalación y los 4 manuales en PDF. | [**Descargar Pack**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
+| 👑 **Pack Completo (Recomendado)** | `Pokemon Anil 4.0.rar` | **~792 MB** | **Todo incluido:** Juego completo estructurado para microSD, Forwarder NSP, guía de instalación y los 4 manuales en PDF. | [**Descargar Pack**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | ⚡ **Actualización Rápida** | `Pokemon_Anil_Switch_Update_v4.0.0.zip` | **~18 MB** | **Para jugadores existentes:** Solo archivos modificados (scripts, shims, NROs corregidos). Se copia en segundos sin volver a transferir audios ni gráficos. | [**Descargar Update**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | 🎮 **Forwarder NSP** | `Pokemon Anil [01ab776ba9c10000].nsp` | **~395 KB** | Acceso directo para el Menú Home de Switch. Desbloquea los **3.5 GB de memoria RAM**. | [**Descargar NSP**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | 📚 **Manuales y Guías** | Carpeta `MANUALES/` | **~12 MB** | Guías oficiales: Modo Clásico, Modo Completo, Modo Radical y Preguntas Frecuentes. | [**Ver Guías**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
