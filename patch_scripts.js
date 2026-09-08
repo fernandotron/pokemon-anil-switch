@@ -1857,7 +1857,15 @@ end`
   attr_accessor :textspeed, :battlescene, :battlestyle, :show_pokemon_on_change
   attr_accessor :sendtoboxes, :givenicknames, :frame, :textskin, :screensize
   attr_accessor :language, :runstyle, :bgmvolume, :sevolume, :textinput, :vsync
-  attr_accessor :autotile_animations, :salvajes_visibles_en_ow
+  attr_accessor :autotile_animations, :salvajes_visibles_en_ow, :repartir_exp
+
+  def repartir_exp
+    @repartir_exp || 0
+  end
+
+  def repartir_exp=(val)
+    @repartir_exp = (val || 0).to_i
+  end
 
   def salvajes_visibles_en_ow
     @salvajes_visibles_en_ow || 0

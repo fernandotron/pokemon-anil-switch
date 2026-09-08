@@ -382,6 +382,9 @@ class Game_Character
     @real_y = @y * Game_Map::REAL_RES_Y
     @prelock_direction = 0
     @moveto_happened = true
+    @move_timer = nil
+    @move_initial_x = nil
+    @move_initial_y = nil
     calculate_bush_depth
     triggerLeaveTile
   end

@@ -30,9 +30,19 @@ class Game_Player < Game_Character
     return @character_name || "POKEMONTRAINER_RojoNeutro"
   end
 
-  def transparent
-    return false if !@move_route_forcing && !pbMapInterpreterRunning?
-    return @transparent
+  def reset_movement_state
+    @move_timer = nil
+    @move_initial_x = nil
+    @move_initial_y = nil
+    @moved_last_frame = false
+    @moved_this_frame = false
+    @stopped_last_frame = true
+    @stopped_this_frame = true
+    @lastdir = 0
+    @lastdirframe = (System.uptime rescue 0)
+    @bumping = false
+    @transparent = false
+    straighten
   end
 
   def map
@@ -72,7 +82,8 @@ class Game_Player < Game_Character
                     !$PokemonGlobal.surfing && !$PokemonGlobal.bicycle
     return false if jumping?
     return false if pbTerrainTag.must_walk
-    return ($PokemonSystem.runstyle == 1) ^ Input.press?(Input::ACTION)
+    run_pressed = Input.press?(Input::ACTION) || Input.press?(Input::BACK) || Input.press?(Input::JUMPUP)
+    return ($PokemonSystem.runstyle == 1) ^ run_pressed
   end
 
   def set_movement_type(type)
@@ -305,6 +316,15 @@ class Game_Player < Game_Character
   #     y : y-coordinate
   def moveto(x, y)
     super
+    @move_timer = nil
+    @move_initial_x = nil
+    @move_initial_y = nil
+    @moved_last_frame = false
+    @moved_this_frame = false
+    @stopped_last_frame = true
+    @stopped_this_frame = true
+    @lastdir = 0
+    @lastdirframe = (System.uptime rescue 0)
     center(x, y)
     make_encounter_count
   end

@@ -922,15 +922,40 @@ module ::Input
   ENTER  = 13 unless const_defined?(:ENTER)
   ESCAPE = 12 unless const_defined?(:ESCAPE)
   SPACE  = 13 unless const_defined?(:SPACE)
-  AUX1   = 18 unless const_defined?(:AUX1)
-  AUX2   = 17 unless const_defined?(:AUX2)
+  AUX1   = 17 unless const_defined?(:AUX1)
+  AUX2   = 18 unless const_defined?(:AUX2)
   SPECIAL = 23 unless const_defined?(:SPECIAL)
 
   class << self
     alias __mkxp_native_input_update update unless method_defined?(:__mkxp_native_input_update) rescue nil
+
+    def update_switch_triggers
+      if defined?(::Input::Controller) && ::Input::Controller.connected?
+        trig = (::Input::Controller.axes_trigger rescue nil)
+        if trig
+          zl_now = ((trig[0] || 0.0) > 0.45)
+          zr_now = ((trig[1] || 0.0) > 0.45)
+          @zl_triggered = zl_now && !@zl_pressed_last
+          @zr_triggered = zr_now && !@zr_pressed_last
+          @zl_pressed_last = zl_now
+          @zr_pressed_last = zr_now
+        else
+          @zl_triggered = false
+          @zr_triggered = false
+        end
+      end
+    end
+
     def update_KGC_ScreenCapture
+      update_switch_triggers
       __mkxp_native_input_update rescue nil
     end
+
+    def update
+      update_switch_triggers
+      __mkxp_native_input_update rescue nil
+    end
+
     def mouse_in_window; false; end
     def mouse_in_window?; false; end
     def mouse_x; 0; end
@@ -938,6 +963,74 @@ module ::Input
     def scroll_v; 0; end
     def release?(*args); false; end
     def time?(*args); 0; end
+
+    # Gatillos analógicos ZL y ZR en Nintendo Switch (umbral 0.45)
+    def press_zl?
+      return false unless defined?(::Input::Controller) && ::Input::Controller.connected?
+      ((::Input::Controller.axes_trigger[0] rescue 0.0) || 0.0) > 0.45
+    end
+
+    def press_zr?
+      return false unless defined?(::Input::Controller) && ::Input::Controller.connected?
+      ((::Input::Controller.axes_trigger[1] rescue 0.0) || 0.0) > 0.45
+    end
+
+    def trigger_zl?
+      @zl_triggered == true
+    end
+
+    def trigger_zr?
+      @zr_triggered == true
+    end
+
+    # Botón + (Plus / Start en Switch)
+    def trigger_plus?
+      if defined?(::Input::Controller) && ::Input::Controller.connected?
+        return true if (::Input::Controller.triggerex?(:START) rescue false)
+      end
+      if ::Input.respond_to?(:triggerex?)
+        return true if (::Input.triggerex?(:RETURN) || ::Input.triggerex?(:KP_ENTER) rescue false)
+      end
+      false
+    end
+
+    # Botón L en Nintendo Switch
+    def trigger_l?
+      if defined?(::Input::Controller) && ::Input::Controller.connected?
+        return true if (::Input::Controller.triggerex?(:LEFTSHOULDER) rescue false)
+      end
+      return true if (::Input.trigger?(::Input::L) rescue false)
+      return true if (::Input.trigger?(::Input::AUX1) rescue false)
+      return true if (::Input.respond_to?(:triggerex?) && ::Input.triggerex?(:L) rescue false)
+      false
+    end
+
+    # Botón R en Nintendo Switch
+    def trigger_r?
+      if defined?(::Input::Controller) && ::Input::Controller.connected?
+        return true if (::Input::Controller.triggerex?(:RIGHTSHOULDER) rescue false)
+      end
+      return true if (::Input.trigger?(::Input::R) rescue false)
+      return true if (::Input.trigger?(::Input::AUX2) rescue false)
+      return true if (::Input.respond_to?(:triggerex?) && ::Input.triggerex?(:R) rescue false)
+      false
+    end
+
+    # Detección inteligente de Turbo (L por defecto, o R / ZR según menú Controles)
+    def trigger_turbo?
+      return true if (::Input.trigger?(::Input::ALT) rescue false)
+      return true if (::Input.respond_to?(:triggerex?) && ::Input.triggerex?(:M) rescue false)
+      mode = ($PokemonSystem&.turbo_button || 0) rescue 0
+      case mode
+      when 1 # Asignado a botón R
+        return true if trigger_r?
+      when 2 # Asignado a gatillo ZR
+        return true if trigger_zr?
+      else   # Asignado a botón L (predeterminado)
+        return true if trigger_l?
+      end
+      false
+    end
 
     def trigger_controls?
       if defined?(::Input::Controller) && ::Input::Controller.connected?
@@ -976,6 +1069,141 @@ module ::Input
 
     def repeat?(num)
       __native_btn_repeat?(remap_button(num))
+    end
+  end
+end
+
+class PokemonSystem
+  attr_accessor :button_layout, :turbo_button, :plus_action unless method_defined?(:button_layout)
+  def only_speedup_battles; @only_speedup_battles || 0; end
+  def turbo_button; @turbo_button || 0; end
+  def plus_action; @plus_action || 0; end
+  def button_layout; @button_layout || 0; end
+end
+
+# Optimizaciones maestras de rendimiento para Nintendo Switch (V4.13)
+# 1. Carga perezosa de iconos de Poke Ball en ChangelingSprite (elimina congelación de 1.2s en menú de equipo)
+module NXBolas
+  @instalado = false
+  class << self
+    attr_reader :instalado
+    def instala
+      return true if @instalado
+      return false unless Object.const_defined?(:ChangelingSprite) &&
+                          ChangelingSprite.method_defined?(:add_bitmap)
+      @instalado = true
+      ChangelingSprite.class_eval do
+        def add_bitmap(mode, *data)
+          if ![1, 5].include?(data.length)
+            raise ArgumentError.new(_INTL("wrong number of arguments (given {1}, expected 2 or 6)", data.length + 1))
+          end
+          @changeling_data[mode] = (data[0].is_a?(Array) ? data[0].clone : [data[0]])
+        end
+
+        alias_method :nx_change_bitmap_sin_carga, :change_bitmap unless method_defined?(:nx_change_bitmap_sin_carga)
+        def change_bitmap(mode)
+          datos = @changeling_data[mode]
+          if mode && datos
+            ruta = datos[0]
+            @bitmaps[ruta] = AnimatedBitmap.new(ruta) if !@bitmaps[ruta]
+          end
+          nx_change_bitmap_sin_carga(mode)
+        end
+      end
+      true
+    end
+  end
+end
+
+# 2. Reutilización de tiras de animación en PokemonSprite [DBK] (elimina congelación de 600ms en datos del Pokémon)
+module NXTira
+  @instalado = false
+  @aciertos = 0
+  @fallos = 0
+  class << self
+    attr_reader :instalado
+    def clave(pokemon, back)
+      return nil unless pokemon.is_a?(Pokemon)
+      fichero = GameData::Species.sprite_filename(
+        pokemon.species, pokemon.form, pokemon.gender, pokemon.shiny?,
+        pokemon.shadowPokemon?, back, pokemon.egg?)
+      hue = (pokemon.respond_to?(:super_shiny?) && pokemon.super_shiny?) ? pokemon.super_shiny_hue : nil
+      [fichero, back ? 1 : 0, pokemon.personalID, hue]
+    rescue StandardError
+      nil
+    end
+
+    def instala
+      return true if @instalado
+      return false unless Object.const_defined?(:PokemonSprite) &&
+                          PokemonSprite.method_defined?(:pbSetDisplay) &&
+                          Object.const_defined?(:DeluxeBitmapWrapper)
+      @instalado = true
+      PokemonSprite.class_eval do
+        alias_method :nx_setPokemonBitmap_sin_memoria, :setPokemonBitmap unless method_defined?(:nx_setPokemonBitmap_sin_memoria)
+        def setPokemonBitmap(pokemon, back = false)
+          clave = NXTira.clave(pokemon, back)
+          tira = @_iconbitmap
+          if clave && clave == @nx_clave_tira && tira.is_a?(DeluxeBitmapWrapper) &&
+             !tira.disposed? && !self.disposed?
+            @pkmn = pokemon
+            tira.instance_variable_set(:@pokemon, pokemon)
+            tira.update_pokemon_sprite
+            self.bitmap = tira.bitmap
+            self.color = Color.new(0, 0, 0, 0)
+            self.make_grey_if_fainted = pokemon.perma_faint rescue false
+            changeOrigin
+            if tira.respond_to?(:constrict_x=)
+              tira.constrict_x = 0
+              tira.constrict_y = 0
+              tira.constrict_w = nil
+              tira.constrict_h = nil
+            end
+            pbSetDisplay
+            return
+          end
+          nx_setPokemonBitmap_sin_memoria(pokemon, back)
+          @nx_clave_tira = clave
+        end
+      end
+      true
+    end
+  end
+end
+
+# 3. Teclado virtual con cursor en Nintendo Switch
+module NXTeclado
+  @hecho = false
+  class << self
+    attr_accessor :hecho
+    def revisar
+      return true if @hecho
+      return false unless defined?(PokemonEntryScene2)
+      return false unless Object.private_method_defined?(:pbEnterText) || Object.method_defined?(:pbEnterText)
+      @hecho = true
+      Object.send(:alias_method, :nx_pbEnterText_con_teclado, :pbEnterText) unless Object.method_defined?(:nx_pbEnterText_con_teclado)
+      Object.send(:define_method, :pbEnterText) do |*args|
+        if defined?($PokemonSystem) && $PokemonSystem.respond_to?(:textinput) && ($PokemonSystem.textinput || 0) == 0
+          $PokemonSystem.textinput = 1
+        end
+        nx_pbEnterText_con_teclado(*args)
+      end
+      true
+    rescue Exception
+      @hecho = true
+    end
+  end
+end
+
+# Inyección segura en bucle de renderizado para activación diferida
+module ::Graphics
+  class << self
+    alias __nx_opt_update update unless method_defined?(:__nx_opt_update)
+    def update
+      NXBolas.instala unless defined?(NXBolas) && NXBolas.instalado
+      NXTira.instala unless defined?(NXTira) && NXTira.instalado
+      NXTeclado.revisar unless defined?(NXTeclado) && NXTeclado.hecho
+      __nx_opt_update
     end
   end
 end
@@ -1521,11 +1749,20 @@ module ::RPG
     end
 
     def _dump(limit = -1)
-      [@name, @volume, @pitch].pack("a*NN") rescue ""
+      [@name.to_s, (@volume || 100).to_i, (@pitch || 100).to_i].pack("a*NN")
     end
 
     def self._load(str)
-      AudioFile.new
+      return new if str.nil? || str.empty?
+      if str.bytesize >= 8
+        name = str[0...-8]
+        vol, pit = str[-8..-1].unpack("NN")
+        new(name, vol, pit)
+      else
+        new(str)
+      end
+    rescue Exception
+      new
     end
   end
 
@@ -1596,6 +1833,12 @@ module ::RPG
       ::Audio.se_stop rescue nil
     end
   end
+end
+
+module ::Audio
+  def self.bgm_playing?
+    (bgm_pos rescue 0).to_i > 0
+  end unless respond_to?(:bgm_playing?)
 end
 
 # Ultra-fast On-demand Memoized Resolvers leveraging mkxp-z native C++ pathCache
@@ -1672,9 +1915,13 @@ module ::Audio
   class << self
     unless method_defined?(:__switch_native_bgm_play)
       alias __switch_native_bgm_play bgm_play rescue nil
+      alias __switch_native_bgm_stop bgm_stop rescue nil
+      alias __switch_native_bgm_fade bgm_fade rescue nil
       alias __switch_native_bgs_play bgs_play rescue nil
-      alias __switch_native_me_play me_play rescue nil
+      alias __switch_native_bgs_stop bgs_stop rescue nil
+      alias __switch_native_bgs_fade bgs_fade rescue nil
       alias __switch_native_se_play se_play rescue nil
+      alias __switch_native_se_stop se_stop rescue nil
       alias __switch_native_me_stop me_stop rescue nil
       alias __switch_native_me_fade me_fade rescue nil
     end
@@ -1772,12 +2019,41 @@ module ::Audio
     end
 
     def bgm_stop(track = nil)
-      __switch_native_bgm_stop(track) rescue (__switch_native_bgm_stop rescue nil)
+      if track
+        __switch_native_bgm_stop(track) rescue (__switch_native_bgm_stop rescue nil)
+      else
+        __switch_native_bgm_stop rescue nil
+      end
     rescue Exception
     end
 
     def bgm_fade(time, track = nil)
-      __switch_native_bgm_fade(time, track) rescue (__switch_native_bgm_fade(time) rescue nil)
+      t = (time || 0.8).to_f
+      fade_ms = (t <= 10.0 ? (t * 1000) : t).to_i
+      fade_ms = 100 if fade_ms <= 0
+      if track
+        __switch_native_bgm_fade(fade_ms, track) rescue (__switch_native_bgm_fade(fade_ms) rescue nil)
+      else
+        __switch_native_bgm_fade(fade_ms) rescue nil
+      end
+    rescue Exception
+    end
+
+    def bgs_stop
+      __switch_native_bgs_stop rescue nil
+    rescue Exception
+    end
+
+    def bgs_fade(time = 0.8)
+      t = (time || 0.8).to_f
+      fade_ms = (t <= 10.0 ? (t * 1000) : t).to_i
+      fade_ms = 100 if fade_ms <= 0
+      __switch_native_bgs_fade(fade_ms) rescue nil
+    rescue Exception
+    end
+
+    def se_stop
+      __switch_native_se_stop rescue nil
     rescue Exception
     end
 

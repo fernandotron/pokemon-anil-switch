@@ -45,7 +45,7 @@ class Battle::Scene
         idxEffect += 1
         idxEffect = 0 if idxEffect > effctSize
         doRefresh = true
-      elsif Input.trigger?(Input::JUMPDOWN)
+      elsif Input.trigger?(Input::JUMPDOWN) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)
         if cw.visible
           ret = 1
           break
@@ -53,7 +53,7 @@ class Battle::Scene
           ret = 2
           break
         end
-      elsif Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::USE)
+      elsif Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::ACTION) || Input.trigger?(Input::USE)
         ret = []
         if battler.opposes?
           ret.push(1)

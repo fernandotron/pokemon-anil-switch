@@ -437,7 +437,13 @@ class PokemonBagPartyPanel < Sprite
     end
   end
 
+  def update
+    super
+    @pkmnsprite&.update
+  end
+
   def pokemon=(value)
+    return if @pokemon == value
     @pokemon = value
     @pkmnsprite.pokemon = value if @pkmnsprite && !@pkmnsprite.disposed?
     @helditemsprite.pokemon = value if @helditemsprite && !@helditemsprite.disposed?
@@ -1111,10 +1117,13 @@ class PokemonBag_Scene
           # Move the item being switched
           if itemwindow.sorting
             thispocket.insert(itemwindow.index, thispocket.delete_at(oldindex))
+            pbRefresh
+          else
+            # Update selected item for current pocket
+            @bag.set_last_viewed_index(itemwindow.pocket, itemwindow.index)
+            @sprites["itemlist"].refresh
+            pbRefreshIndexChanged
           end
-          # Update selected item for current pocket
-          @bag.set_last_viewed_index(itemwindow.pocket, itemwindow.index)
-          pbRefresh
         end
         if itemwindow.sorting
           if Input.trigger?(Input::ACTION) ||

@@ -211,7 +211,9 @@ class DP_PauseMenu
     reset_shortcut_positioning
     draw_fly_shortcut if $bag.has?(:POKERIDER) && ADD_POKERIDER_SHORTCUT_IN_MENU
     draw_vial_shortcut if $bag.has?(:VIAL) || $bag.has?(:EMPTYVIAL)
-    draw_radar_shortcut if $bag.has?(:RADAR) && (!RandomizedChallenge.enabled? || RandomizedChallenge.consistent_wild_encounters?)
+    if !$bag.has?(:INFREPEL) && !$bag.has?(:INFREPELOFF) && ($PokemonGlobal.respond_to?(:infRepel) && !$PokemonGlobal.infRepel.nil?)
+      $bag.add(:INFREPELOFF)
+    end
     draw_repel_shortcut if $bag.has?(:INFREPEL) || $bag.has?(:INFREPELOFF)
     draw_helpful_text
     
@@ -248,7 +250,7 @@ class DP_PauseMenu
         @option = @count - 1 if @option == -1
         changed = true
       end
-      if (Input.trigger?(Input::JUMPDOWN) || Input.trigger?(Input::AUX1) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:S))) && $bag.has?(:POKERIDER) && ADD_POKERIDER_SHORTCUT_IN_MENU
+      if ((Input.respond_to?(:trigger_zl?) && Input.trigger_zl?) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:S))) && $bag.has?(:POKERIDER) && ADD_POKERIDER_SHORTCUT_IN_MENU
         pbPlayDecisionSE
         if pokerider
           @sprites.visible = false
@@ -262,11 +264,19 @@ class DP_PauseMenu
         if use_pokevial
           draw_vial_shortcut(true)
         end
-      elsif (Input.trigger?(Input::AUX2) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:R))) && ( $bag.has?(:INFREPEL) || $bag.has?(:INFREPELOFF) )
+      elsif ((Input.respond_to?(:trigger_r?) && Input.trigger_r?) ||
+             (Input.trigger?(Input::R) rescue false) ||
+             (Input.trigger?(Input::AUX2) rescue false) ||
+             (defined?(Input::Controller) && Input::Controller.triggerex?(:RIGHTSHOULDER) rescue false) ||
+             (Input.respond_to?(:triggerex?) && Input.triggerex?(:R) rescue false)) &&
+            ($bag.has?(:INFREPEL) || $bag.has?(:INFREPELOFF) || ($PokemonGlobal.respond_to?(:infRepel) && !$PokemonGlobal.infRepel.nil?))
+        if !$bag.has?(:INFREPEL) && !$bag.has?(:INFREPELOFF)
+          $bag.add(:INFREPELOFF)
+        end
         pbPlayDecisionSE
         pbToggleInfiniteRepel
         draw_repel_shortcut(true)
-      elsif (Input.trigger?(Input::SPECIAL) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:D))) && $bag.has?(:RADAR) && (!RandomizedChallenge.enabled? || RandomizedChallenge.consistent_wild_encounters?)
+      elsif ((Input.respond_to?(:trigger_zr?) && Input.trigger_zr?) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:D))) && $bag.has?(:RADAR) && (!RandomizedChallenge.enabled? || RandomizedChallenge.consistent_wild_encounters?)
         pbPlayDecisionSE
         pbStartRadar
       elsif Input.trigger_controls?

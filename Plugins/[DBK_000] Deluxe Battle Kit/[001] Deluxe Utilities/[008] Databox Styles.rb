@@ -166,15 +166,15 @@ class Battle::Scene::PokemonDataBox
   alias :dx_x= :x=
   def x=(value)
     self.dx_x=(value)
-    @hpBar.x  = value + @hpOffsetXY[0]  if @hpOffsetXY
-    @expBar.x = value + @expOffsetXY[0] if @expOffsetXY
+    @hpBar.x  = value + @hpOffsetXY[0]  if @hpOffsetXY && @hpBar && !@hpBar.disposed?
+    @expBar.x = value + @expOffsetXY[0] if @expOffsetXY && @expBar && !@expBar.disposed?
   end
 
   alias :dx_y= :y=
   def y=(value)
     self.dx_y=(value)
-    @hpBar.y  = value + @hpOffsetXY[1]  if @hpOffsetXY
-    @expBar.y = value + @expOffsetXY[1] if @expOffsetXY
+    @hpBar.y  = value + @hpOffsetXY[1]  if @hpOffsetXY && @hpBar && !@hpBar.disposed?
+    @expBar.y = value + @expOffsetXY[1] if @expOffsetXY && @expBar && !@expBar.disposed?
   end
   
   alias dx_refresh refresh

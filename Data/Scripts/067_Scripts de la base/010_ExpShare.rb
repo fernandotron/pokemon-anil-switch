@@ -13,6 +13,7 @@
 if Settings::USE_NEW_EXP_SHARE
     class PokemonSystem
         attr_accessor :expshareon
+        attr_accessor :repartir_exp
     end
 
     class PokemonGlobalMetadata
@@ -29,15 +30,22 @@ if Settings::USE_NEW_EXP_SHARE
     end
 
 
-    MenuHandlers.add(:options_menu, :expshareon, {
-        "name"        => _INTL("Rep Exp al capturar"),
-        "order"       => 40,
+    MenuHandlers.add(:options_menu, :repartir_exp, {
+        "name"        => _INTL("Repartir Exp."),
+        "order"       => 42,
         "type"        => EnumOption,
-        "condition"   => proc { next expshare_enabled? },
         "parameters"  => [_INTL("Sí"), _INTL("No")],
-        "description" => _INTL("Si quieres que los Pokémon capturados tengan el repartir experiencia activado."),
-        "get_proc"    => proc { next ($PokemonSystem&.expshareon || 0) },
-        "set_proc"    => proc { |value, _scene| $PokemonSystem.expshareon = value if $PokemonSystem }
+        "description" => _INTL("Activa o desactiva la distribución de experiencia en todo el equipo."),
+        "get_proc"    => proc { next ($PokemonSystem&.repartir_exp || 0) },
+        "set_proc"    => proc { |value, _scene|
+            if $PokemonSystem
+                $PokemonSystem.repartir_exp = value
+                if $player&.party
+                    new_val = (value == 0)
+                    $player.party.each { |pkmn| pkmn.expshare = new_val if pkmn.respond_to?(:expshare=) }
+                end
+            end
+        }
     })
 
 
@@ -47,9 +55,13 @@ if Settings::USE_NEW_EXP_SHARE
         "order"     => 70,
         "condition" => proc { next expshare_enabled? },
         "effect"    => proc { |screen, party, party_idx|
-                pokemon = party[party_idx]
-                var_msg = pokemon.expshare ? _INTL("desactivar") : _INTL("activar")
-                pokemon.expshare = !pokemon.expshare if pbConfirmMessage(_INTL("¿Quieres {1} el Repartir Experiencia en este Pokémon?", var_msg))
+            if $PokemonSystem&.repartir_exp == 1
+                pbMessage(_INTL("El Repartir Experiencia global está desactivado en Opciones."))
+                next
+            end
+            pokemon = party[party_idx]
+            var_msg = pokemon.expshare ? _INTL("desactivar") : _INTL("activar")
+            pokemon.expshare = !pokemon.expshare if pbConfirmMessage(_INTL("¿Quieres {1} el Repartir Experiencia en este Pokémon?", var_msg))
         }   
     })
 
@@ -67,12 +79,15 @@ if Settings::USE_NEW_EXP_SHARE
     end
     
     class Pokemon
-        attr_accessor(:expshare)    # Repartir experiencia
-        alias initialize_old initialize
+        attr_writer(:expshare)    # Repartir experiencia
+        def expshare
+            return false if $PokemonSystem&.repartir_exp == 1
+            return @expshare.nil? ? true : @expshare
+        end
+        alias initialize_expshare initialize unless method_defined?(:initialize_expshare)
         def initialize(species, level, player = $player, withMoves = true, recheck_form = true)
-            initialize_old(species, level, player, withMoves)
-            $PokemonSystem.expshareon ||= 0
-            @expshare = expshare_enabled? && $PokemonSystem.expshareon == 0
+            initialize_expshare(species, level, player, withMoves, recheck_form)
+            @expshare = ($PokemonSystem&.repartir_exp != 1)
         end 
     end
     
@@ -104,6 +119,7 @@ if Settings::USE_NEW_EXP_SHARE
 
         def refresh_exp_icon
             return if !@expicon || @expicon.disposed?
+            @expicon.visible = (@pokemon.expshare && !@pokemon.egg?)
             @expicon.x=self.x+226
             @expicon.y=self.y+68
             @expicon.color=self.color
@@ -162,7 +178,7 @@ if Settings::USE_NEW_EXP_SHARE
             return if !@internalBattle || !@expGain
             # Go through each battler in turn to find the Pokémon that participated in
             # battle against it, and award those Pokémon Exp/EVs
-            expAll = $player.has_exp_all || $bag.has?(:EXPALL) 
+            expAll = ($player.has_exp_all || $bag.has?(:EXPALL)) && ($PokemonSystem&.repartir_exp != 1) 
             p1 = pbParty(0)
             @battlers.each do |b|
             next unless b&.opposes?   # Can only gain Exp from fainted foes

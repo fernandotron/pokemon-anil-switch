@@ -203,7 +203,6 @@ class Battle
       end
       return
     end
-=begin
     $stats.total_exp_gained += expGained
     tempExp1 = pkmn.exp
     battler = pbFindBattler(idxParty)
@@ -241,34 +240,6 @@ class Battle
       # Learn all moves learned at this level
       moveList = pkmn.getMoveList
       moveList.each { |m| pbLearnMove(idxParty, m[1]) if m[0] == curLevel }
-    end
-=end
-
-    $stats.total_exp_gained += expGained
-    pkmn.exp = expFinal
-    battler = pbFindBattler(idxParty)
-    levelMinExp = growth_rate.minimum_exp_for_level(curLevel)
-    levelMaxExp = growth_rate.minimum_exp_for_level(newLevel)
-    @scene.pbEXPBar(battler, levelMinExp, levelMaxExp, pkmn.exp - expGained, pkmn.exp)
-    oldTotalHP = pkmn.totalhp
-    oldAttack  = pkmn.attack
-    oldDefense = pkmn.defense
-    oldSpAtk   = pkmn.spatk
-    oldSpDef   = pkmn.spdef
-    oldSpeed   = pkmn.speed
-    pkmn.calc_stats
-    battler&.pbUpdate(false)
-    @scene.pbRefreshOne(battler.index) if battler
-    if newLevel > curLevel
-      pbCommonAnimation("LevelUp", battler) if battler
-      pbDisplayPaused(_INTL("¡{1} subió al nivel {2}!", pkmn.name, newLevel)) { pbSEPlay("Pkmn level up") }
-      @scene.pbLevelUp(pkmn, battler, oldTotalHP, oldAttack, oldDefense,
-                      oldSpAtk, oldSpDef, oldSpeed)
-      battler.pokemon.changeHappiness("levelup") if battler&.pokemon
-      moveList = pkmn.getMoveList
-      (curLevel+1).upto(newLevel) do |lvl|
-        moveList.each { |m| pbLearnMove(idxParty, m[1]) if m[0] == lvl }
-      end
     end
   end
 end

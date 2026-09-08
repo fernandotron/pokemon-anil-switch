@@ -109,59 +109,62 @@ class Battle::Scene::PokemonDataBox < Sprite
   end
 
   def dispose
-    pbDisposeSpriteHash(@sprites)
-    @databoxBitmap.dispose
-    @numbersBitmap.dispose
-    @hpBarBitmap.dispose
-    @hpPercent.dispose
-    @expBarBitmap.dispose
-    @contents.dispose
+    pbDisposeSpriteHash(@sprites) rescue nil
+    @databoxBitmap.dispose if @databoxBitmap && !@databoxBitmap.disposed? rescue nil
+    @numbersBitmap.dispose if @numbersBitmap && !@numbersBitmap.disposed? rescue nil
+    @hpBarBitmap.dispose if @hpBarBitmap && !@hpBarBitmap.disposed? rescue nil
+    @hpPercent.dispose if @hpPercent && !@hpPercent.disposed? rescue nil
+    @expBarBitmap.dispose if @expBarBitmap && !@expBarBitmap.disposed? rescue nil
+    @contents.dispose if @contents && !@contents.disposed? rescue nil
     super
   end
 
   def x=(value)
     super
-    @hpBar.x     = value + @spriteBaseX + 102
-    @expBar.x    = value + @spriteBaseX + 6
-    @hpNumbers.x = value + @spriteBaseX + 80
-    @hpPercent.x = value + @spriteBaseX + 130
+    @hpBar.x     = value + @spriteBaseX + 102 if @hpBar && !@hpBar.disposed?
+    @expBar.x    = value + @spriteBaseX + 6 if @expBar && !@expBar.disposed?
+    @hpNumbers.x = value + @spriteBaseX + 80 if @hpNumbers && !@hpNumbers.disposed?
+    @hpPercent.x = value + @spriteBaseX + 130 if @hpPercent && !@hpPercent.disposed?
   end
 
   def y=(value)
     super
-    @hpBar.y     = value + 40
-    @expBar.y    = value + 74
-    @hpNumbers.y = value + 52
-    @hpPercent.y = value + 52
+    @hpBar.y     = value + 40 if @hpBar && !@hpBar.disposed?
+    @expBar.y    = value + 74 if @expBar && !@expBar.disposed?
+    @hpNumbers.y = value + 52 if @hpNumbers && !@hpNumbers.disposed?
+    @hpPercent.y = value + 52 if @hpPercent && !@hpPercent.disposed?
   end
 
   def z=(value)
     super
-    @hpBar.z     = value + 1
-    @expBar.z    = value + 1
-    @hpNumbers.z = value + 2
-    @hpPercent.z = value + 2
+    @hpBar.z     = value + 1 if @hpBar && !@hpBar.disposed?
+    @expBar.z    = value + 1 if @expBar && !@expBar.disposed?
+    @hpNumbers.z = value + 2 if @hpNumbers && !@hpNumbers.disposed?
+    @hpPercent.z = value + 2 if @hpPercent && !@hpPercent.disposed?
   end
 
   def opacity=(value)
     super
+    return if !@sprites
     @sprites.each do |i|
-      i[1].opacity = value if !i[1].disposed?
+      i[1].opacity = value if i[1] && !i[1].disposed?
     end
   end
 
   def visible=(value)
     super
+    return if !@sprites
     @sprites.each do |i|
-      i[1].visible = value if !i[1].disposed?
+      i[1].visible = value if i[1] && !i[1].disposed?
     end
-    @expBar.visible = (value && @show_exp_bar)
+    @expBar.visible = (value && @show_exp_bar) if @expBar && !@expBar.disposed?
   end
 
   def color=(value)
     super
+    return if !@sprites
     @sprites.each do |i|
-      i[1].color = value if !i[1].disposed?
+      i[1].color = value if i[1] && !i[1].disposed?
     end
   end
 

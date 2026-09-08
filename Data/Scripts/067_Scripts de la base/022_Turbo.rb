@@ -25,7 +25,7 @@ module Game
   def self.load(save_data)
     original_load(save_data)
     # echoln "UNSCALED #{System.unscaled_uptime} * #{SPEEDUP_STAGES[$GameSpeed]} - #{$GameSpeed}"
-    $CanToggle = $PokemonSystem.only_speedup_battles == 0
+    $CanToggle = ($PokemonSystem.nil? || ($PokemonSystem.only_speedup_battles || 0) == 0)
   end
 end
 
@@ -36,7 +36,8 @@ module Input
   def self.update
     update_KGC_ScreenCapture
     pbScreenCapture if trigger?(Input::F8)
-    if $CanToggle && (trigger?(Input::ALT) || (trigger?(Input::AUX1) && !Input.text_input))
+    turbo_triggered = (Input.respond_to?(:trigger_turbo?) ? Input.trigger_turbo? : (trigger?(Input::ALT) || trigger?(Input::AUX1)))
+    if $CanToggle && (turbo_triggered && !Input.text_input)
       $GameSpeed += 1
       if $GameSpeed >= SPEEDUP_STAGES.size
         $GameSpeed = 0 
@@ -205,11 +206,17 @@ class PokemonSystem
   alias_method :original_initialize, :initialize unless method_defined?(:original_initialize)
   attr_accessor :only_speedup_battles
   attr_accessor :battle_speed
+  attr_accessor :turbo_button
+  attr_accessor :plus_action
+  attr_accessor :button_layout
 
   def initialize
     original_initialize
     @only_speedup_battles = 0 # Speed up setting (0=always, 1=battle_only)
     @battle_speed = 0 # Depends on the SPEEDUP_STAGES array size
+    @turbo_button = 0
+    @plus_action  = 0
+    @button_layout = 0
   end
 end
 
@@ -220,10 +227,10 @@ MenuHandlers.add(:options_menu, :turbo, {
   "condition"   => proc { next expshare_enabled? },
   "parameters"  => [_INTL("Siempre"), _INTL("Combates")],
   "description" => _INTL("Define el modo del turbo, si se puede activar siempre o solo en combates."),
-  "get_proc"    => proc { next $PokemonSystem.only_speedup_battles },
+  "get_proc"    => proc { next $PokemonSystem.only_speedup_battles || 0 },
   "set_proc"    => proc { |value, _scene| 
     $PokemonSystem.only_speedup_battles = value 
-    $CanToggle = $PokemonSystem.only_speedup_battles == 0
+    $CanToggle = ($PokemonSystem.only_speedup_battles || 0) == 0
     $GameSpeed = 0 if $PokemonSystem.only_speedup_battles == 1
   }
 })

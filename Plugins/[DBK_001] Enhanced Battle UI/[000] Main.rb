@@ -208,9 +208,9 @@ class Battle::Scene
   alias enhanced_pbFightMenu_Extra pbFightMenu_Extra
   def pbFightMenu_Extra(*args)
     return if pbInSafari?
-    if Input.trigger?(Input::JUMPUP)
+    if Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::ACTION)
       pbToggleBattleInfo
-    elsif Input.trigger?(Input::JUMPDOWN)
+    elsif Input.trigger?(Input::JUMPDOWN) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)
       pbToggleMoveInfo(*args)
     end
   end
@@ -251,6 +251,35 @@ class Battle::Scene::EnhancedUIPrompt < Sprite
   TEXT_BASE_COLOR   = Color.new(248, 248, 248)
   TEXT_SHADOW_COLOR = Color.new(0, 0, 0)
   
+  @@prompt_cleaned = false
+
+  def clean_prompt_bitmap(bmp)
+    return if !bmp || bmp.disposed? || @@prompt_cleaned
+    # Clean top half (lines 0..51)
+    for x in 66..92
+      clean_pixel_top = bmp.get_pixel(x, 4)
+      for y in 5..23
+        bmp.set_pixel(x, y, clean_pixel_top)
+      end
+      clean_pixel_bot = bmp.get_pixel(x, 26)
+      for y in 29..47
+        bmp.set_pixel(x, y, clean_pixel_bot)
+      end
+    end
+    # Clean bottom half (lines 52..103)
+    for x in 66..92
+      clean_pixel_top = bmp.get_pixel(x, 52 + 4)
+      for y in (52 + 5)..(52 + 23)
+        bmp.set_pixel(x, y, clean_pixel_top)
+      end
+      clean_pixel_bot = bmp.get_pixel(x, 52 + 26)
+      for y in (52 + 29)..(52 + 47)
+        bmp.set_pixel(x, y, clean_pixel_bot)
+      end
+    end
+    @@prompt_cleaned = true
+  end
+
   def initialize(battler, battle, window, viewport = nil)
     super(viewport) 
     offset    = 0
@@ -259,6 +288,7 @@ class Battle::Scene::EnhancedUIPrompt < Sprite
     @battle   = battle
     @battler  = battler
     @bgBitmap = AnimatedBitmap.new(Settings::BATTLE_UI_GRAPHICS_PATH + "menu_prompts")
+    clean_prompt_bitmap(@bgBitmap.bitmap)
     @bgSprite = Sprite.new(viewport)
     @bgSprite.bitmap = @bgBitmap.bitmap
     case @window
@@ -278,6 +308,7 @@ class Battle::Scene::EnhancedUIPrompt < Sprite
     @contents = Bitmap.new(@bgBitmap.width, @bgBitmap.height / 2)
     self.bitmap = @contents
     pbSetSmallFont(self.bitmap)
+    self.bitmap.font.bold = true
     self.x       = -164
     self.y       = 236 + offset
     self.z       = 120
@@ -338,21 +369,21 @@ class Battle::Scene::EnhancedUIPrompt < Sprite
     return if !@battler
     offset = 0
     textPos = [
-      #[_INTL(": A"), 68, 7,  :left, TEXT_BASE_COLOR, TEXT_SHADOW_COLOR, :outline],
-      #[_INTL(": S"), 68, 31, :left, TEXT_BASE_COLOR, TEXT_SHADOW_COLOR, :outline]
+      [_INTL("X"), 78, 5, :center, TEXT_BASE_COLOR, TEXT_SHADOW_COLOR, :outline]
     ]
     case @window
     when Battle::Scene::FIGHT_BOX
       @bgSprite.src_rect.y = @bgBitmap.height / 2
       @bgSprite.src_rect.height = @bgBitmap.height / 2
+      textPos.push([_INTL("ZL"), 78, 29, :center, TEXT_BASE_COLOR, TEXT_SHADOW_COLOR, :outline])
       offset = -46 if @battle.pbCanShift?(@battler)
     else
       @bgSprite.src_rect.y = 0
       if @battle.pbCanUsePokeBall?(@battler)
         @bgSprite.src_rect.height = @bgBitmap.height / 2
+        textPos.push([_INTL("ZL"), 78, 29, :center, TEXT_BASE_COLOR, TEXT_SHADOW_COLOR, :outline])
       else
         @bgSprite.src_rect.height = 28
-        textPos.delete_at(1)
         offset = 24
       end
     end

@@ -20,6 +20,15 @@ class PokemonSystem
   attr_accessor :vsync
   attr_accessor :autotile_animations
   attr_accessor :salvajes_visibles_en_ow
+  attr_accessor :repartir_exp
+
+  def repartir_exp
+    @repartir_exp || 0
+  end
+
+  def repartir_exp=(val)
+    @repartir_exp = (val || 0).to_i
+  end
 
   def salvajes_visibles_en_ow
     @salvajes_visibles_en_ow || 0
@@ -48,6 +57,7 @@ class PokemonSystem
   end
 
   def initialize
+    @repartir_exp  = 0     # Repartir experiencia global (0=sí/activado, 1=no/desactivado)
     @textspeed     = 2     # Text speed (0=slow, 1=medium, 2=fast, 3=instant)
     @battlescene   = 0     # Battle effects (animations) (0=on, 1=off)
     @battlestyle   = 0     # Battle style (0=switch, 1=set)

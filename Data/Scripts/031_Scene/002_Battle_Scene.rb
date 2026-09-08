@@ -333,8 +333,13 @@ class Battle::Scene
   end
 
   def pbDisposeSprites
-    pbDisposeSpriteHash(@sprites)
+    pbDisposeSpriteHash(@sprites) rescue nil
     pbClearAnimationCache if defined?(pbClearAnimationCache)
+    if @viewport && !@viewport.disposed?
+      @viewport.dispose rescue nil
+    end
+    @viewport = nil
+    $active_battle_viewport = nil
   end
 
   # Used by Ally Switch.
@@ -368,12 +373,19 @@ class Battle::Scene
   def pbBeginEndOfRoundPhase; end
 
   def pbEndBattle(_result)
+    return if @battle_ended
+    @battle_ended = true
     @abortable = false
-    pbShowWindow(BLANK)
+    pbShowWindow(BLANK) rescue nil
     # Fade out all sprites
-    pbBGMFade(1.0)
-    pbFadeOutAndHide(@sprites)
-    pbDisposeSprites
+    begin
+      pbBGMFade(1.0)
+      pbFadeOutAndHide(@sprites)
+    rescue Exception => e
+      log_compat("[Battle::Scene#pbEndBattle] Fade error: #{e.message}") rescue nil
+    ensure
+      pbDisposeSprites
+    end
   end
 
   #=============================================================================

@@ -172,9 +172,9 @@ class DP_PauseMenu
     shadow_color = Color.new(75, 75, 75)
 
     # Get or calculate position for this shortcut
-    if !refresh
+    if !refresh || @repel_y_pos.nil?
       # Store the position for this shortcut if it's the first time drawing
-      @repel_y_pos = get_next_shortcut_y_position
+      @repel_y_pos = get_next_shortcut_y_position if @repel_y_pos.nil?
       
       @sprites[:repelTop] = Sprite.new(@viewport2)
       @sprites[:repelTop].bitmap = pbBitmap("Graphics/Pictures/DP Pause Menu/bgTop")

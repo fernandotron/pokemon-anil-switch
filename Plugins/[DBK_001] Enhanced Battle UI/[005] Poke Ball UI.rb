@@ -100,7 +100,7 @@ class Battle::Scene
       item = items[index][0]
       @sprites["leftarrow"].visible = index > 0
       @sprites["rightarrow"].visible = index < maxIdx
-      if Input.trigger?(Input::USE)
+      if Input.trigger?(Input::USE) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)
         if !item
           pbPlayCloseMenuSE
           break
@@ -129,11 +129,11 @@ class Battle::Scene
         index = 0 if index > maxIdx
         pbPlayCursorSE
         dorefresh = true
-      elsif Input.trigger?(Input::JUMPUP) && index > 0
+      elsif (Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::ACTION)) && index > 0
         index = 0
         pbPlayCursorSE
         dorefresh = true
-      elsif Input.trigger?(Input::JUMPDOWN) && index < maxIdx
+      elsif (Input.trigger?(Input::JUMPDOWN) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)) && index < maxIdx
         index = maxIdx
         pbPlayCursorSE
         dorefresh = true

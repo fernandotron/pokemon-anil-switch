@@ -17,6 +17,7 @@ class Battle::Scene
     SwitchPreloadManager.preload_battle_participants(battle) if defined?(SwitchPreloadManager)
     @viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
     @viewport.z = 99999
+    $active_battle_viewport = @viewport
     @lastCmd  = Array.new(@battle.battlers.length, 0)
     @lastMove = Array.new(@battle.battlers.length, 0)
     pbInitSprites

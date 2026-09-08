@@ -143,6 +143,7 @@ class PokemonIconSprite < Sprite
   end
 
   def pokemon=(value)
+    return if @pokemon == value
     @pokemon = value
     @animBitmap&.dispose
     @animBitmap = nil

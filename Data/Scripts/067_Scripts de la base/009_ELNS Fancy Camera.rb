@@ -347,6 +347,8 @@ end
 class Scene_Map
   def transfer_player(cancel_swimming = true)
     $game_temp.player_transferring = false
+    $game_temp.cue_bgm_delay = nil if $game_temp
+    $game_temp.cue_bgm = nil if $game_temp
     pbCancelVehicles($game_temp.player_new_map_id, cancel_swimming)
     autofade($game_temp.player_new_map_id)
     pbBridgeOff
@@ -355,6 +357,8 @@ class Scene_Map
       $map_factory.setup($game_temp.player_new_map_id)
     end
     $game_player.moveto($game_temp.player_new_x, $game_temp.player_new_y, true)
+    $game_player.reset_movement_state if $game_player.respond_to?(:reset_movement_state)
+    $game_player.transparent = false
     case $game_temp.player_new_direction
     when 2 then $game_player.turn_down
     when 4 then $game_player.turn_left
@@ -374,6 +378,7 @@ class Scene_Map
     $game_map.autoplay
     Graphics.frame_reset
     Input.update
+    $game_player.reset_movement_state if $game_player.respond_to?(:reset_movement_state)
   end
 end
 

@@ -8,7 +8,7 @@ class Battle
     return if !@internalBattle || !@expGain
     # Go through each battler in turn to find the Pokémon that participated in
     # battle against it, and award those Pokémon Exp/EVs
-    expAll = $player.has_exp_all || $bag.has?(:EXPALL)
+    expAll = ($player.has_exp_all || $bag.has?(:EXPALL)) && ($PokemonSystem&.repartir_exp != 1)
     p1 = pbParty(0)
     @battlers.each do |b|
       next unless b&.opposes?   # Can only gain Exp from fainted foes
@@ -25,7 +25,7 @@ class Battle
       if !expAll
         eachInTeam(0, 0) do |pkmn, i|
           next if !pkmn.able?
-          next if !pkmn.hasItem?(:EXPSHARE) && GameData::Item.try_get(@initialItems[0][i]) != :EXPSHARE
+          next if (!pkmn.hasItem?(:EXPSHARE) && GameData::Item.try_get(@initialItems[0][i]) != :EXPSHARE) && !(pkmn.respond_to?(:expshare) && pkmn.expshare)
           expShare.push(i)
         end
       end

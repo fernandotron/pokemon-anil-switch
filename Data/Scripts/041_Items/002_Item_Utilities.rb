@@ -212,14 +212,17 @@ def pbTopRightWindow(text, scene = nil)
   window.y     = 0
   window.z     = 99999
   pbPlayDecisionSE
-  loop do
-    Graphics.update
-    Input.update
-    window.update
-    scene&.pbUpdate
-    break if Input.trigger?(Input::USE)
+  begin
+    loop do
+      Graphics.update
+      Input.update
+      window.update
+      scene&.pbUpdate
+      break if Input.trigger?(Input::USE) || Input.trigger?(Input::BACK)
+    end
+  ensure
+    window.dispose rescue nil
   end
-  window.dispose
 end
 
 def pbChangeExp(pkmn, new_exp, scene)

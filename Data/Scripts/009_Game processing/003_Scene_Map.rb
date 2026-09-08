@@ -88,6 +88,8 @@ class Scene_Map
       $map_factory.setup($game_temp.player_new_map_id)
     end
     $game_player.moveto($game_temp.player_new_x, $game_temp.player_new_y)
+    $game_player.reset_movement_state if $game_player.respond_to?(:reset_movement_state)
+    $game_player.transparent = false
     case $game_temp.player_new_direction
     when 2 then $game_player.turn_down
     when 4 then $game_player.turn_left
@@ -107,6 +109,7 @@ class Scene_Map
     $game_map.autoplay
     Graphics.frame_reset
     Input.update
+    $game_player.reset_movement_state if $game_player.respond_to?(:reset_movement_state)
   end
 
   def call_menu
@@ -125,6 +128,51 @@ class Scene_Map
     pbPlayDecisionSE
     $game_player.straighten
     pbFadeOutIn { pbDebugMenu }
+  end
+
+  def call_plus_action
+    $game_player.straighten
+    action = ($PokemonSystem&.plus_action || 0) rescue 0
+    case action
+    when 1 # Abrir Mochila
+      item = nil
+      pbFadeOutIn(99999) do
+        scene = PokemonBag_Scene.new
+        screen = PokemonBagScreen.new(scene, $bag)
+        item = screen.pbStartScreen
+      end
+      if item
+        pbUseKeyItemInField(item)
+      end
+    when 2 # Abrir Pokédex
+      if !$player.has_pokedex
+        pbPlayBuzzerSE
+      elsif Settings::USE_CURRENT_REGION_DEX || $player.pokedex.accessible_dexes.length <= 1
+        $PokemonGlobal.pokedexDex = $player.pokedex.accessible_dexes[0] if $player.pokedex.accessible_dexes.length == 1
+        pbFadeOutIn do
+          scene = PokemonPokedex_Scene.new
+          screen = PokemonPokedexScreen.new(scene)
+          screen.pbStartScreen
+        end
+      else
+        pbFadeOutIn do
+          scene = PokemonPokedexMenu_Scene.new
+          screen = PokemonPokedexMenuScreen.new(scene)
+          screen.pbStartScreen
+        end
+      end
+    else # 0: Guardado Rápido (Quick Save)
+      if $game_temp.begun_new_game && SaveData.exists?
+        pbSaveScreen
+      else
+        if Game.save
+          pbSEPlay("GUI save game") rescue nil
+          pbMessage(_INTL("\\se[]¡Partida guardada correctamente!\\wtnp[20]"))
+        else
+          pbMessage(_INTL("\\se[]El guardado ha fallado."))
+        end
+      end
+    end
   end
 
   def miniupdate
@@ -209,11 +257,16 @@ class Scene_Map
         $game_temp.ready_menu_calling = true if !$game_player.moving?
       elsif Input.press?(Input::F9)
         $game_temp.debug_calling = true if $DEBUG
+      elsif (Input.respond_to?(:trigger_plus?) && Input.trigger_plus?)
+        @plus_calling = true if !$game_system.menu_disabled
       end
     end
     if !$game_player.moving?
       if $game_temp.menu_calling
         call_menu
+      elsif @plus_calling
+        @plus_calling = false
+        call_plus_action
       elsif $game_temp.debug_calling
         call_debug
       elsif $game_temp.ready_menu_calling

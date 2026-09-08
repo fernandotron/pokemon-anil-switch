@@ -286,8 +286,9 @@ class Battle::Scene
     endExpLevel   = tempExp2 - startExp
     expRange      = endExp - startExp
     dataBox = @sprites["dataBox_#{battler.index}"]
+    return if !dataBox || dataBox.disposed?
     dataBox.animate_exp(startExpLevel, endExpLevel, expRange)
-    while dataBox.animating_exp?
+    while dataBox && !dataBox.disposed? && dataBox.animating_exp?
       pbUpdate
     end
   end

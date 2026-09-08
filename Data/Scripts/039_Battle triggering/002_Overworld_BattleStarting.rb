@@ -435,6 +435,10 @@ class WildBattle
         rescue Exception => e
           log_compat("[WildBattle CRASH] #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
           outcome = 1
+          battle.scene&.pbEndBattle(outcome) rescue nil
+        ensure
+          battle.scene&.pbDisposeSprites rescue nil
+          battle.scene&.viewport&.dispose rescue nil
         end
       end
       BattleCreationHelperMethods.after_battle(outcome, can_lose)
@@ -563,6 +567,10 @@ class TrainerBattle
         rescue Exception => e
           log_compat("[TrainerBattle CRASH] #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}") rescue nil
           outcome = 1
+          battle.scene&.pbEndBattle(outcome) rescue nil
+        ensure
+          battle.scene&.pbDisposeSprites rescue nil
+          battle.scene&.viewport&.dispose rescue nil
         end
       end
       BattleCreationHelperMethods.after_battle(outcome, can_lose)

@@ -154,10 +154,10 @@ class PokemonControls_Scene
     ]
     
     right_items = [
-      [_INTL("Botón R / ZR:"), _INTL("Alternar Modo Turbo (Velocidad de juego)")],
-      [_INTL("Botón L:"), _INTL("Página anterior en menús y Mochila")],
+      [_INTL("Botón L:"), _INTL("Alternar Modo Turbo (Velocidad de juego)")],
+      [_INTL("Botón R:"), _INTL("Repelente Infinito (en Menú de Pausa)")],
       [_INTL("Botón ZL:"), _INTL("Atajo rápido de Pokémontura (Volar)")],
-      [_INTL("Botón (-):"), _INTL("Guía de Controles interactiva")],
+      [_INTL("Gatillo ZR:"), _INTL("Atajo Pokéradar (en Menú de Pausa)")],
       [_INTL("Botón (+):"), _INTL("Guardado Rápido automático")]
     ]
     
@@ -316,7 +316,8 @@ class PokemonControls_Scene
       ["Botón B:", "Volver al menú de combate anterior o cancelar selección."],
       ["Botón X:", "Activar Megaevolución / Dinamax / Teracristalización."],
       ["Botón Y:", "Consultar datos del movimiento (Tipo, Potencia, Precisión, Efecto)."],
-      ["Botón R:", "Acelerar la velocidad de las animaciones y diálogos en batalla."]
+      ["Botón L:", "Acelerar la velocidad de las animaciones y diálogos (Turbo)."],
+      ["Gatillo ZL:", "Atajo directo para lanzar Poké Ball en combate salvaje."]
     ]
     
     battle_controls.each do |btn, desc|
@@ -358,7 +359,11 @@ class PokemonControls_Scene
       ],
       [
         _INTL("Botón de Modo Turbo"),
-        (turbo_val == 0) ? _INTL("Botón R (Predeterminado)") : _INTL("Gatillo ZR"),
+        case turbo_val
+        when 1 then _INTL("Botón R")
+        when 2 then _INTL("Gatillo ZR")
+        else _INTL("Botón L (Predeterminado)")
+        end,
         _INTL("Selecciona qué botón físico cicla la velocidad de juego.")
       ],
       [
@@ -522,7 +527,7 @@ class PokemonControls_Scene
       redraw_static_elements
     when 1 # Botón Turbo
       cur = ($PokemonSystem&.turbo_button || 0) rescue 0
-      new_val = (cur == 0) ? 1 : 0
+      new_val = (cur + 1) % 3
       $PokemonSystem.turbo_button = new_val if $PokemonSystem.respond_to?(:turbo_button=)
       pbPlayDecisionSE
       redraw_static_elements

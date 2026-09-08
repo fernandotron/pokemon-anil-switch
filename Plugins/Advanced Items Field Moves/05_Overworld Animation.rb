@@ -239,11 +239,12 @@ class Game_Player < Game_Character
       move_forward
     elsif $PokemonGlobal.forced_rockclimb?
       pbTraverseRockClimb?
-    elsif !pbMapInterpreterRunning? && !$game_temp.message_window_showing &&
+    elsif dir.to_i > 0 && !pbMapInterpreterRunning? && !$game_temp.message_window_showing &&
           !$game_temp.in_mini_update && !$game_temp.in_menu
       # Move player in the direction the directional button is being pressed
+      subs = System.uptime - @lastdirframe
       if @moved_last_frame ||
-         (dir > 0 && dir == @lastdir && System.uptime - @lastdirframe >= 0.075)
+         (dir == @lastdir && (subs >= 0.075 || subs.negative?))
         case dir
         when 2 then move_down
         when 4 then move_left
@@ -275,7 +276,8 @@ class Game_Player < Game_Character
     # return false if $game_player.lifted_event_heavy
     return false if jumping?
     return false if pbTerrainTag.must_walk
-    return ($PokemonSystem.runstyle == 1) ^ Input.press?(Input::ACTION)
+    run_pressed = Input.press?(Input::ACTION) || Input.press?(Input::BACK) || Input.press?(Input::JUMPUP)
+    return ($PokemonSystem.runstyle == 1) ^ run_pressed
   end
 
   def set_movement_type(type)

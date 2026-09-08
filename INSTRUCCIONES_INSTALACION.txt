@@ -1,0 +1,112 @@
+==============================================================================
+   POKÉMON AÑIL 4.0 - GUÍA DE INSTALACIÓN EN NINTENDO SWITCH
+==============================================================================
+
+¡Gracias por probar este port optimizado de Pokémon Añil 4.0 para Nintendo Switch!
+
+Este paquete contiene todo lo necesario para jugar en tu consola con el máximo
+rendimiento, tiempos de carga optimizados, cero congelamientos en combates,
+soporte nativo completo para mandos Joy-Con y Mando Pro, y mejoras de calidad de vida.
+
+------------------------------------------------------------------------------
+CONTENIDO DE ESTE PAQUETE (.RAR):
+------------------------------------------------------------------------------
+1. pokemon_anil_switch.zip:
+   Contiene el juego completo listo para funcionar en la Nintendo Switch:
+   todos los mapas, gráficos, audios convertidos a .wav de baja latencia,
+   scripts y plugins optimizados, precarga de animaciones, motor mkxp-z y shims.
+   
+2. Pokemon Anil [01ab776ba9c10000].nsp:
+   Acceso directo instalable (Forwarder) para tener el icono oficial del juego en
+   el Menú Principal (Home Menu) de la consola con acceso al 100% de la memoria
+   RAM de la consola (3.5 GB).
+
+3. INSTRUCCIONES_INSTALACION.txt:
+   Este documento explicativo.
+
+------------------------------------------------------------------------------
+NOVEDADES Y MEJORAS DESTACADAS EN ESTA VERSIÓN:
+------------------------------------------------------------------------------
+• ⚡ Arranque instantáneo: Menos de 300 llamadas a disco en C++ (antes más de 24.000).
+  Pantalla de carga visual progresiva con logo y barra de porcentaje desde el primer segundo.
+• ⚔️ Combates sin congelamientos: Precarga de animaciones en memoria; adiós a la pantalla
+  negra con música en la primera batalla contra entrenadores.
+• 💡 Calidad de Vida (QoL) - Recordar Movimientos desde el Menú:
+  Modificado para poder recordar movimientos/ataques olvidados directamente desde
+  los datos del Pokémon (pestaña Movimientos -> Recordar Movimiento), al estilo
+  de las generaciones modernas (Gen 8/9), sin necesidad de buscar al NPC Recuerda-Movimientos.
+• 💾 Guardado Atómico (Atomic Save): Tus partidas nunca se corrompen si la consola
+  se apaga o se cierra el juego mientras guardas.
+• 🎮 Controles 100% nativos: Mapeo ergonómico para Joy-Con y Pro Controller, con
+  botón de turbo, guardado rápido, doble toque de B para salir y menú de mandos.
+• 🧠 Optimización de Memoria: Límite estricto de 40 MB en caché de texturas y 6 mapas
+  en RAM para cero cuelgues por Out of Memory.
+
+------------------------------------------------------------------------------
+PASO 1: EXTRAER EL ARCHIVO ZIP EN TU TARJETA MICROSD
+------------------------------------------------------------------------------
+Los archivos del juego deben quedar ubicados obligatoriamente en la siguiente ruta:
+   sdmc:/switch/pokemon_anil/
+
+Tienes dos formas de realizar este paso:
+
+• MÉTODO A (Recomendado - Desde tu PC):
+  1. Conecta la tarjeta microSD de tu Switch al PC (mediante lector de tarjetas
+     o usando DBI en modo "MTP Responder" conectado por cable USB-C).
+  2. Abre el archivo "pokemon_anil_switch.zip" y descomprímelo DIRECTAMENTE en la
+     raíz de tu tarjeta microSD (ejemplo: E:\ o F:\).
+  3. Al descomprimirlo en la raíz, como el zip ya incluye la estructura interna
+     "switch/pokemon_anil/", todos los archivos y carpetas se colocarán
+     automáticamente en su sitio exacto: sdmc:/switch/pokemon_anil/
+
+• MÉTODO B (Directamente en la consola con DBI o NX-Shell):
+  1. Copia el archivo "pokemon_anil_switch.zip" a tu tarjeta microSD.
+  2. Abre la aplicación DBI en tu Switch, ve a "Browse SD Card" y localiza el zip.
+  3. Pulsa el botón (A) sobre el zip y elige "Extract archive".
+  4. Extráelo en la raíz de la SD para que la ruta resultante sea:
+     sdmc:/switch/pokemon_anil/
+     (o utiliza NX-Shell para extraerlo en dicha ruta).
+
+* Comprobación de archivos:
+  Dentro de la carpeta /switch/pokemon_anil/ en tu microSD debes encontrar:
+  - Archivos: port.nro, pokemon_anil.nro, mkxp.json, Game.ini, preload.rb, soundfont.sf2, icon_switch.png
+  - Carpetas: Audio, Data, Fonts, Graphics, Plugins.
+
+------------------------------------------------------------------------------
+PASO 2: INSTALAR EL FORWARDER NSP (ICONO EN EL MENÚ HOME)
+------------------------------------------------------------------------------
+Para disfrutar de la mejor experiencia y habilitar los 3.5 GB de RAM:
+
+1. Instala el archivo "Pokemon Anil [01ab776ba9c10000].nsp" en tu Switch
+   usando tu instalador preferido:
+   - DBI (Recomendado: abre DBI -> "Browse SD Card" o desde el PC arrastrando
+     a la ventana "MicroSD install" en modo MTP).
+   - TinWoo Installer
+   - Goldleaf
+   - Tinfoil
+
+2. ¡Listo! Aparecerá el icono oficial de Pokémon Añil directamente en el
+   Menú Principal (Home Menu) de tu consola.
+
+(Nota: También puedes abrir el juego desde el Homebrew Launcher / Álbum, pero se
+recomienda usar el acceso directo NSP del Menú Home para contar con el 100% de la RAM).
+
+------------------------------------------------------------------------------
+ESQUEMA DE CONTROLES EN SWITCH:
+------------------------------------------------------------------------------
+• (A)              : Aceptar / Interactuar / Hablar
+• (B)              : Cancelar / Retroceder / Correr
+                     (Doble pulsación para salir rápido de menús)
+• (X)              : Abrir Menú Principal
+• (Y)              : Usar Objeto Registrado / Abrir Mochila
+• (L) / (R)        : Cambiar de página en menús, cajas del PC y Pokédex
+• (ZL)             : Guardado Rápido (Quick Save)
+• (ZR)             : Alternar Modo Turbo (Acelera velocidad de juego y combates)
+• D-Pad / Sticks   : Movimiento del personaje en 4 u 8 direcciones
+• (+) Plus         : Pausa / Salir
+
+------------------------------------------------------------------------------
+¡Que disfrutes de la aventura en tu Nintendo Switch!
+Port desarrollado y optimizado para la comunidad de Switch.
+Juego original creado por Eric Lostie.
+==============================================================================

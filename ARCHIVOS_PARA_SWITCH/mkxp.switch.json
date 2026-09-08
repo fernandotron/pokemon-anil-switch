@@ -17,31 +17,36 @@
     "fixedAspectRatio": true,
     "integerScalingActive": false,
     "integerScalingLastMile": false,
-    "smoothScaling": 3,
-    "lanczos3Scaling": true,
+    "smoothScaling": true,
+    "lanczos3Scaling": false,
     "enableBlitting": false,
 
-    // Sincronización y velocidad fluida sin bloqueo de VSync a 15fps
-    "vsync": false,
-    "syncToRefreshrate": false,
+    // Sincronización y velocidad fluida con VSync estable a 60fps
+    "vsync": true,
+    "syncToRefreshrate": true,
     "fixedFramerate": 0,
     "subImageFix": true,
+    "enableReset": false,
+    "enableSettings": false,
     "preloadScript": [],
 
     // Fuentes y sustituciones para evitar textos deformados o borrosos
-    "defaultFontFamily": "Power Green",
+    "defaultFontFamily": "Power Clear",
     "fontScale": 1.0,
     "fontSub": [
-      "Arial>Power Green",
-      "MS Gothic>Power Green",
-      "SimSun>Power Green",
-      "Tahoma>Power Green",
-      "Segoe UI>Power Green",
-      "Calibri>Power Green",
-      "Power Green Narrow>Power Green",
-      "Power Green Small>Power Green",
-      "Annon>Power Green",
-      "Sword>Power Green"
+      "Power Green>Power Clear",
+      "Power Green Narrow>Power Clear",
+      "Power Green Small>Power Clear",
+      "Power Red and Blue>Power Clear",
+      "Power Red and Green>Power Clear",
+      "Arial>Power Clear",
+      "MS Gothic>Power Clear",
+      "SimSun>Power Clear",
+      "Tahoma>Power Clear",
+      "Segoe UI>Power Clear",
+      "Calibri>Power Clear",
+      "Annon>Power Clear",
+      "Sword>Power Clear"
     ],
 
     // Cache de rutas para sistemas de archivos FAT32/exFAT (insensible a mayúsculas/minúsculas)
@@ -51,10 +56,10 @@
     "dataPathApp": "PokemonAnil",
     "dataPathOrg": "EricLostie",
 
-    // Audio MIDI
+    // Audio
     "midiSoundFont": "soundfont.sf2",
-    "BGMTrackCount": 2,
-    "SESourceCount": 32,
+    "BGMTrackCount": 1,
+    "SESourceCount": 12,
 
     // Mapeo de botones para Joy-Con / Nintendo Switch Pro Controller (SDL2 GameController API)
     "bindingNames": {
@@ -62,9 +67,9 @@
       "b": "Cancelar / Correr (B)",
       "a": "Menú / Acción (X)",
       "x": "Atajo / Registrar (Y)",
-      "y": "Página Anterior (L)",
-      "z": "Página Siguiente (R)",
-      "l": "Guardar / Rápido (ZL)",
-      "r": "Modo Turbo / Lento (ZR)"
+      "y": "Modo Turbo (L)",
+      "z": "Repelente (R)",
+      "l": "Pokémontura / Volar (ZL)",
+      "r": "Pokéradar (ZR)"
     }
 }

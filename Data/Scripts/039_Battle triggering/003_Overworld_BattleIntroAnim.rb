@@ -138,33 +138,51 @@ def pbBattleAnimation(bgm = nil, battletype = 0, foe = nil)
     # Yield to the battle scene
     yield if block_given?
   ensure
-    viewport.visible = true
-    # After the battle
-    pbPopFade
-    if $game_system.is_a?(Game_System)
-      $game_system.bgm_resume(playingBGM)
-      $game_system.bgs_resume(playingBGS)
+    begin
+      if defined?($active_battle_viewport) && $active_battle_viewport && !$active_battle_viewport.disposed?
+        $active_battle_viewport.dispose rescue nil
+      end
+      $active_battle_viewport = nil
+      if defined?($active_exp_panel_viewport) && $active_exp_panel_viewport && !$active_exp_panel_viewport.disposed?
+        $active_exp_panel_viewport.dispose rescue nil
+      end
+      $active_exp_panel_viewport = nil
+      # After the battle
+      pbPopFade rescue nil
+      if $game_system.is_a?(Game_System)
+        $game_system.bgm_resume(playingBGM) rescue nil
+        $game_system.bgs_resume(playingBGS) rescue nil
+        if playingBGM && $game_system.getPlayingBGM.nil?
+          $game_system.bgm_play(playingBGM) rescue nil
+        elsif $game_map && $game_system.getPlayingBGM.nil?
+          $game_map.autoplayAsCue rescue nil
+        end
+      end
+      $game_temp.memorized_bgm            = nil
+      $game_temp.memorized_bgm_position   = 0
+      $PokemonGlobal.nextBattleBGM        = nil
+      $PokemonGlobal.nextBattleVictoryBGM = nil
+      $PokemonGlobal.nextBattleCaptureME  = nil
+      $PokemonGlobal.nextBattleBack       = nil
+      $PokemonEncounters.reset_step_count rescue nil
+      # Fade back to the overworld in 0.4 seconds
+      if viewport && !viewport.disposed?
+        viewport.visible = true
+        viewport.color = Color.black
+        timer_start = (System.uptime rescue Time.now.to_f)
+        loop do
+          Graphics.update rescue nil
+          Input.update rescue nil
+          pbUpdateSceneMap rescue nil
+          now = (System.uptime rescue Time.now.to_f)
+          viewport.color.alpha = 255 * [1 - ((now - timer_start) / 0.4), 0].max
+          break if viewport.color.alpha <= 0 || (now - timer_start) >= 0.5
+        end
+      end
+    ensure
+      viewport.dispose rescue nil
+      $game_temp.in_battle = false
     end
-    $game_temp.memorized_bgm            = nil
-    $game_temp.memorized_bgm_position   = 0
-    $PokemonGlobal.nextBattleBGM        = nil
-    $PokemonGlobal.nextBattleVictoryBGM = nil
-    $PokemonGlobal.nextBattleCaptureME  = nil
-    $PokemonGlobal.nextBattleBack       = nil
-    $PokemonEncounters.reset_step_count
-    # Fade back to the overworld in 0.4 seconds
-    viewport.color = Color.black
-    timer_start = (System.uptime rescue Time.now.to_f)
-    loop do
-      Graphics.update rescue nil
-      Input.update rescue nil
-      pbUpdateSceneMap rescue nil
-      now = (System.uptime rescue Time.now.to_f)
-      viewport.color.alpha = 255 * [1 - ((now - timer_start) / 0.4), 0].max
-      break if viewport.color.alpha <= 0 || (now - timer_start) >= 0.5
-    end
-    viewport.dispose rescue nil
-    $game_temp.in_battle = false
   end
 end
 

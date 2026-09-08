@@ -2,6 +2,10 @@
 build-switch/
 release_ready/
 switch_release/
+dist/
+Nueva carpeta/
+Pokemon_Anil_Switch_4.0_Completo/
+ARCHIVOS_PARA_SWITCH/switch/
 mkxp_ruby.log
 *.bak
 *.tmp

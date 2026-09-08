@@ -201,7 +201,7 @@ class Battle::Scene
       pbUpdateInfoSprites
       oldSide = idxSide
       oldPoke = idxPoke
-      break if Input.trigger?(Input::BACK) || Input.trigger?(Input::JUMPUP)
+      break if Input.trigger?(Input::BACK) || Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::ACTION)
       if Input.trigger?(Input::USE)
         pbPlayDecisionSE
         ret = pbOpenBattlerInfo(battler, battlers)
@@ -232,7 +232,7 @@ class Battle::Scene
           end
         end
         pbPlayCursorSE
-      elsif Input.trigger?(Input::JUMPDOWN)
+      elsif Input.trigger?(Input::JUMPDOWN) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)
         if cw.visible
           switchUI = 1
           break
@@ -300,10 +300,10 @@ class Battle::Scene
         pbHideInfoUI
         ret = -2
         break
-      elsif Input.trigger?(Input::JUMPUP) && !pbInSafari?
+      elsif (Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::ACTION)) && !pbInSafari?
         pbToggleBattleInfo
         promptTimer = System.uptime
-      elsif Input.trigger?(Input::JUMPDOWN) && !pbInSafari?
+      elsif (Input.trigger?(Input::JUMPDOWN) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)) && !pbInSafari?
         if pbToggleBallInfo(idxBattler)
           ret = 1
           break
