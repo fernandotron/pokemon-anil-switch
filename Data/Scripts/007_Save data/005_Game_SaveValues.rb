@@ -138,9 +138,10 @@ module SaveData
         name = ivar.to_s.sub(/^@/, '').to_sym
         opts[name] = $PokemonSystem.instance_variable_get(ivar)
       end
-      opts[:button_layout] = ($PokemonSystem.button_layout || 0) rescue 0
-      opts[:turbo_button]  = ($PokemonSystem.turbo_button || 0) rescue 0
-      opts[:plus_action]   = ($PokemonSystem.plus_action || 0) rescue 0
+      opts[:button_layout]      = ($PokemonSystem.button_layout || 0) rescue 0
+      opts[:turbo_button]       = ($PokemonSystem.turbo_button || 0) rescue 0
+      opts[:plus_action]        = ($PokemonSystem.plus_action || 0) rescue 0
+      opts[:custom_button_map]  = (($PokemonSystem.custom_button_map rescue nil) || (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {}))
       
       paths = [
         defined?($SavePath) && $SavePath ? "#{$SavePath}options.dat" : nil,
@@ -196,6 +197,9 @@ module SaveData
         if opts.key?(:plus_action) && $PokemonSystem.respond_to?(:plus_action=)
           $PokemonSystem.plus_action = opts[:plus_action] rescue nil
         end
+        if opts.key?(:custom_button_map) && $PokemonSystem.respond_to?(:custom_button_map=)
+          $PokemonSystem.custom_button_map = opts[:custom_button_map] rescue nil
+        end
         sz = ($PokemonSystem.screensize rescue 1)
         sz = 1 if sz.nil?
         pbSetResizeFactor([sz, 4].min) rescue nil
@@ -212,9 +216,10 @@ module SaveData
     return if !$PokemonSystem
     begin
       data = {
-        button_layout: (($PokemonSystem.button_layout rescue 0) || 0),
-        turbo_button:  (($PokemonSystem.turbo_button rescue 0) || 0),
-        plus_action:   (($PokemonSystem.plus_action rescue 0) || 0)
+        button_layout:     (($PokemonSystem.button_layout rescue 0) || 0),
+        turbo_button:      (($PokemonSystem.turbo_button rescue 0) || 0),
+        plus_action:       (($PokemonSystem.plus_action rescue 0) || 0),
+        custom_button_map: (($PokemonSystem.custom_button_map rescue nil) || (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {}))
       }
       paths = [
         defined?($SavePath) && $SavePath ? "#{$SavePath}controls.dat" : nil,
@@ -256,6 +261,9 @@ module SaveData
         $PokemonSystem.button_layout = data[:button_layout] if data.key?(:button_layout) && $PokemonSystem.respond_to?(:button_layout=)
         $PokemonSystem.turbo_button  = data[:turbo_button]  if data.key?(:turbo_button) && $PokemonSystem.respond_to?(:turbo_button=)
         $PokemonSystem.plus_action   = data[:plus_action]   if data.key?(:plus_action) && $PokemonSystem.respond_to?(:plus_action=)
+        if data.key?(:custom_button_map) && $PokemonSystem.respond_to?(:custom_button_map=)
+          $PokemonSystem.custom_button_map = data[:custom_button_map] rescue nil
+        end
       end
     rescue Exception => e
       log_compat("[SaveData.load_controls] Error: #{e.class} - #{e.message}") rescue nil

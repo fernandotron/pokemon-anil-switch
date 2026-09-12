@@ -932,8 +932,9 @@ module ::Input
   DEFAULT_CUSTOM_CONTROLS = {
     use:       :A,
     back:      :B,
-    menu:      :X,
-    shortcut:  :Y,
+    menu:      :Y,
+    follower:  :X,
+    shortcut:  :R3,
     turbo:     :L,
     repel:     :R,
     mount:     :ZL,
@@ -1038,21 +1039,21 @@ module ::Input
       if has_ctrl
         case btn
         when :A
-          return (type == :press)  ? (::Input::Controller.pressex?(:A) rescue false) :
-                 (type == :repeat) ? (::Input::Controller.repeatex?(:A) rescue false) :
-                                     (::Input::Controller.triggerex?(:A) rescue false)
-        when :B
           return (type == :press)  ? (::Input::Controller.pressex?(:B) rescue false) :
                  (type == :repeat) ? (::Input::Controller.repeatex?(:B) rescue false) :
                                      (::Input::Controller.triggerex?(:B) rescue false)
+        when :B
+          return (type == :press)  ? (::Input::Controller.pressex?(:A) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:A) rescue false) :
+                                     (::Input::Controller.triggerex?(:A) rescue false)
         when :X
-          return (type == :press)  ? (::Input::Controller.pressex?(:X) rescue false) :
-                 (type == :repeat) ? (::Input::Controller.repeatex?(:X) rescue false) :
-                                     (::Input::Controller.triggerex?(:X) rescue false)
-        when :Y
           return (type == :press)  ? (::Input::Controller.pressex?(:Y) rescue false) :
                  (type == :repeat) ? (::Input::Controller.repeatex?(:Y) rescue false) :
                                      (::Input::Controller.triggerex?(:Y) rescue false)
+        when :Y
+          return (type == :press)  ? (::Input::Controller.pressex?(:X) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:X) rescue false) :
+                                     (::Input::Controller.triggerex?(:X) rescue false)
         when :L
           return (type == :press)  ? (::Input::Controller.pressex?(:LEFTSHOULDER) rescue false) :
                  (type == :repeat) ? (::Input::Controller.repeatex?(:LEFTSHOULDER) rescue false) :
@@ -1165,8 +1166,10 @@ module ::Input
       when 12 # BACK / B
         return trigger_action?(:back)
       when 11 # ACTION / A
-        return trigger_action?(:menu)
+        return (btn_physical_state(:X, :trigger) rescue false) || trigger_action?(:follower) || trigger_action?(:menu)
       when 14 # JUMPUP / X
+        return trigger_action?(:follower)
+      when 16, 23 # SPECIAL / Z / R3
         return trigger_action?(:shortcut)
       end
       __native_btn_trigger?(num)
@@ -1179,8 +1182,10 @@ module ::Input
       when 12 # BACK / B
         return press_action?(:back)
       when 11 # ACTION / A
-        return press_action?(:menu)
+        return (btn_physical_state(:X, :press) rescue false) || press_action?(:follower) || press_action?(:menu)
       when 14 # JUMPUP / X
+        return press_action?(:follower)
+      when 16, 23 # SPECIAL / Z / R3
         return press_action?(:shortcut)
       end
       __native_btn_press?(num)
@@ -1193,8 +1198,10 @@ module ::Input
       when 12 # BACK / B
         return repeat_action?(:back)
       when 11 # ACTION / A
-        return repeat_action?(:menu)
+        return (btn_physical_state(:X, :repeat) rescue false) || repeat_action?(:follower) || repeat_action?(:menu)
       when 14 # JUMPUP / X
+        return repeat_action?(:follower)
+      when 16, 23 # SPECIAL / Z / R3
         return repeat_action?(:shortcut)
       end
       __native_btn_repeat?(num)

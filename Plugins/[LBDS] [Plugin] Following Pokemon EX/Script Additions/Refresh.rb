@@ -246,8 +246,8 @@ class Scene_Map
     end
     toggle_triggered = false
     if !$game_temp.in_menu && !$game_temp.message_window_showing && !$game_player.moving?
-      # Only respond to Switch X button (Input::JUMPUP) or Keyboard X key
-      if Input.trigger?(Input::JUMPUP)
+      # Only respond to Switch X button (Input::JUMPUP / :follower) or Keyboard X key
+      if (Input.respond_to?(:trigger_action?) && Input.trigger_action?(:follower)) || Input.trigger?(Input::JUMPUP)
         toggle_triggered = true
       end
     end

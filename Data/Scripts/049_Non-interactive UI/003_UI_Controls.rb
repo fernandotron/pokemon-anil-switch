@@ -170,15 +170,15 @@ class PokemonControls_Scene
       [action_btn_lbl(:use), _INTL("Confirmar / Hablar / Interactuar")],
       [action_btn_lbl(:back), _INTL("Cancelar / Volver / Mantener Correr")],
       [action_btn_lbl(:menu), _INTL("Abrir Menú de Pausa principal")],
-      [action_btn_lbl(:shortcut), _INTL("Acceso a Objetos Clave registrados")],
-      [_INTL("Stick / D-Pad:"), _INTL("Desplazarse en 4 u 8 direcciones")]
+      [action_btn_lbl(:follower), _INTL("Sacar / Guardar Pokémon Seguidor")],
+      [action_btn_lbl(:shortcut), _INTL("Acceso a Objetos Clave registrados")]
     ]
     
     right_items = [
+      [_INTL("Stick / D-Pad:"), _INTL("Desplazarse en 4 u 8 direcciones")],
       [action_btn_lbl(:turbo), _INTL("Alternar Modo Turbo (Velocidad)")],
-      [action_btn_lbl(:repel), _INTL("Repelente Infinito (en Menú Pausa)")],
       [action_btn_lbl(:mount), _INTL("Atajo rápido de Pokémontura (Volar)")],
-      [action_btn_lbl(:radar), _INTL("Atajo Pokéradar (en Menú Pausa)")],
+      [action_btn_lbl(:repel), _INTL("Repelente Infinito (en Menú Pausa)")],
       [action_btn_lbl(:quicksave), _INTL("Guardado Rápido automático")]
     ]
     
@@ -188,17 +188,17 @@ class PokemonControls_Scene
       @static_overlay.font.size = 13
       @static_overlay.font.bold = true
       @static_overlay.font.color = Color.new(255, 215, 80)
-      @static_overlay.draw_text(24, sy + i * gap, 100, 22, lbl, 0)
+      @static_overlay.draw_text(24, sy + i * gap, 104, 22, lbl, 0)
       @static_overlay.font.bold = false
       @static_overlay.font.color = Color.new(235, 242, 255)
-      @static_overlay.draw_text(128, sy + i * gap, 142, 22, desc, 0)
+      @static_overlay.draw_text(130, sy + i * gap, 140, 22, desc, 0)
     end
     
     right_items.each_with_index do |(lbl, desc), i|
       @static_overlay.font.size = 13
       @static_overlay.font.bold = true
       @static_overlay.font.color = Color.new(100, 210, 255)
-      @static_overlay.draw_text(278, sy + i * gap, 100, 22, lbl, 0)
+      @static_overlay.draw_text(276, sy + i * gap, 104, 22, lbl, 0)
       @static_overlay.font.bold = false
       @static_overlay.font.color = Color.new(235, 242, 255)
       @static_overlay.draw_text(382, sy + i * gap, 118, 22, desc, 0)
@@ -363,6 +363,7 @@ class PokemonControls_Scene
     [:use,       "Confirmar / Hablar / Interactuar", "Acción principal en menús, diálogos e interacción."],
     [:back,      "Cancelar / Volver / Mantener Correr", "Retroceder en menús o mantener pulsado para correr."],
     [:menu,      "Menú de Pausa Principal",          "Abre el menú flotante en la aventura."],
+    [:follower,  "Sacar / Guardar Pokémon Seguidor", "Muestra o esconde a tu Pokémon acompañante."],
     [:shortcut,  "Atajo / Objetos Registrados",     "Usa la caña, bicicleta u objeto clave registrado."],
     [:turbo,     "Modo Turbo (Velocidad)",          "Alterna entre velocidad normal y acelerada."],
     [:repel,     "Repelente Infinito",               "Activa o desactiva el repelente ilimitado."],
