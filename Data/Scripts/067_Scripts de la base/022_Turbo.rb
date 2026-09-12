@@ -24,6 +24,8 @@ module Game
 
   def self.load(save_data)
     original_load(save_data)
+    SaveData.load_options rescue nil
+    SaveData.load_controls rescue nil
     # echoln "UNSCALED #{System.unscaled_uptime} * #{SPEEDUP_STAGES[$GameSpeed]} - #{$GameSpeed}"
     $CanToggle = ($PokemonSystem.nil? || ($PokemonSystem.only_speedup_battles || 0) == 0)
   end
@@ -152,7 +154,7 @@ def pbMessage(message, commands = nil, cmdIfCancel = 0, skin = nil, defaultCmd =
   if commands
     ret = pbMessageDisplay(msgwindow, message, true,
                            proc { |msgwndw|
-                             next send(:pbShowCommands, msgwndw, commands, cmdIfCancel, defaultCmd, &block)
+                             next Kernel.pbShowCommands(msgwndw, commands, cmdIfCancel, defaultCmd, &block)
                            }, &block)
   else
     pbMessageDisplay(msgwindow, message, &block)

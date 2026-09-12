@@ -8,7 +8,7 @@
 
 [![Nintendo Switch](https://img.shields.io/badge/Platform-Nintendo%20Switch-E60012?style=for-the-badge&logo=nintendoswitch&logoColor=white)](https://github.com/fernandotron/pokemon-anil-switch)
 [![Motor mkxp-z](https://img.shields.io/badge/Engine-mkxp--z%20ARM64-blue?style=for-the-badge)](https://github.com/mkxp-z/mkxp-z)
-[![Versión](https://img.shields.io/badge/Versión-v4.0.0%20Estable-brightgreen?style=for-the-badge)](https://github.com/fernandotron/pokemon-anil-switch/releases/latest)
+[![Versión](https://img.shields.io/badge/Versión-v4.0.1%20Estable-brightgreen?style=for-the-badge)](https://github.com/fernandotron/pokemon-anil-switch/releases/latest)
 [![Descargas](https://img.shields.io/badge/Descargas-GitHub%20Releases-orange?style=for-the-badge)](https://github.com/fernandotron/pokemon-anil-switch/releases/latest)
 
 ---
@@ -21,8 +21,8 @@ Todas las descargas oficiales se alojan directamente en la sección de **[GitHub
 
 | Paquete | Archivo | Tamaño | Descripción | Enlace |
 | :--- | :--- | :--- | :--- | :---: |
-| 👑 **Pack Completo (Recomendado)** | `Pokemon Anil 4.0.rar` | **~792 MB** | **Todo incluido:** Juego completo estructurado para microSD, Forwarder NSP, guía de instalación y los 4 manuales en PDF. | [**Descargar Pack**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
-| ⚡ **Actualización Rápida** | `Pokemon_Anil_Switch_Update_v4.0.0.zip` | **~18 MB** | **Para jugadores existentes:** Solo archivos modificados (scripts, shims, NROs corregidos). Se copia en segundos sin volver a transferir audios ni gráficos. | [**Descargar Update**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
+| 👑 **Pack Completo (Recomendado)** | `Pokemon Anil 4.0.rar` | **~767 MB** | **Todo incluido:** Juego completo estructurado para microSD, Forwarder NSP, guía de instalación y los 4 manuales en PDF. | [**Descargar Pack**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
+| ⚡ **Actualización Rápida** | `Pokemon_Anil_Switch_Update_v4.0.1.zip` | **~20 MB** | **Para jugadores existentes:** Solo archivos modificados (scripts, shims, NROs corregidos). Se copia en segundos sin volver a transferir audios ni gráficos. | [**Descargar Update**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | 🎮 **Forwarder NSP** | `Pokemon Anil [01ab776ba9c10000].nsp` | **~395 KB** | Acceso directo para el Menú Home de Switch. Desbloquea los **3.5 GB de memoria RAM**. | [**Descargar NSP**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | 📚 **Manuales y Guías** | Carpeta `MANUALES/` | **~12 MB** | Guías oficiales: Modo Clásico, Modo Completo, Modo Radical y Preguntas Frecuentes. | [**Ver Guías**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 
@@ -34,18 +34,23 @@ Todas las descargas oficiales se alojan directamente en la sección de **[GitHub
 
 Este port ha sido reconstruido y optimizado a bajo nivel para ofrecer una experiencia fluida e idéntica a una consola oficial:
 
+* 🎮 **Reasignación Completa de Controles:** Menú interactivo dentro de Controles/Opciones para mapear cualquier botón físico de tu Joy-Con o Pro Controller a cualquier acción del juego, con persistencia atómica en `controls.dat`.
 * ⚡ **Arranque Instantáneo:** Reducción de más de 24.000 comprobaciones lentas a disco en C++ a menos de 300 lecturas en memoria. El juego arranca en segundos sin pantallas negras congeladas.
-* 🛡️ **Blindaje Total en Combates:** Precarga de animaciones en memoria y captura inteligente de excepciones. Se eliminaron por completo los cuelgues o congelaciones al iniciar batallas contra entrenadores o Pokémon salvajes.
+* 🛡️ **Blindaje Total en Combates:** Precarga de animaciones en memoria, corrección de crasheos al capturar Pokémon con objetos (`pbDisplayConfirm`), menú de medicina rápida en combate y captura inteligente de excepciones.
 * 💡 **Recordar Movimientos desde el Menú (QoL):** Implementado el sistema moderno estilo Gen 8/9. Puedes recordar cualquier ataque olvidado directamente desde la pantalla de datos del Pokémon sin necesidad de buscar al NPC Recuerda-Movimientos.
+* 🎒 **Mochila Optimizada a 60 FPS:** Navegación ultra fluida sin micro-tirones y uso ágil de MTs/MOs en el equipo.
+* 🌿 **Encuentros Visibles Dinámicos (VOE):** Los Pokémon salvajes en el sobremundo permanecen 25 pasos activos en lugar de 10, facilitando su captura e interacción.
 * 💾 **Guardado Atómico Anti-Corrupción:** Guardado protegido en dos pasos con archivos `.tmp` y respaldos `.bak`. Tu partida nunca se corromperá aunque la consola se apague en mitad de un guardado.
 * 🧠 **Gestión Avanzada de RAM y Texturas:** Tablas de búsqueda aceleradas en RAM para más de 115.000 gráficos y 35.000 audios. Caché inteligente de texturas con límite estricto para evitar errores *Out of Memory*.
-* 🎮 **Soporte Nativo de Mandos:** Control ergonómico para Joy-Con y Switch Pro Controller, con modo Turbo, Quick Save y salida rápida de menús.
+* 🔊 **Audio Calibrado para Switch:** Volumen reforzado en un +35% para compensar los altavoces de la consola con balance óptimo de efectos de sonido.
 
 ---
 
 ## 🎮 Controles en Nintendo Switch
 
-| Botón Switch | Función en el Juego |
+*(Totalmente personalizables desde el menú de opciones dentro del juego)*
+
+| Botón Switch (Por Defecto) | Función en el Juego |
 | :---: | :--- |
 | **(A)** | **Aceptar / Hablar / Interactuar / Seleccionar** |
 | **(B)** | **Cancelar / Retroceder / Correr** *(Doble toque rápido para salir de menús)* |

@@ -31,6 +31,7 @@ module Game
       SaveData.load_bootup_values(save_data)
     end
     SaveData.load_options rescue nil
+    SaveData.load_controls rescue nil
     # Set resize factor
     pbSetResizeFactor([$PokemonSystem.screensize, 4].min)
     # Set language (and choose language if there is no save file)
@@ -54,6 +55,8 @@ module Game
     pbMapInterpreter&.clear
     pbMapInterpreter&.setup(nil, 0, 0)
     SaveData.load_new_game_values
+    SaveData.load_options rescue nil
+    SaveData.load_controls rescue nil
     $game_temp.last_uptime_refreshed_play_time = System.real_uptime
     $stats.play_sessions += 1
     $map_factory = PokemonMapFactory.new($data_system.start_map_id)
@@ -72,6 +75,8 @@ module Game
   def self.load(save_data)
     validate save_data => Hash
     SaveData.load_all_values(save_data)
+    SaveData.load_options rescue nil
+    SaveData.load_controls rescue nil
     $game_temp.last_uptime_refreshed_play_time = System.real_uptime rescue nil
     $stats.play_sessions += 1 rescue nil
     self.load_map

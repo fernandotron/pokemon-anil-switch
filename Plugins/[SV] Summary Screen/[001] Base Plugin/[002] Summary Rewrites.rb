@@ -170,6 +170,8 @@ class PokemonSummary_Scene
     @partyindex = partyindex
     @pokemon    = @party[@partyindex]
     @page = 4
+    @page_id = :page_moves
+    @page_list = [:page_moves]
 	  @party_sprites = false #Party Sprites are not defined
     @typebitmap = AnimatedBitmap.new(_INTL("Graphics/UI/types"))
     @typeminibitmap    = AnimatedBitmap.new(_INTL("Graphics/UI/types_mini"))
@@ -178,7 +180,7 @@ class PokemonSummary_Scene
     @sprites["overlay"] = BitmapSprite.new(Graphics.width, Graphics.height, @viewport)
     pbSetSystemFont(@sprites["overlay"].bitmap)
     @sprites["pokeicon"] = PokemonIconSprite.new(@pokemon, @viewport)
-    @sprites["pokeicon"].make_grey_if_fainted = @pokemon.perma_faint
+    @sprites["pokeicon"].make_grey_if_fainted = (@pokemon&.perma_faint rescue false) || false
     @sprites["pokeicon"].setOffset(PictureOrigin::CENTER)
     @sprites["pokeicon"].x       = 48
     @sprites["pokeicon"].y       = 86
@@ -186,7 +188,7 @@ class PokemonSummary_Scene
     @sprites["movesel"].visible = false
     @sprites["movesel"].visible = true
     @sprites["movesel"].index   = 0
-    new_move = (move_to_learn) ? Pokemon::Move.new(move_to_learn) : nil
+    new_move = (move_to_learn) ? (move_to_learn.is_a?(Pokemon::Move) ? move_to_learn : Pokemon::Move.new(move_to_learn)) : nil
     drawSelectedMove(new_move, @pokemon.moves[0])
     pbFadeInAndShow(@sprites)
   end
@@ -855,6 +857,7 @@ class PokemonSummary_Scene
   end
 
   def drawPageFourSelecting(move_to_learn)
+    move_to_learn = (move_to_learn.is_a?(Pokemon::Move) ? move_to_learn : Pokemon::Move.new(move_to_learn)) if move_to_learn
     overlay = @sprites["overlay"].bitmap
     overlay.clear
     drawPageIcons if !move_to_learn
@@ -871,10 +874,10 @@ class PokemonSummary_Scene
                 Color.new(74, 80, 111),   # 1/4 of total PP or less
                 Color.new(74, 60, 123)]   # Zero PP
     # Set background image
-    if move_to_learn
-      @sprites["background"].setBitmap("Graphics/UI/Summary/bg_learnmove")
-    else
-      @sprites["background"].setBitmap("Graphics/UI/Summary/bg_movedetail")
+    bg_path = move_to_learn ? "Graphics/UI/Summary/bg_learnmove" : "Graphics/UI/Summary/bg_movedetail"
+    if @current_summary_bg != bg_path
+      @sprites["background"].setBitmap(bg_path)
+      @current_summary_bg = bg_path
     end
     # Write various bits of text
     textpos = [
@@ -938,6 +941,9 @@ class PokemonSummary_Scene
   end
 
   def drawSelectedMove(move_to_learn, selected_move)
+    return if !selected_move
+    selected_move = (selected_move.is_a?(Pokemon::Move) ? selected_move : Pokemon::Move.new(selected_move))
+    move_to_learn = (move_to_learn.is_a?(Pokemon::Move) ? move_to_learn : Pokemon::Move.new(move_to_learn)) if move_to_learn
     # Draw all of page four, except selected move's details
     drawPageFourSelecting(move_to_learn)
     # Set various values
@@ -950,7 +956,7 @@ class PokemonSummary_Scene
     @sprites["itemicon"].visible = false if @sprites["itemicon"]
     if @party_sprites
       for i in 0..@num_icons do
-        @sprites["pokeicon_#{i}"].visible = false
+        @sprites["pokeicon_#{i}"].visible = false if @sprites["pokeicon_#{i}"]
       end
     end
     textpos = []
@@ -1403,9 +1409,18 @@ class PokemonSummaryScreen
 
   def pbStartForgetScreen(party, partyindex, move_to_learn)
     ret = -1
-    @scene.pbStartForgetScene(party, partyindex, move_to_learn)
-    ret = @scene.pbChooseMoveToForget(move_to_learn)
-    @scene.pbEndScene
+    begin
+      @scene.pbStartForgetScene(party, partyindex, move_to_learn)
+      ret = @scene.pbChooseMoveToForget(move_to_learn)
+    rescue Exception => e
+      if defined?(write_crash_report)
+        write_crash_report(e, "PokemonSummaryScreen#pbStartForgetScreen")
+      else
+        log_compat("[ERROR pbStartForgetScreen] #{e.class}: #{e.message}") rescue nil
+      end
+    ensure
+      @scene.pbEndScene rescue nil
+    end
     return ret
   end
 

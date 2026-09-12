@@ -1139,6 +1139,7 @@ end`);
     log_compat("[set_up_system] d. comprobando PokemonSystem...") rescue nil
     $PokemonSystem ||= PokemonSystem.new rescue nil
     SaveData.load_options rescue nil
+    SaveData.load_controls rescue nil
     log_compat("[set_up_system] e. configurando pantalla...") rescue nil
     pbSetResizeFactor([($PokemonSystem.screensize rescue 1) || 1, 4].min) rescue nil
     log_compat("[set_up_system] f. completado con exito!") rescue nil
@@ -1638,10 +1639,15 @@ end`
     changed = true;
   }
   
-  if (s.code.includes('pbShowCommands') || s.code.includes('Kernel.pb')) {
-    s.code = s.code.replace(/next\s+(?:Kernel\.)?pbShowCommands\(/g, 'next send(:pbShowCommands, ');
-    s.code = s.code.replace(/next\s+(?:Kernel\.)?pbShowCommandsWithHelp\(/g, 'next send(:pbShowCommandsWithHelp, ');
-    s.code = s.code.replace(/Kernel\.pb([A-Za-z0-9_]+)/g, 'pb$1');
+  if (s.code.includes('pbShowCommands')) {
+    s.code = s.code.replace(/next\s+(?:Kernel\.)?pbShowCommands\(/g, 'next Kernel.pbShowCommands(');
+    s.code = s.code.replace(/next\s+(?:Kernel\.)?pbShowCommandsWithHelp\(/g, 'next Kernel.pbShowCommandsWithHelp(');
+    s.code = s.code.replace(/next\s+send\(:pbShowCommands,\s*/g, 'next Kernel.pbShowCommands(');
+    s.code = s.code.replace(/next\s+send\(:pbShowCommandsWithHelp,\s*/g, 'next Kernel.pbShowCommandsWithHelp(');
+    changed = true;
+  }
+  if (s.code.includes('Kernel.pb')) {
+    s.code = s.code.replace(/Kernel\.pb(?!ShowCommands\b|ShowCommandsWithHelp\b)([A-Za-z0-9_]+)/g, 'pb$1');
     changed = true;
   }
   
@@ -1858,6 +1864,16 @@ end`
   attr_accessor :sendtoboxes, :givenicknames, :frame, :textskin, :screensize
   attr_accessor :language, :runstyle, :bgmvolume, :sevolume, :textinput, :vsync
   attr_accessor :autotile_animations, :salvajes_visibles_en_ow, :repartir_exp
+  attr_accessor :button_layout, :turbo_button, :plus_action, :custom_button_map
+
+  def custom_button_map
+    @custom_button_map = (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {}) unless @custom_button_map.is_a?(Hash)
+    @custom_button_map
+  end
+
+  def custom_button_map=(val)
+    @custom_button_map = val.is_a?(Hash) ? val : (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {})
+  end
 
   def repartir_exp
     @repartir_exp || 0
@@ -1950,8 +1966,10 @@ end`
       /def bgm_play_internal2\(name, volume, pitch, position, track = nil\)[\s\S]*?vol = vol\.to_i/m,
       `def bgm_play_internal2(name, volume, pitch, position, track = nil)
     vol = volume || 100
+    vol = [(vol * 1.35).round, 100].min
     bgm_vol = ($PokemonSystem ? ($PokemonSystem.bgmvolume || 100) : 100)
-    vol = (vol * (bgm_vol / 100.0)).to_i`
+    vol = (bgm_vol >= 100) ? 100 : (vol * (bgm_vol / 100.0)).round
+    vol = [[vol, 0].max, 100].min`
     );
     s.code = s.code.replace(
       /def se_play\(se\)[\s\S]*?def se_stop/m,
@@ -1960,7 +1978,8 @@ end`
     if se && se.name && !se.name.to_s.empty?
       vol = (se.volume || 100)
       se_vol = ($PokemonSystem ? ($PokemonSystem.sevolume || 100) : 100)
-      vol = (vol * (se_vol / 100.0)).to_i
+      vol = (vol * (se_vol / 100.0) * 0.70).round
+      vol = [[vol, 0].max, 100].min
       file = se.name.to_s
       file = "Audio/SE/" + file unless file.start_with?("Audio/SE/") || file.start_with?("Audio/")
       Audio.se_play(file, vol, se.pitch || 100)
@@ -1975,8 +1994,10 @@ end`
     me = RPG::AudioFile.new(me) if me.is_a?(String)
     if me && me.name && !me.name.to_s.empty?
       vol = (me.volume || 100)
+      vol = [(vol * 1.35).round, 100].min
       bgm_vol = ($PokemonSystem ? ($PokemonSystem.bgmvolume || 100) : 100)
-      vol = (vol * (bgm_vol / 100.0)).to_i
+      vol = (bgm_vol >= 100) ? 100 : (vol * (bgm_vol / 100.0)).round
+      vol = [[vol, 0].max, 100].min
       file = me.name.to_s
       file = "Audio/ME/" + file unless file.start_with?("Audio/ME/") || file.start_with?("Audio/")
       Audio.me_play(file, vol, me.pitch || 100)
@@ -1993,7 +2014,8 @@ end`
     if bgs && bgs.name && !bgs.name.to_s.empty?
       vol = (bgs.volume || 100)
       se_vol = ($PokemonSystem ? ($PokemonSystem.sevolume || 100) : 100)
-      vol = (vol * (se_vol / 100.0)).to_i
+      vol = (vol * (se_vol / 100.0) * 0.80).round
+      vol = [[vol, 0].max, 100].min
       file = bgs.name.to_s
       file = "Audio/BGS/" + file unless file.start_with?("Audio/BGS/") || file.start_with?("Audio/")
       Audio.bgs_play(file, vol, bgs.pitch || 100)
@@ -2671,6 +2693,7 @@ log_compat("[Main] 5. Variables globales...") rescue nil
 $data_system ||= load_data("Data/System.rxdata") rescue nil
 $PokemonSystem ||= PokemonSystem.new rescue nil
 SaveData.load_options rescue nil
+SaveData.load_controls rescue nil
 $game_system ||= Game_System.new rescue nil
 $game_temp ||= Game_Temp.new rescue nil
 

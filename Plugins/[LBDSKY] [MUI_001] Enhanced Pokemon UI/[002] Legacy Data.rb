@@ -49,25 +49,25 @@ class Pokemon
   alias legacy_learn_move learn_move
   def learn_move(move_id)
     if GameData::Move.exists?(move_id) && !@moves.include?(move_id)
-      legacy_data[:move_count] += 1
+      legacy_data[:move_count] = (legacy_data[:move_count] || 0) + 1 rescue nil
     end
     legacy_learn_move(move_id)
   end
 end
 
 class Battle::Scene
-  alias legacy_pbForgetMove pbForgetMove
+  alias legacy_pbForgetMove pbForgetMove unless method_defined?(:legacy_pbForgetMove)
   def pbForgetMove(pkmn, moveToLearn)
     ret = legacy_pbForgetMove(pkmn, moveToLearn)
-    pkmn.legacy_data[:move_count] += 1 if ret >= 0
+    pkmn.legacy_data[:move_count] = (pkmn.legacy_data[:move_count] || 0) + 1 if ret >= 0 rescue nil
     return ret
   end
 end
 
-alias legacy_pbForgetMove pbForgetMove
+alias legacy_pbForgetMove pbForgetMove unless (defined?(legacy_pbForgetMove) || Object.method_defined?(:legacy_pbForgetMove))
 def pbForgetMove(pkmn, moveToLearn)
   ret = legacy_pbForgetMove(pkmn, moveToLearn)
-  pkmn.legacy_data[:move_count] += 1 if ret >= 0
+  pkmn.legacy_data[:move_count] = (pkmn.legacy_data[:move_count] || 0) + 1 if ret >= 0 rescue nil
   return ret
 end
 
@@ -427,7 +427,26 @@ class Pokemon
   # Legacy data.
   #-----------------------------------------------------------------------------
   def legacy_data
-    resetLegacyData if !@legacy_data
+    if !@legacy_data
+      resetLegacyData
+    else
+      @legacy_data[:party_time]     ||= 0
+      @legacy_data[:item_count]     ||= 0
+      @legacy_data[:move_count]     ||= 0
+      @legacy_data[:egg_count]      ||= 0
+      @legacy_data[:trade_count]    ||= 0
+      @legacy_data[:defeated_count] ||= 0
+      @legacy_data[:fainted_count]  ||= 0
+      @legacy_data[:supereff_count] ||= 0
+      @legacy_data[:critical_count] ||= 0
+      @legacy_data[:retreat_count]  ||= 0
+      @legacy_data[:trainer_count]  ||= 0
+      @legacy_data[:leader_count]   ||= 0
+      @legacy_data[:legend_count]   ||= 0
+      @legacy_data[:champion_count] ||= 0
+      @legacy_data[:loss_count]     ||= 0
+    end
+    @legacy_data.default = 0
     return @legacy_data
   end
 

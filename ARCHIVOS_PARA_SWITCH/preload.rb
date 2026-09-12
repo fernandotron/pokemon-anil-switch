@@ -774,6 +774,9 @@ module ::Game
       if defined?(SaveData) && SaveData.respond_to?(:load_options)
         SaveData.load_options rescue nil
       end
+      if defined?(SaveData) && SaveData.respond_to?(:load_controls)
+        SaveData.load_controls rescue nil
+      end
       if defined?(SwitchAssetOptimizer)
         SwitchAssetOptimizer.prewarm_all rescue nil
       end
@@ -926,6 +929,19 @@ module ::Input
   AUX2   = 18 unless const_defined?(:AUX2)
   SPECIAL = 23 unless const_defined?(:SPECIAL)
 
+  DEFAULT_CUSTOM_CONTROLS = {
+    use:       :A,
+    back:      :B,
+    menu:      :X,
+    shortcut:  :Y,
+    turbo:     :L,
+    repel:     :R,
+    mount:     :ZL,
+    radar:     :ZR,
+    quicksave: :PLUS,
+    controls:  :MINUS
+  }.freeze unless const_defined?(:DEFAULT_CUSTOM_CONTROLS)
+
   class << self
     alias __mkxp_native_input_update update unless method_defined?(:__mkxp_native_input_update) rescue nil
 
@@ -976,83 +992,166 @@ module ::Input
     end
 
     def trigger_zl?
-      @zl_triggered == true
+      trigger_action?(:mount)
     end
 
     def trigger_zr?
-      @zr_triggered == true
+      trigger_action?(:radar)
     end
 
     # Botón + (Plus / Start en Switch)
     def trigger_plus?
-      if defined?(::Input::Controller) && ::Input::Controller.connected?
-        return true if (::Input::Controller.triggerex?(:START) rescue false)
-      end
-      if ::Input.respond_to?(:triggerex?)
-        return true if (::Input.triggerex?(:RETURN) || ::Input.triggerex?(:KP_ENTER) rescue false)
-      end
-      false
+      trigger_action?(:quicksave)
     end
 
     # Botón L en Nintendo Switch
     def trigger_l?
-      if defined?(::Input::Controller) && ::Input::Controller.connected?
-        return true if (::Input::Controller.triggerex?(:LEFTSHOULDER) rescue false)
-      end
-      return true if (::Input.trigger?(::Input::L) rescue false)
-      return true if (::Input.trigger?(::Input::AUX1) rescue false)
-      return true if (::Input.respond_to?(:triggerex?) && ::Input.triggerex?(:L) rescue false)
-      false
+      btn_physical_state(:L, :trigger)
     end
 
     # Botón R en Nintendo Switch
     def trigger_r?
-      if defined?(::Input::Controller) && ::Input::Controller.connected?
-        return true if (::Input::Controller.triggerex?(:RIGHTSHOULDER) rescue false)
-      end
-      return true if (::Input.trigger?(::Input::R) rescue false)
-      return true if (::Input.trigger?(::Input::AUX2) rescue false)
-      return true if (::Input.respond_to?(:triggerex?) && ::Input.triggerex?(:R) rescue false)
-      false
+      trigger_action?(:repel)
     end
 
-    # Detección inteligente de Turbo (L por defecto, o R / ZR según menú Controles)
+    # Detección de Turbo
     def trigger_turbo?
       return true if (::Input.trigger?(::Input::ALT) rescue false)
       return true if (::Input.respond_to?(:triggerex?) && ::Input.triggerex?(:M) rescue false)
-      mode = ($PokemonSystem&.turbo_button || 0) rescue 0
-      case mode
-      when 1 # Asignado a botón R
-        return true if trigger_r?
-      when 2 # Asignado a gatillo ZR
-        return true if trigger_zr?
-      else   # Asignado a botón L (predeterminado)
-        return true if trigger_l?
-      end
-      false
+      trigger_action?(:turbo)
     end
 
     def trigger_controls?
-      if defined?(::Input::Controller) && ::Input::Controller.connected?
-        return true if (::Input::Controller.triggerex?(:BACK) rescue false)
+      trigger_action?(:controls)
+    end
+
+    def custom_button_for(action)
+      map = ($PokemonSystem&.custom_button_map rescue nil)
+      if map.is_a?(Hash) && map[action]
+        return map[action]
       end
-      if ::Input.respond_to?(:triggerex?)
-        return true if (::Input.triggerex?(:MINUS) || ::Input.triggerex?(:KP_MINUS) rescue false)
-        return true if (::Input.triggerex?(:H) rescue false)
+      (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS[action] : nil) || :A
+    end
+
+    def btn_physical_state(btn, type = :trigger)
+      has_ctrl = defined?(::Input::Controller) && ::Input::Controller.connected? rescue false
+      if has_ctrl
+        case btn
+        when :A
+          return (type == :press)  ? (::Input::Controller.pressex?(:A) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:A) rescue false) :
+                                     (::Input::Controller.triggerex?(:A) rescue false)
+        when :B
+          return (type == :press)  ? (::Input::Controller.pressex?(:B) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:B) rescue false) :
+                                     (::Input::Controller.triggerex?(:B) rescue false)
+        when :X
+          return (type == :press)  ? (::Input::Controller.pressex?(:X) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:X) rescue false) :
+                                     (::Input::Controller.triggerex?(:X) rescue false)
+        when :Y
+          return (type == :press)  ? (::Input::Controller.pressex?(:Y) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:Y) rescue false) :
+                                     (::Input::Controller.triggerex?(:Y) rescue false)
+        when :L
+          return (type == :press)  ? (::Input::Controller.pressex?(:LEFTSHOULDER) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:LEFTSHOULDER) rescue false) :
+                                     (::Input::Controller.triggerex?(:LEFTSHOULDER) rescue false)
+        when :R
+          return (type == :press)  ? (::Input::Controller.pressex?(:RIGHTSHOULDER) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:RIGHTSHOULDER) rescue false) :
+                                     (::Input::Controller.triggerex?(:RIGHTSHOULDER) rescue false)
+        when :ZL
+          return (type == :press) ? press_zl? : (@zl_triggered == true)
+        when :ZR
+          return (type == :press) ? press_zr? : (@zr_triggered == true)
+        when :PLUS
+          return (type == :press)  ? (::Input::Controller.pressex?(:START) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:START) rescue false) :
+                                     (::Input::Controller.triggerex?(:START) rescue false)
+        when :MINUS
+          return (type == :press)  ? (::Input::Controller.pressex?(:BACK) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:BACK) rescue false) :
+                                     (::Input::Controller.triggerex?(:BACK) rescue false)
+        when :L3
+          return (type == :press)  ? (::Input::Controller.pressex?(:LEFTSTICK) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:LEFTSTICK) rescue false) :
+                                     (::Input::Controller.triggerex?(:LEFTSTICK) rescue false)
+        when :R3
+          return (type == :press)  ? (::Input::Controller.pressex?(:RIGHTSTICK) rescue false) :
+                 (type == :repeat) ? (::Input::Controller.repeatex?(:RIGHTSTICK) rescue false) :
+                                     (::Input::Controller.triggerex?(:RIGHTSTICK) rescue false)
+        end
+        return false
+      end
+
+      # Fallback teclado cuando NO hay mando conectado (PC sin mando)
+      case btn
+      when :A
+        return (type == :press)  ? (__native_btn_press?(13) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(13) rescue false) :
+                                   (__native_btn_trigger?(13) rescue false)
+      when :B
+        return (type == :press)  ? (__native_btn_press?(12) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(12) rescue false) :
+                                   (__native_btn_trigger?(12) rescue false)
+      when :X
+        return (type == :press)  ? (__native_btn_press?(11) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(11) rescue false) :
+                                   (__native_btn_trigger?(11) rescue false)
+      when :Y
+        return (type == :press)  ? (__native_btn_press?(14) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(14) rescue false) :
+                                   (__native_btn_trigger?(14) rescue false)
+      when :L
+        return (type == :press)  ? (__native_btn_press?(17) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(17) rescue false) :
+                                   (__native_btn_trigger?(17) rescue false)
+      when :R
+        return (type == :press)  ? (__native_btn_press?(18) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(18) rescue false) :
+                                   (__native_btn_trigger?(18) rescue false)
+      when :ZL
+        return (type == :press)  ? (::Input.pressex?(:S) rescue false) :
+               (type == :repeat) ? (::Input.repeatex?(:S) rescue false) :
+                                   (::Input.triggerex?(:S) rescue false)
+      when :ZR
+        return (type == :press)  ? (::Input.pressex?(:D) rescue false) :
+               (type == :repeat) ? (::Input.repeatex?(:D) rescue false) :
+                                   (::Input.triggerex?(:D) rescue false)
+      when :PLUS
+        return (type == :press)  ? (::Input.pressex?(:RETURN) rescue false) :
+               (type == :repeat) ? (::Input.repeatex?(:RETURN) rescue false) :
+                                   (::Input.triggerex?(:RETURN) rescue false)
+      when :MINUS
+        return (type == :press)  ? (::Input.pressex?(:MINUS) rescue false) :
+               (type == :repeat) ? (::Input.repeatex?(:MINUS) rescue false) :
+                                   (::Input.triggerex?(:MINUS) rescue false)
+      when :L3
+        return (type == :press)  ? (__native_btn_press?(15) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(15) rescue false) :
+                                   (__native_btn_trigger?(15) rescue false)
+      when :R3
+        return (type == :press)  ? (__native_btn_press?(23) rescue false) :
+               (type == :repeat) ? (__native_btn_repeat?(23) rescue false) :
+                                   (__native_btn_trigger?(23) rescue false)
       end
       false
     end
 
-    def remap_button(num)
-      layout = ($PokemonSystem&.button_layout || 0) rescue 0
-      if layout == 1 # Estilo PC / Xbox invertido: A y B intercambiados
-        if num == 13 # Input::USE / C
-          return 12  # Input::BACK / B
-        elsif num == 12 # Input::BACK / B
-          return 13  # Input::USE / C
-        end
-      end
-      num
+    def trigger_action?(action)
+      btn = custom_button_for(action)
+      btn_physical_state(btn, :trigger)
+    end
+
+    def press_action?(action)
+      btn = custom_button_for(action)
+      btn_physical_state(btn, :press)
+    end
+
+    def repeat_action?(action)
+      btn = custom_button_for(action)
+      btn_physical_state(btn, :repeat)
     end
 
     alias __native_btn_trigger? trigger? unless method_defined?(:__native_btn_trigger?)
@@ -1060,25 +1159,127 @@ module ::Input
     alias __native_btn_repeat? repeat? unless method_defined?(:__native_btn_repeat?)
 
     def trigger?(num)
-      __native_btn_trigger?(remap_button(num))
+      case num
+      when 13 # USE / C
+        return trigger_action?(:use)
+      when 12 # BACK / B
+        return trigger_action?(:back)
+      when 11 # ACTION / A
+        return trigger_action?(:menu)
+      when 14 # JUMPUP / X
+        return trigger_action?(:shortcut)
+      end
+      __native_btn_trigger?(num)
     end
 
     def press?(num)
-      __native_btn_press?(remap_button(num))
+      case num
+      when 13 # USE / C
+        return press_action?(:use)
+      when 12 # BACK / B
+        return press_action?(:back)
+      when 11 # ACTION / A
+        return press_action?(:menu)
+      when 14 # JUMPUP / X
+        return press_action?(:shortcut)
+      end
+      __native_btn_press?(num)
     end
 
     def repeat?(num)
-      __native_btn_repeat?(remap_button(num))
+      case num
+      when 13 # USE / C
+        return repeat_action?(:use)
+      when 12 # BACK / B
+        return repeat_action?(:back)
+      when 11 # ACTION / A
+        return repeat_action?(:menu)
+      when 14 # JUMPUP / X
+        return repeat_action?(:shortcut)
+      end
+      __native_btn_repeat?(num)
     end
   end
 end
 
 class PokemonSystem
-  attr_accessor :button_layout, :turbo_button, :plus_action unless method_defined?(:button_layout)
+  attr_accessor :button_layout, :turbo_button, :plus_action, :custom_button_map unless method_defined?(:button_layout)
   def only_speedup_battles; @only_speedup_battles || 0; end
   def turbo_button; @turbo_button || 0; end
   def plus_action; @plus_action || 0; end
   def button_layout; @button_layout || 0; end
+  def custom_button_map
+    @custom_button_map = (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {}) unless @custom_button_map.is_a?(Hash)
+    @custom_button_map
+  end
+  def custom_button_map=(val)
+    @custom_button_map = val.is_a?(Hash) ? val : (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {})
+  end
+end
+
+module ::SaveData
+  CONTROLS_FILE_PATH = "controls.dat" unless defined?(CONTROLS_FILE_PATH)
+
+  def self.save_controls
+    return if !$PokemonSystem
+    begin
+      data = {
+        button_layout:      (($PokemonSystem.button_layout rescue 0) || 0),
+        turbo_button:       (($PokemonSystem.turbo_button rescue 0) || 0),
+        plus_action:        (($PokemonSystem.plus_action rescue 0) || 0),
+        custom_button_map:  (($PokemonSystem.custom_button_map rescue nil) || (defined?(::Input::DEFAULT_CUSTOM_CONTROLS) ? ::Input::DEFAULT_CUSTOM_CONTROLS.dup : {}))
+      }
+      paths = [
+        defined?($SavePath) && $SavePath ? "#{$SavePath}controls.dat" : nil,
+        CONTROLS_FILE_PATH,
+        "Data/controls.dat"
+      ].compact.uniq
+
+      paths.each do |file_path|
+        begin
+          tmp_path = file_path + ".tmp"
+          File.open(tmp_path, "wb") { |f| Marshal.dump(data, f) }
+          if File.size(tmp_path) > 0
+            File.rename(tmp_path, file_path) rescue (File.open(file_path, "wb") { |f| Marshal.dump(data, f) } rescue nil)
+          end
+          File.delete(tmp_path) if File.exist?(tmp_path) rescue nil
+        rescue Exception
+        end
+      end
+    rescue Exception
+    end
+  end unless method_defined?(:save_controls)
+
+  def self.load_controls
+    return if !$PokemonSystem
+    paths = [
+      defined?($SavePath) && $SavePath ? "#{$SavePath}controls.dat" : nil,
+      CONTROLS_FILE_PATH,
+      "Data/controls.dat"
+    ].compact.uniq
+
+    file_path = paths.find { |p| File.file?(p) rescue false }
+    return if !file_path
+    begin
+      data = File.open(file_path, "rb") { |f| Marshal.load(f) }
+      if data.is_a?(Hash)
+        $PokemonSystem.button_layout = data[:button_layout] if data.key?(:button_layout) && $PokemonSystem.respond_to?(:button_layout=)
+        $PokemonSystem.turbo_button  = data[:turbo_button]  if data.key?(:turbo_button) && $PokemonSystem.respond_to?(:turbo_button=)
+        $PokemonSystem.plus_action   = data[:plus_action]   if data.key?(:plus_action) && $PokemonSystem.respond_to?(:plus_action=)
+        if data.key?(:custom_button_map) && data[:custom_button_map].is_a?(Hash) && $PokemonSystem.respond_to?(:custom_button_map=)
+          $PokemonSystem.custom_button_map = data[:custom_button_map]
+        end
+      end
+    rescue Exception
+    end
+  end unless method_defined?(:load_controls)
+end
+
+# Carga inicial inmediata de controles personalizados en el arranque de preload
+begin
+  $PokemonSystem ||= PokemonSystem.new
+  SaveData.load_controls rescue nil
+rescue Exception
 end
 
 # Optimizaciones maestras de rendimiento para Nintendo Switch (V4.13)
@@ -1672,6 +1873,14 @@ class Object
   public :pbShowCommandsWithHelp rescue nil
 end
 
+def pbShowCommands(*args, &block)
+  Kernel.pbShowCommands(*args, &block)
+end
+
+def pbShowCommandsWithHelp(*args, &block)
+  Kernel.pbShowCommandsWithHelp(*args, &block)
+end
+
 # 1.12 Color, Tone y Rect helpers
 class ::Color
   def [](idx)
@@ -2007,6 +2216,8 @@ module ::Audio
         file = ["Audio/BGM/Title.ogg", "Audio/BGM/title_frlg.ogg", "Audio/BGM/title_origin.ogg", "Audio/BGM/title_bw.ogg"].find { |f| File.exist?(f) } || "Audio/BGM/Title.ogg"
       end
       vol = [(volume || 100).to_i, 1].max # Asegurar que volumen nunca quede en 0
+      vol = [(vol * 1.35).round, 100].min if vol > 1 && vol < 100 && (!defined?($game_system) || !$game_system)
+      vol = [[vol, 1].max, 100].min
       pit = (pitch || 100).to_i
 
       __switch_native_bgm_stop rescue nil
@@ -2904,6 +3115,9 @@ class Module
 
   def const_missing(name)
     return true if name == :MOSTRAR_PANEL_REP_EXP
+    if name == :DEFAULT_CUSTOM_CONTROLS && defined?(::Input::DEFAULT_CUSTOM_CONTROLS)
+      return ::Input::DEFAULT_CUSTOM_CONTROLS
+    end
     if ::Object.const_defined?(name, false)
       return ::Object.const_get(name)
     end
@@ -3046,11 +3260,13 @@ module Kernel
         src = src.gsub(/Graphics\.resize_window\b[^\n;]*/, '# Graphics.resize_window skipped on Switch')
       end
       if src.include?("pbShowCommands")
-        src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommands\(/, 'next send(:pbShowCommands, ')
-        src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommandsWithHelp\(/, 'next send(:pbShowCommandsWithHelp, ')
+        src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommands\(/, 'next Kernel.pbShowCommands(')
+        src = src.gsub(/next\s+(?:Kernel\.)?pbShowCommandsWithHelp\(/, 'next Kernel.pbShowCommandsWithHelp(')
+        src = src.gsub(/next\s+send\(:pbShowCommands,\s*/, 'next Kernel.pbShowCommands(')
+        src = src.gsub(/next\s+send\(:pbShowCommandsWithHelp,\s*/, 'next Kernel.pbShowCommandsWithHelp(')
       end
       if src.include?("Kernel.pb")
-        src = src.gsub(/Kernel\.pb([A-Za-z0-9_]+)/, 'pb\1')
+        src = src.gsub(/Kernel\.pb(?!ShowCommands\b|ShowCommandsWithHelp\b)([A-Za-z0-9_]+)/, 'pb\1')
       end
     end
 

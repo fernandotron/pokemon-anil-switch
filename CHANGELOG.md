@@ -6,6 +6,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ---
 
+## [v4.0.1] - 2026-09-12
+
+### 🎮 Controles Personalizados y Reasignación Dinámica
+- **Reasignación Completa de Botones en Switch:** Nuevo menú interactivo dentro de Controles/Opciones que permite mapear cualquier acción (Aceptar, Cancelar, Menú, Acceso Rápido, Turbo, Guardado Rápido) a cualquier botón físico del Joy-Con o Pro Controller.
+- **Detección Física en Tiempo Real:** Detección automática al pulsar el botón deseado con intercambio inteligente si ya estaba asignado a otra acción.
+- **Persistencia Atómica Independiente:** Almacenamiento directo en `controls.dat` que garantiza que la personalización de controles se conserve al cambiar de ranura en Multi-Save o al comenzar una Nueva Partida.
+- **Restaurar Ajustes de Fábrica:** Botón de restablecimiento con un solo toque para regresar a la disposición oficial recomendada para Switch.
+
+### 🛡️ Corrección de Bugs Críticos
+- **Crasheo al Capturar Pokémon con Objeto Equipado:** Solucionado el error fatal en combate que intentaba invocar `pbConfirmMessage` (inexistente en el contexto de batalla) al enviar un Pokémon capturado a la caja del PC si llevaba un objeto equipado; reemplazado por `pbDisplayConfirm` con verificación de espacio en la mochila (`can_add?`).
+- **Eliminación de Lag en Mochila con Equipo Interactivo:** Eliminado el cuello de botella que recalculaba las anotaciones del equipo en cada fotograma del bucle principal, logrando 60 FPS fluidos al examinar la mochila.
+- **Bloqueo de Cursor con MTs/MOs:** Corregido el desfase de selección del cursor tras aprender o cancelar movimientos con MT o MO en la mochila.
+- **Blindaje del Sumario / Olvido de Movimientos:** Envolvimiento de `pbStartForgetScreen` con bloque `ensure` para garantizar el cierre seguro de la escena gráfica, y compatibilidad dual para objetos de movimiento.
+- **Colisión de pbShowCommands en Plugins:** Unificación de `pbShowCommands` y `pbShowCommandsWithHelp` en `Kernel` para eliminar interferencias entre `Map Zoom`, `Messages` y la pantalla de equipo.
+- **Seguidores Fantasma de Pokémon Acompañante:** Corregido el spawn de Following Pokémon EX cuando el equipo está completamente debilitado, previniendo referencias nulas y duplicación de sprites al cambiar de mapa.
+
+### 💡 Novedades y Calidad de Vida (QoL)
+- **Menú Rápido de Medicina en Combate:** Acceso rápido durante batallas para usar Pociones, Revivir y Antídotos sin abrir la mochila completa, con selector de Pokémon objetivo (Arriba/Abajo) mostrando PS y estado alterado.
+- **Sobremundo Dinámico con Encuentros Visibles (VOE):** Aumentado el tiempo de permanencia de los Pokémon salvajes visibles de 10 a 25 pasos para permitir alcanzarlos cómodamente, con algoritmo de búsqueda optimizado para parches de hierba.
+- **Calibración de Audio para Switch:** Refuerzo del volumen base de BGM/ME en +35% y balance acústico adaptado a altavoces y auriculares (BGS al 80%, SE al 70%).
+
+---
+
 ## [v4.0.0] - 2026-09-08
 
 ### ⚡ Rendimiento y Arranque

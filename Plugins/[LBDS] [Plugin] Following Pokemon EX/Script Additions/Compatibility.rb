@@ -97,7 +97,7 @@ MenuHandlers.add(:options_menu, :follower_toggle, {
   "set_proc"    => proc { |value, _scene|
     next if !FollowingPkmn.can_check?
     $PokemonGlobal.follower_toggled = (value == 0)
-    if $PokemonGlobal.follower_toggled
+    if $PokemonGlobal.follower_toggled && $player&.first_able_pokemon
       $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
       $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil
       $game_temp.followers.add_follower($game_player, "FollowingPkmn", FollowingPkmn::FOLLOWER_COMMON_EVENT) rescue nil
@@ -105,6 +105,8 @@ MenuHandlers.add(:options_menu, :follower_toggle, {
     else
       FollowingPkmn.refresh(false) rescue nil
       FollowingPkmn.remove_sprite rescue nil
+      $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
+      $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil if $game_temp&.followers
     end
   }
 })

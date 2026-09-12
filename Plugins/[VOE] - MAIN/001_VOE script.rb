@@ -263,7 +263,7 @@ module VisibleEncounterSettings
   #true - means you can battle from the ground a pokemon from the water
 
   #--------------- VANISHING OF SPAWNED POKEMON AFTER STEPS -------------------
-  DEFAULT_STEPS_BEFORE_VANISH = 10 # default 10
+  DEFAULT_STEPS_BEFORE_VANISH = 25 # default 10 (ampliado a 25 para dar tiempo al jugador a interactuar)
   # This is the number of steps a wild encounter goes by default before vanishing on the map.
 
   Add_Steps_Before_Vanish = [ # default
@@ -456,21 +456,23 @@ end
 def pbChooseTileOnStepTaken
   x = $game_player.x
   y = $game_player.y
-  range = VisibleEncounterSettings::SPAWN_RANGE
-  i = rand(range)
-  r = rand((i+1)*8)
-  if r<=(i+1)*2
-    new_x = x-i-1+r
-    new_y = y-i-1
-  elsif r<=(i+1)*6-2
-    new_x = [x+i+1,x-i-1][r%2]
-    new_y = y-i+((r-1-(i+1)*2)/2).floor
-  else
-    new_x = x-i+r-(i+1)*6
-    new_y = y+i+1
+  range = 4 # Rango óptimo cercano para no dispersar el spawn fuera del parche
+  6.times do
+    i = rand(range)
+    r = rand((i + 1) * 8)
+    if r <= (i + 1) * 2
+      new_x = x - i - 1 + r
+      new_y = y - i - 1
+    elsif r <= (i + 1) * 6 - 2
+      new_x = [x + i + 1, x - i - 1][r % 2]
+      new_y = y - i + ((r - 1 - (i + 1) * 2) / 2).floor
+    else
+      new_x = x - i + r - (i + 1) * 6
+      new_y = y + i + 1
+    end
+    return [new_x, new_y] if pbTileIsPossible(new_x, new_y)
   end
-  return [new_x,new_y] if pbTileIsPossible(new_x,new_y)
-  return
+  nil
 end
 
 #===============================================================================
@@ -622,7 +624,18 @@ class PokemonEncounters
   # chance. Called when taking a step. Add-ons may overwrite this method.
   #===============================================================================
   def encounter_triggered_on_tile?(enc_type, repel_active = false, triggered_by_step = true)
-    return $PokemonEncounters.encounter_triggered?(enc_type, repel_active, true)
+    return false if repel_active
+    return false if $game_system.encounter_disabled rescue false
+    return false if !$player
+    return true if pbPokeRadarOnShakingGrass rescue false
+
+    # En Añil PBS/encounters.txt la tasa base suele ser 12 (Land,12).
+    # Para Pokémon visibles en sobremundo, una probabilidad de spawn de 24% por paso sobre
+    # hierba proporciona una cadencia óptima y dinámica (1 Pokémon cada 8-12 pasos).
+    base_chance = (@step_chances[enc_type] || 12).to_f
+    spawn_chance = [base_chance * 1.85, 24.0].max
+    spawn_chance *= 0.8 if $PokemonGlobal&.bicycle
+    return rand(100) < spawn_chance
   end
 
   #===============================================================================

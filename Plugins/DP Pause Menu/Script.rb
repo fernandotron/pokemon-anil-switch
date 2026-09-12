@@ -316,7 +316,7 @@ class DP_PauseMenu
       confirmed = false
       if @done
         break
-      elsif Input.trigger?(Input::BACK)
+      elsif Input.trigger?(Input::BACK) || (Input.respond_to?(:trigger_action?) && Input.trigger_action?(:menu))
         pbPlayCancelSE
         break
       end

@@ -25,13 +25,14 @@ class PokemonSummary_Scene
   #-----------------------------------------------------------------------------
   def drawPageIcons
     setPages if !@page_list || @page_list.empty?
+    return if !@page_list || @page_list.empty?
     iconPos    = 0
     imagepos   = []
     xpos, ypos = PAGE_ICONS_POSITION
     w, h       = PAGE_ICON_SIZE
     size       = MAX_PAGE_ICONS - 1
     range      = [@page_list.length, MAX_PAGE_ICONS]
-    page       = @page_list.find_index(@page_id)
+    page       = @page_list.find_index(@page_id) || 0
     startPage  = (page > size) ? page - size : 0
     endPage    = [startPage + size, @page_list.length - 1].min
     case PAGE_ICONS_ALIGNMENT
@@ -61,7 +62,7 @@ class PokemonSummary_Scene
   #-----------------------------------------------------------------------------
   # Aliased to set up the correct page while forgetting a move.
   #-----------------------------------------------------------------------------
-  alias modular_pbStartForgetScene pbStartForgetScene
+  alias modular_pbStartForgetScene pbStartForgetScene unless method_defined?(:modular_pbStartForgetScene)
   def pbStartForgetScene(party, partyindex, move_to_learn)
     @page_id = :page_moves
     @page_list = [:page_moves]
@@ -71,7 +72,7 @@ class PokemonSummary_Scene
   #-----------------------------------------------------------------------------
   # Aliased for redrawing page icons while viewing moves.
   #-----------------------------------------------------------------------------
-  alias modular_drawPageFourSelecting drawPageFourSelecting
+  alias modular_drawPageFourSelecting drawPageFourSelecting unless method_defined?(:modular_drawPageFourSelecting)
   def drawPageFourSelecting(move_to_learn)
     modular_drawPageFourSelecting(move_to_learn)
     drawPageIcons if !move_to_learn
@@ -81,7 +82,7 @@ class PokemonSummary_Scene
   # Edited to add missing sound effects while selecting a move to forget.
   #-----------------------------------------------------------------------------
   def pbChooseMoveToForget(move_to_learn)
-    new_move = (move_to_learn) ? Pokemon::Move.new(move_to_learn) : nil
+    new_move = (move_to_learn) ? (move_to_learn.is_a?(Pokemon::Move) ? move_to_learn : Pokemon::Move.new(move_to_learn)) : nil
     selmove = 0
     maxmove = (new_move) ? Pokemon::MAX_MOVES : Pokemon::MAX_MOVES - 1
     loop do
@@ -95,10 +96,6 @@ class PokemonSummary_Scene
       elsif Input.trigger?(Input::USE)
         pbPlayDecisionSE
         break
-      elsif Input.trigger?(Input::ACTION)
-        newScene = PokemonSummary_Scene.new
-        newScreen = PokemonSummaryScreen.new(newScene, @inbattle, false)
-        newScreen.pbStartScreen(@party, @partyindex, 3)
       elsif Input.trigger?(Input::UP)
         selmove -= 1
         selmove = maxmove if selmove < 0

@@ -5,6 +5,7 @@ class PokemonSummary_Scene
   #-----------------------------------------------------------------------------
     def drawPageIcons
     setPages if !@page_list || @page_list.empty?
+    return if !@page_list || @page_list.empty?
     iconPos    = 0
     imagepos   = [] 
     xpos, ypos = PAGE_ICONS_POSITION
@@ -12,7 +13,7 @@ class PokemonSummary_Scene
     spacing    = 4
     size       = MAX_PAGE_ICONS - 1
     range      = [@page_list.length, MAX_PAGE_ICONS]
-    page       = @page_list.find_index(@page_id)
+    page       = @page_list.find_index(@page_id) || 0
     startPage  = (page > size) ? page - size : 0
     endPage    = [startPage + size, @page_list.length - 1].min
     case PAGE_ICONS_ALIGNMENT

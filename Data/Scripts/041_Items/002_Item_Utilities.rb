@@ -637,10 +637,18 @@ end
 
 def pbForgetMove(pkmn, moveToLearn)
   ret = -1
-  pbFadeOutIn do
-    scene = PokemonSummary_Scene.new
-    screen = PokemonSummaryScreen.new(scene)
-    ret = screen.pbStartForgetScreen([pkmn], 0, moveToLearn)
+  begin
+    pbFadeOutIn do
+      scene = PokemonSummary_Scene.new
+      screen = PokemonSummaryScreen.new(scene)
+      ret = screen.pbStartForgetScreen([pkmn], 0, moveToLearn)
+    end
+  rescue Exception => e
+    if defined?(write_crash_report)
+      write_crash_report(e, "pbForgetMove")
+    else
+      log_compat("[ERROR pbForgetMove] #{e.class}: #{e.message}") rescue nil
+    end
   end
   return ret
 end

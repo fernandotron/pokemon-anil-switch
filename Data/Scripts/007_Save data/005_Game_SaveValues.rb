@@ -127,7 +127,8 @@ SaveData.register(:stats) do
 end
 
 module SaveData
-  OPTIONS_FILE_PATH = "options.dat"
+  OPTIONS_FILE_PATH  = "options.dat"
+  CONTROLS_FILE_PATH = "controls.dat"
 
   def self.save_options
     return if !$PokemonSystem
@@ -137,6 +138,9 @@ module SaveData
         name = ivar.to_s.sub(/^@/, '').to_sym
         opts[name] = $PokemonSystem.instance_variable_get(ivar)
       end
+      opts[:button_layout] = ($PokemonSystem.button_layout || 0) rescue 0
+      opts[:turbo_button]  = ($PokemonSystem.turbo_button || 0) rescue 0
+      opts[:plus_action]   = ($PokemonSystem.plus_action || 0) rescue 0
       
       paths = [
         defined?($SavePath) && $SavePath ? "#{$SavePath}options.dat" : nil,
@@ -183,6 +187,15 @@ module SaveData
             $PokemonSystem.instance_variable_set("@#{k}", v)
           end
         end
+        if opts.key?(:button_layout) && $PokemonSystem.respond_to?(:button_layout=)
+          $PokemonSystem.button_layout = opts[:button_layout] rescue nil
+        end
+        if opts.key?(:turbo_button) && $PokemonSystem.respond_to?(:turbo_button=)
+          $PokemonSystem.turbo_button = opts[:turbo_button] rescue nil
+        end
+        if opts.key?(:plus_action) && $PokemonSystem.respond_to?(:plus_action=)
+          $PokemonSystem.plus_action = opts[:plus_action] rescue nil
+        end
         sz = ($PokemonSystem.screensize rescue 1)
         sz = 1 if sz.nil?
         pbSetResizeFactor([sz, 4].min) rescue nil
@@ -192,6 +205,60 @@ module SaveData
       end
     rescue Exception => e
       log_compat("[SaveData.load_options] Error: #{e.class} - #{e.message}") rescue nil
+    end
+  end
+
+  def self.save_controls
+    return if !$PokemonSystem
+    begin
+      data = {
+        button_layout: (($PokemonSystem.button_layout rescue 0) || 0),
+        turbo_button:  (($PokemonSystem.turbo_button rescue 0) || 0),
+        plus_action:   (($PokemonSystem.plus_action rescue 0) || 0)
+      }
+      paths = [
+        defined?($SavePath) && $SavePath ? "#{$SavePath}controls.dat" : nil,
+        CONTROLS_FILE_PATH,
+        "Data/controls.dat"
+      ].compact.uniq
+
+      paths.each do |file_path|
+        begin
+          tmp_path = file_path + ".tmp"
+          File.open(tmp_path, "wb") { |f| Marshal.dump(data, f) }
+          if File.size(tmp_path) > 0
+            File.rename(tmp_path, file_path) rescue (File.open(file_path, "wb") { |f| Marshal.dump(data, f) } rescue nil)
+            switch_invalidate_file_cache(file_path) rescue nil
+            $SWITCH_FILE_EXIST_CACHE&.delete(file_path)
+          end
+          File.delete(tmp_path) if File.exist?(tmp_path) rescue nil
+        rescue Exception
+        end
+      end
+    rescue Exception => e
+      log_compat("[SaveData.save_controls] Error: #{e.class} - #{e.message}") rescue nil
+    end
+  end
+
+  def self.load_controls
+    return if !$PokemonSystem
+    paths = [
+      defined?($SavePath) && $SavePath ? "#{$SavePath}controls.dat" : nil,
+      CONTROLS_FILE_PATH,
+      "Data/controls.dat"
+    ].compact.uniq
+
+    file_path = paths.find { |p| File.file?(p) rescue false }
+    return if !file_path
+    begin
+      data = File.open(file_path, "rb") { |f| Marshal.load(f) }
+      if data.is_a?(Hash)
+        $PokemonSystem.button_layout = data[:button_layout] if data.key?(:button_layout) && $PokemonSystem.respond_to?(:button_layout=)
+        $PokemonSystem.turbo_button  = data[:turbo_button]  if data.key?(:turbo_button) && $PokemonSystem.respond_to?(:turbo_button=)
+        $PokemonSystem.plus_action   = data[:plus_action]   if data.key?(:plus_action) && $PokemonSystem.respond_to?(:plus_action=)
+      end
+    rescue Exception => e
+      log_compat("[SaveData.load_controls] Error: #{e.class} - #{e.message}") rescue nil
     end
   end
 end

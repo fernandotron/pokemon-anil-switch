@@ -44,10 +44,15 @@ module Battle::CatchAndStoreMixin
           stored_box = @peer.pbStorePokemon(pbPlayer, send_pkmn)
           pbPlayer.party.delete_at(party_index)
           box_name = @peer.pbBoxName(stored_box)
-          if send_pkmn.item && pbConfirmMessage(_INTL("{1} tiene equipado {2}. ¿Quieres guardar el objeto en la mochila?", send_pkmn.name, send_pkmn.item.name))
+          if send_pkmn.hasItem? && pbDisplayConfirm(_INTL("{1} tiene equipado {2}. ¿Quieres guardar el objeto en la mochila?", send_pkmn.name, send_pkmn.item.name))
             item = send_pkmn.item
-            $bag.add(item)
-            send_pkmn.item = nil
+            if $bag.can_add?(item)
+              $bag.add(item)
+              pbDisplayPaused(_INTL("Guardaste {1} en la mochila.", item.name))
+              send_pkmn.item = nil
+            else
+              pbDisplayPaused(_INTL("La mochila está llena y no se pudo guardar el objeto."))
+            end
           end
           pbDisplayPaused(_INTL("Has enviado a {1} a la Caja \"{2}\".", send_pkmn.name, box_name))
           # Rearrange all remembered properties of party Pokémon
@@ -87,10 +92,15 @@ module Battle::CatchAndStoreMixin
     end
     # Messages saying the Pokémon was stored in a PC box
     box_name = @peer.pbBoxName(stored_box)
-    if pkmn.item && pbConfirmMessage(_INTL("{1} tiene equipado {2}. ¿Quieres guardar el objeto en la mochila?", pkmn.name, pkmn.item.name))
+    if pkmn.hasItem? && pbDisplayConfirm(_INTL("{1} tiene equipado {2}. ¿Quieres guardar el objeto en la mochila?", pkmn.name, pkmn.item.name))
       item = pkmn.item
-      $bag.add(item)
-      pkmn.item = nil
+      if $bag.can_add?(item)
+        $bag.add(item)
+        pbDisplayPaused(_INTL("Guardaste {1} en la mochila.", item.name))
+        pkmn.item = nil
+      else
+        pbDisplayPaused(_INTL("La mochila está llena y no se pudo guardar el objeto."))
+      end
     end
     pbDisplayPaused(_INTL("¡{1} se ha enviado a la Caja \"{2}\"!", pkmn.name, box_name))
   end

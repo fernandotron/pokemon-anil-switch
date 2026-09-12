@@ -51,9 +51,27 @@ console.log('\n=== 6. DESPLEGANDO TODOS LOS ARCHIVOS FRESCOS ===');
 const now = new Date();
 
 function copyAndTouch(src, dest) {
-  const content = fs.readFileSync(src);
-  fs.writeFileSync(dest, content);
-  fs.utimesSync(dest, now, now);
+  try {
+    if (fs.existsSync(dest)) {
+      const srcStat = fs.statSync(src);
+      const destStat = fs.statSync(dest);
+      if (srcStat.size === destStat.size && Math.abs(srcStat.mtimeMs - destStat.mtimeMs) < 5000) {
+        return;
+      }
+    }
+  } catch (e) {}
+  try {
+    fs.copyFileSync(src, dest);
+    try { fs.utimesSync(dest, now, now); } catch (e) {}
+  } catch (err) {
+    try {
+      const content = fs.readFileSync(src);
+      fs.writeFileSync(dest, content);
+      try { fs.utimesSync(dest, now, now); } catch (e) {}
+    } catch (err2) {
+      console.warn(`[AVISO] No se pudo copiar a ${dest}: ${err2.message}`);
+    }
+  }
 }
 
 function copyDir(src, dest, filterFn = null) {

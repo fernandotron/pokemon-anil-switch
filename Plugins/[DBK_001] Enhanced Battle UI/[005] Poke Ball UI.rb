@@ -148,6 +148,243 @@ class Battle::Scene
     pbRefreshUIPrompt(idxBattler) if !useBall
     return useBall
   end
+
+  #-----------------------------------------------------------------------------
+  # Retrieves all battle-usable healing / medicine items from the player's bag.
+  #-----------------------------------------------------------------------------
+  def pbGetBattleMedicineItems
+    items = []
+    seen = {}
+    return items if !$bag
+    # Pocket 2: Medicinas
+    med_pocket = $bag.pockets[2] || []
+    med_pocket.each do |item_qty|
+      next if !item_qty || !item_qty[0]
+      item_id = item_qty[0]
+      next if seen[item_id]
+      item_data = GameData::Item.try_get(item_id)
+      next if !item_data
+      # Must have in-battle use on pokemon or battler
+      next if !item_data.battle_use || item_data.battle_use <= 0
+      # Exclude move recharge items like Ether (which need move selection)
+      next if item_data.battle_use == 2
+      seen[item_id] = true
+      items.push([item_id, item_qty[1]])
+    end
+    # Pocket 5: Bayas (healing berries)
+    berry_pocket = $bag.pockets[5] || []
+    berry_pocket.each do |item_qty|
+      next if !item_qty || !item_qty[0]
+      item_id = item_qty[0]
+      next if seen[item_id]
+      item_data = GameData::Item.try_get(item_id)
+      next if !item_data
+      next if !item_data.is_berry? || !item_data.is_healing_item?
+      next if !item_data.battle_use || item_data.battle_use <= 0
+      next if item_data.battle_use == 2
+      seen[item_id] = true
+      items.push([item_id, item_qty[1]])
+    end
+    return items
+  end
+
+  #-----------------------------------------------------------------------------
+  # Toggles the visibility of the Medicine / Healing selection menu.
+  #-----------------------------------------------------------------------------
+  def pbToggleHealInfo(idxBattler)
+    return false if pbInSafari?
+    items = pbGetBattleMedicineItems
+    if items.empty?
+      pbSEPlay("GUI sel buzzer") rescue nil
+      return false
+    end
+    pbHideInfoUI if @enhancedUIToggle != :heal
+    @enhancedUIToggle = (@enhancedUIToggle.nil?) ? :heal : nil
+    (@enhancedUIToggle) ? pbSEPlay("GUI party switch") : pbPlayCloseMenuSE
+    @sprites["enhancedUI"].visible = !@enhancedUIToggle.nil?
+    return pbSelectHealInfo(idxBattler, items)
+  end
+
+  #-----------------------------------------------------------------------------
+  # Draws the Medicine / Healing menu.
+  #-----------------------------------------------------------------------------
+  def pbUpdateHealSelection(items, index, targetPkmn, showDesc = false)
+    @enhancedUIOverlay.clear
+    return if @enhancedUIToggle != :heal
+    ypos = @sprites["messageBox"].y - 128
+    imagePos = [[@path + "pokeball_bg", 0, ypos]]
+    imagePos.push([@path + "pokeball_desc", 0, ypos - 69]) if showDesc
+    textY = (showDesc) ? ypos - 55 : ypos + 14
+    action = (showDesc) ? _INTL("X: Esconder") : _INTL("X: Detalles")
+    item = GameData::Item.try_get(items[index][0])
+    name = (item) ? _INTL("{1}", item.name) : _INTL("Volver")
+    desc = (item) ? item.description : _INTL("Volver al menú.")
+
+    targetText = ""
+    targetColor = BASE_LIGHT
+    if targetPkmn
+      if targetPkmn.fainted?
+        targetText = _INTL("Objetivo: {1} [DEBILITADO]", targetPkmn.name)
+        targetColor = BASE_LOWERED
+      else
+        status_str = ""
+        case targetPkmn.status
+        when :POISON
+          status_str = (targetPkmn.statusCount > 0) ? " [TOX]" : " [ENV]"
+        when :PARALYSIS then status_str = " [PAR]"
+        when :SLEEP     then status_str = " [DOR]"
+        when :BURN      then status_str = " [QUE]"
+        when :FROZEN    then status_str = " [CON]"
+        end
+        targetText = _INTL("Objetivo: {1} (PS: {2}/{3}){4}", targetPkmn.name, targetPkmn.hp, targetPkmn.totalhp, status_str)
+      end
+    end
+
+    textPos = [
+      [_INTL("A: Usar"), 46, textY, :center, BASE_LIGHT],
+      [action, Graphics.width - 56, textY, :center, BASE_LIGHT],
+      [name, Graphics.width / 2, textY, :center, BASE_LIGHT, SHADOW_LIGHT, :outline]
+    ]
+
+    if !showDesc && targetText != ""
+      textPos.push([targetText, Graphics.width / 2, ypos - 18, :center, targetColor, SHADOW_LIGHT, :outline])
+    elsif showDesc && targetText != ""
+      textPos.push([targetText, Graphics.width / 2, ypos - 85, :center, targetColor, SHADOW_LIGHT, :outline])
+    end
+
+    ballY = @sprites["messageBox"].y - 25
+    range = ((index - 2)..(index + 2)).to_a
+    range.each_with_index do |pos, i|
+      if pos < 0 || pos > items.length - 1
+        pbUpdateBallIcon(i, nil, true)
+      else
+        try_item = items[pos][0]
+        pbUpdateBallIcon(i, try_item)
+        if try_item
+          x = @sprites["ball_icon#{i}"].x
+          x += 2 if i == index
+          text_colors = (pos == index) ? [BASE_LIGHT, SHADOW_LIGHT, :outline] : [BASE_DARK, SHADOW_DARK]
+          textPos.push([items[pos][1].to_s, x, ballY, :center, *text_colors])
+        end
+      end
+    end
+    pbDrawImagePositions(@enhancedUIOverlay, imagePos)
+    pbDrawTextPositions(@enhancedUIOverlay, textPos)
+    drawTextEx(@enhancedUIOverlay, 10, ypos - 21, Graphics.width - 10, 2, 
+      desc, BASE_DARK, SHADOW_DARK) if showDesc
+  end
+
+  #-----------------------------------------------------------------------------
+  # Handles controls for the Medicine / Healing menu.
+  #-----------------------------------------------------------------------------
+  def pbSelectHealInfo(idxBattler, raw_items)
+    return false if @enhancedUIToggle != :heal
+    pbHideUIPrompt
+    useItem = false
+    showDesc = false
+    items = raw_items.clone
+    items.push([nil])
+    items.unshift([nil])
+    index = 1
+    maxIdx = items.length - 1
+
+    party = @battle.pbParty(idxBattler)
+    activeBattler = @battle.battlers[idxBattler]
+    partyIdx = activeBattler.pokemonIndex || 0
+    partyIdx = 0 if partyIdx >= party.length
+
+    targetPkmn = party[partyIdx]
+    pbUpdateHealSelection(items, index, targetPkmn, showDesc)
+    @sprites["leftarrow"].x = 174
+    @sprites["leftarrow"].y = @sprites["ball_icon0"].y
+    @sprites["rightarrow"].x = 298
+    @sprites["rightarrow"].y = @sprites["ball_icon0"].y
+
+    loop do
+      pbUpdate
+      pbUpdateInfoSprites
+      dorefresh = false
+      item = items[index][0]
+      @sprites["leftarrow"].visible = index > 0
+      @sprites["rightarrow"].visible = index < maxIdx
+      targetPkmn = party[partyIdx]
+
+      trigger_confirm = Input.trigger?(Input::USE) || 
+                        (Input.respond_to?(:trigger_zr?) && Input.trigger_zr?) ||
+                        (!@battle.pbCanUsePokeBall?(idxBattler) && Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)
+
+      if trigger_confirm
+        if !item
+          pbPlayCloseMenuSE
+          break
+        end
+        targetBattler = @battle.pbFindBattler(partyIdx, idxBattler)
+        if @battle.pbCanUseItemOnPokemon?(item, targetPkmn, targetBattler, self, true)
+          if ItemHandlers.triggerCanUseInBattle(item, targetPkmn, targetBattler, nil, true, @battle, self)
+            pbPlayDecisionSE
+            useItem = @battle.pbRegisterItem(idxBattler, item, partyIdx)
+            break
+          end
+        end
+        pbShowWindow(COMMAND_BOX)
+        dorefresh = true
+      elsif Input.trigger?(Input::ACTION)
+        showDesc = !showDesc
+        pbPlayDecisionSE
+        dorefresh = true
+      elsif Input.trigger?(Input::BACK)
+        pbPlayCloseMenuSE
+        break
+      elsif Input.repeat?(Input::LEFT)
+        index -= 1
+        index = maxIdx if index < 0
+        pbPlayCursorSE
+        dorefresh = true
+      elsif Input.repeat?(Input::RIGHT)
+        index += 1
+        index = 0 if index > maxIdx
+        pbPlayCursorSE
+        dorefresh = true
+      elsif Input.repeat?(Input::UP)
+        if party.length > 1
+          loop do
+            partyIdx -= 1
+            partyIdx = party.length - 1 if partyIdx < 0
+            break if party[partyIdx] && !party[partyIdx].egg?
+          end
+          pbPlayCursorSE
+          dorefresh = true
+        end
+      elsif Input.repeat?(Input::DOWN)
+        if party.length > 1
+          loop do
+            partyIdx += 1
+            partyIdx = 0 if partyIdx >= party.length
+            break if party[partyIdx] && !party[partyIdx].egg?
+          end
+          pbPlayCursorSE
+          dorefresh = true
+        end
+      elsif (Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::AUX1)) && index > 0
+        index = 0
+        pbPlayCursorSE
+        dorefresh = true
+      elsif (Input.trigger?(Input::JUMPDOWN) || Input.trigger?(Input::AUX2)) && index < maxIdx
+        index = maxIdx
+        pbPlayCursorSE
+        dorefresh = true
+      end
+      if dorefresh
+        targetPkmn = party[partyIdx]
+        pbUpdateHealSelection(items, index, targetPkmn, showDesc)
+      end
+    end
+    pbHideInfoUI
+    @sprites["leftarrow"].visible = false
+    @sprites["rightarrow"].visible = false
+    pbRefreshUIPrompt(idxBattler) if !useItem
+    return useItem
+  end
 end
 
 
@@ -194,6 +431,17 @@ class PokemonBag
       next if !GameData::Item.get(p[0][0]).is_poke_ball?
       return i
     end
+    return -1
+  end
+
+  def get_medicine_pocket
+    @pockets.each_with_index do |p, i|
+      next if p.empty?
+      item_data = GameData::Item.try_get(p[0][0])
+      next if !item_data
+      return i if item_data.num_pocket == 2
+    end
+    return 2 if @pockets && @pockets[2]
     return -1
   end
 end

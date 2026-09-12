@@ -592,7 +592,10 @@ class PokemonParty_Scene
     return ret
   end
 
-  def pbShowCommands(helptext, commands, index = 0)
+  def pbShowCommands(helptext, commands = nil, index = 0, defaultCmd = 0, *args, &block)
+    if helptext.is_a?(Window) || helptext.is_a?(SpriteWindow_Base) || args.length > 0 || defaultCmd != 0
+      return Kernel.pbShowCommands(helptext, commands, index, defaultCmd, &block)
+    end
     ret = -1
     helpwindow = @sprites["helpwindow"]
     helpwindow.visible = true
@@ -996,7 +999,10 @@ class PokemonPartyScreen
     return @scene.pbDisplayConfirm(text)
   end
 
-  def pbShowCommands(helptext, commands, index = 0)
+  def pbShowCommands(helptext, commands = nil, index = 0, defaultCmd = 0, *args, &block)
+    if helptext.is_a?(Window) || helptext.is_a?(SpriteWindow_Base) || args.length > 0 || defaultCmd != 0
+      return Kernel.pbShowCommands(helptext, commands, index, defaultCmd, &block)
+    end
     return @scene.pbShowCommands(helptext, commands, index)
   end
 

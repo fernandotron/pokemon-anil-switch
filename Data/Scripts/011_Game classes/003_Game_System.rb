@@ -50,8 +50,10 @@ class Game_System
 
   def bgm_play_internal2(name, volume, pitch, position, track = nil) # :nodoc:
     vol = volume || 100
+    vol = [(vol * 1.35).round, 100].min
     bgm_vol = ($PokemonSystem ? ($PokemonSystem.bgmvolume || 100) : 100)
-    vol = (vol * (bgm_vol / 100.0)).to_i
+    vol = (bgm_vol >= 100) ? 100 : (vol * (bgm_vol / 100.0)).round
+    vol = [[vol, 0].max, 100].min
     begin
       Audio.bgm_play(name, vol, pitch || 100, position || 0, track)
     rescue ArgumentError
@@ -154,8 +156,10 @@ class Game_System
     if me && me.name != ""
       if FileTest.audio_exist?("Audio/ME/" + me.name)
         vol = (me.volume || 100)
+        vol = [(vol * 1.35).round, 100].min
         bgm_vol = ($PokemonSystem ? ($PokemonSystem.bgmvolume || 100) : 100)
-        vol = (vol * (bgm_vol / 100.0)).to_i
+        vol = (bgm_vol >= 100) ? 100 : (vol * (bgm_vol / 100.0)).round
+        vol = [[vol, 0].max, 100].min
         Audio.me_play("Audio/ME/" + me.name, vol, me.pitch || 100)
       end
     else
@@ -172,7 +176,8 @@ class Game_System
       if FileTest.audio_exist?("Audio/BGS/" + bgs.name)
         vol = (bgs.volume || 100)
         se_vol = ($PokemonSystem ? ($PokemonSystem.sevolume || 100) : 100)
-        vol = (vol * (se_vol / 100.0)).to_i
+        vol = (vol * (se_vol / 100.0) * 0.80).round
+        vol = [[vol, 0].max, 100].min
         Audio.bgs_play("Audio/BGS/" + bgs.name, vol, bgs.pitch || 100)
       end
     else
@@ -238,7 +243,8 @@ class Game_System
     if se && se.name != ""
       vol = (se.volume || 100)
       se_vol = ($PokemonSystem ? ($PokemonSystem.sevolume || 100) : 100)
-      vol = (vol * (se_vol / 100.0)).to_i
+      vol = (vol * (se_vol / 100.0) * 0.70).round
+      vol = [[vol, 0].max, 100].min
       file = se.name.to_s
       file = "Audio/SE/" + file unless file.start_with?("Audio/SE/") || file.start_with?("Audio/")
       Audio.se_play(file, vol, se.pitch || 100)

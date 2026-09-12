@@ -126,7 +126,12 @@ module FollowingPkmn
   def self.refresh(anim = false)
     return if !FollowingPkmn.can_check?
     first_pkmn = FollowingPkmn.get_pokemon
-    return if !first_pkmn
+    if !first_pkmn
+      FollowingPkmn.remove_sprite rescue nil
+      $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
+      $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil if $game_temp&.followers
+      return
+    end
     FollowingPkmn.refresh_internal
     ret = FollowingPkmn.active?
     event = FollowingPkmn.get_event

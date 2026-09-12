@@ -783,6 +783,7 @@ module Game
       SaveData.load_bootup_values(save_data)
     end
     SaveData.load_options rescue nil
+    SaveData.load_controls rescue nil
     # Set resize factor
     sz = ($PokemonSystem && $PokemonSystem.respond_to?(:screensize) && !$PokemonSystem.screensize.nil?) ? [$PokemonSystem.screensize, 4].min : 1
     pbSetResizeFactor(sz)

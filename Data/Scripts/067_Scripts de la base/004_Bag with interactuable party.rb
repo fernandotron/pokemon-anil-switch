@@ -319,6 +319,11 @@ class PokemonBagPartyBlankPanel < Sprite
     @text = nil
   end
 
+  def set_annotation(text, text_color)
+    @text = text
+    @text_color = text_color
+  end
+
   def dispose
     @panelbgsprite.dispose
     super
@@ -419,6 +424,15 @@ class PokemonBagPartyPanel < Sprite
   def color=(value)
     super
     refresh
+  end
+
+  def set_annotation(value, color_val)
+    if @text != value || @text_color != color_val
+      @text = value
+      @text_color = color_val
+      @refreshBitmap = true
+      refresh
+    end
   end
 
   def text=(value)
@@ -635,8 +649,10 @@ class PokemonBag_Scene
 
   def pbUpdate
     pbUpdateSpriteHash(@sprites)
-    @sprites["panorama"].x  = 0 if @sprites["panorama"].x == - 56
-    @sprites["panorama"].x -= 2 if BagScreenWiInParty::PANORAMA == true
+    if @sprites["panorama"] && !@sprites["panorama"].disposed?
+      @sprites["panorama"].x = 0 if @sprites["panorama"].x <= -56
+      @sprites["panorama"].x -= 2 if BagScreenWiInParty::PANORAMA == true
+    end
   end
 
   def pbStartScene(bag, party = $player.party, choosing = false, filterproc = nil, resetpocket = true)
@@ -871,7 +887,10 @@ class PokemonBag_Scene
     return UIHelper.pbChooseNumber(@sprites["helpwindow"], helptext, maximum, initnum) { pbUpdate }
   end
 
-  def pbShowCommands(helptext, commands, index = 0)
+  def pbShowCommands(helptext, commands = nil, index = 0, defaultCmd = 0, *args, &block)
+    if helptext.is_a?(Window) || helptext.is_a?(SpriteWindow_Base) || args.length > 0 || defaultCmd != 0
+      return Kernel.pbShowCommands(helptext, commands, index, defaultCmd, &block)
+    end
     return UIHelper.pbShowCommands(@sprites["helpwindow"], helptext, commands, index) { pbUpdate }
   end
 
@@ -964,6 +983,7 @@ class PokemonBag_Scene
     else
       @sprites["itemtext"].text = (itemlist.item) ? GameData::Item.get(itemlist.item).description : _INTL("Cerrar Mochila.")
     end
+    pbUpdateAnnotation
   end
 
   def pbRefreshFilter
@@ -1014,63 +1034,40 @@ class PokemonBag_Scene
     end
   end
   
+  def pbCheckTMCompat(pkmn, move)
+    @tm_compat_cache ||= {}
+    key = [pkmn.species, pkmn.form, move]
+    return @tm_compat_cache[key] if @tm_compat_cache.key?(key)
+    @tm_compat_cache[key] = (pkmn.compatible_with_move?(move) rescue false)
+  end
+
   def pbUpdateAnnotation
     itemwindow = @sprites["itemlist"]
     item       = itemwindow.item
     itm        = GameData::Item.get(item) if item
-    if @bag.last_viewed_pocket == 1 && item #Items Pocket
-      annotations = nil
-      annotations = []
-      color_annotations=[]
+    annotations = []
+    color_annotations = []
+    if @bag.last_viewed_pocket == 1 && item && itm # Items Pocket
       if itm.is_evolution_stone?
         for i in $player.party
           elig = i.check_evolution_on_use_item(itm)
           annotations.push((elig) ? _INTL("APTO") : _INTL("NO APTO"))
           color_annotations.push((elig) ? nil : true)
         end
-      else
-        for i in 0...max_party_size
-          @sprites["pokemon#{i}"].text = annotations[i] if  annotations
-          @sprites["pokemon#{i}"].text_color = color_annotations[i] if annotations
-        end
       end
-      for i in 0...max_party_size
-        @sprites["pokemon#{i}"].text = annotations[i] if  annotations
-        @sprites["pokemon#{i}"].text_color = color_annotations[i] if annotations
-
-
-      end
-    elsif @bag.last_viewed_pocket == 4 && item #TMs Pocket
-      annotations = nil
-      annotations = []
-      color_annotations=[]
+    elsif @bag.last_viewed_pocket == 4 && item && itm # TMs Pocket
       if itm.is_machine?
         machine = itm.move
-        # if RandomizedChallenge.enabled? && $PokemonGlobal.tm_move_map && $PokemonGlobal.tm_move_map.has_key?(itm.id)
-        #   machine = $PokemonGlobal.tm_move_map[itm.id]
-        # end
-        move = GameData::Move.get(machine).id
-        movelist = nil
-        if movelist!=nil && movelist.is_a?(Array)
-          for i in 0...movelist.length
-            movelist[i] = GameData::Move.get(movelist[i]).id
-          end
-        end
-        $player.party.each_with_index do |pkmn, i|
-          if pkmn.egg?
-            annotations[i] = _INTL("NO APTO")
-            color_annotations[i] = true
-          elsif pkmn.hasMove?(move)
-            annotations[i] = _INTL("APRENDIDO")
-            color_annotations[i] = false
-          else
-            species = pkmn.species
-            if movelist && movelist.any? { |j| j == species }
-              # Checked data from movelist given in parameter
-              annotations[i] = _INTL("APTO")
-              color_annotations[i] = nil
-            elsif pkmn.compatible_with_move?(move)
-              # Checked data from Pokémon's tutor moves in pokemon.txt
+        move = GameData::Move.get(machine).id rescue nil
+        if move
+          $player.party.each_with_index do |pkmn, i|
+            if pkmn.egg?
+              annotations[i] = _INTL("NO APTO")
+              color_annotations[i] = true
+            elsif pkmn.hasMove?(move)
+              annotations[i] = _INTL("APRENDIDO")
+              color_annotations[i] = false
+            elsif pbCheckTMCompat(pkmn, move)
               annotations[i] = _INTL("APTO")
               color_annotations[i] = nil
             else
@@ -1079,20 +1076,16 @@ class PokemonBag_Scene
             end
           end
         end
+      end
+    end
+    for i in 0...max_party_size
+      sprite = @sprites["pokemon#{i}"]
+      next if !sprite || sprite.disposed?
+      if sprite.respond_to?(:set_annotation)
+        sprite.set_annotation(annotations[i], color_annotations[i])
       else
-        for i in @party
-          annotations.push((elig) ? _INTL("APTO") : _INTL("NO APTO"))
-          color_annotations.push((elig) ? nil : true)
-        end
-      end
-      for i in 0...max_party_size
-        @sprites["pokemon#{i}"].text = annotations[i] if annotations
-        @sprites["pokemon#{i}"].text_color = color_annotations[i] if annotations
-      end
-    else #Others, only show HP
-      for i in 0...max_party_size
-        @sprites["pokemon#{i}"].text = nil if @sprites["pokemon#{i}"].text 
-        @sprites["pokemon#{i}"].text_color = color_annotations[i] if @sprites["pokemon#{i}"].text 
+        sprite.text = annotations[i]
+        sprite.text_color = color_annotations[i]
       end
     end
   end
@@ -1103,13 +1096,13 @@ class PokemonBag_Scene
     itemwindow = @sprites["itemlist"]
     thispocket = @bag.pockets[itemwindow.pocket]
     swapinitialpos = -1
+    pbUpdateAnnotation
     pbActivateWindow(@sprites, "itemlist") {
       loop do
         oldindex = itemwindow.index
         Graphics.update
         Input.update
         pbUpdate
-        pbUpdateAnnotation
         if itemwindow.sorting && itemwindow.index >= thispocket.length
           itemwindow.index = (oldindex == thispocket.length - 1) ? 0 : thispocket.length - 1
         end
@@ -1404,7 +1397,8 @@ class PokemonBag_Scene
         elsif option == 2 # Use
           ret = pbBagUseItem(@bag, item, PokemonBagScreen, self, @activecmd)
           pbRefresh; pbUpdateAnnotation
-          if !$bag.has?(item)
+          itm_obj = GameData::Item.try_get(item)
+          if !$bag.has?(item) || (itm_obj && itm_obj.is_machine?)
             @sprites["pokemon#{@activecmd}"].selected = false
             pbChangeCursor(2)
             break
@@ -1872,74 +1866,87 @@ end
 #=============================================================================
 # @return [Integer] 0 = item wasn't used; 1 = item used; 2 = close Bag to use in field
 def pbBagUseItem(bag, item, scene, screen, chosen, bagscene=nil)
-  itm     = GameData::Item.get(item)
-  useType = itm.field_use
-  pkmn    = $player.party[chosen]
-  if itm.is_machine?    # TM, HM or TR
-    if $player.pokemon_count == 0
-      pbMessage(_INTL("No hay Pokémon.")) { screen.pbUpdate }
-      return 0
-    end
-    machine = itm.move
-    return 0 if !machine
-    movename = GameData::Move.get(machine).name
-    move     = GameData::Move.get(machine).id
-    movelist = nil; bymachine = false; oneusemachine = false
-    if movelist != nil && movelist.is_a?(Array)
-      for i in 0...movelist.length
-        movelist[i] = GameData::Move.get(movelist[i]).id
+  begin
+    itm     = GameData::Item.get(item)
+    useType = itm.field_use
+    pkmn    = $player.party[chosen]
+    if itm.is_machine?    # TM, HM or TR
+      if $player.pokemon_count == 0
+        pbMessage(_INTL("No hay Pokémon.")) { screen.pbUpdate }
+        return 0
       end
-    end
-    if pkmn.egg?
-      pbMessage(_INTL("Los Huevos no pueden aprender movimientos.")) { screen.pbUpdate }
-    elsif pkmn.shadowPokemon?
-      pbMessage(_INTL("Los Pokémon Oscuros no pueden aprender movimientos.")) { screen.pbUpdate }
-    elsif movelist && !movelist.any? { |j| j == pkmn.species }
-      pbMessage(_INTL("{1} no puede aprender {2}.", pkmn.name, movename)) { screen.pbUpdate }
-    elsif !pkmn.compatible_with_move?(move)
-      pbMessage(_INTL("{1} no puede aprender {2}.", pkmn.name, movename)) { screen.pbUpdate }
-    else
-      if pbLearnMove(pkmn, move, false, bymachine) { screen.pbUpdate }
-        pkmn.add_first_move(move) if oneusemachine
-        bag.remove(itm) if itm.consumed_after_use?
-      end
-    end
-    screen.pbRefresh; screen.pbUpdate
-    return 1
-  elsif useType == 1 # Item is usable on a Pokémon
-    if $player.pokemon_count == 0
-      pbMessage(_INTL("No hay Pokémon.")) { screen.pbUpdate }
-      return 0
-    end
-    qty = 1
-    ret = false
-    screen.pbRefresh
-    if pbCheckUseOnPokemon(item, pkmn, screen)
-      #ret = ItemHandlers.triggerUseOnPokemon(item, qty, pkmn, screen)
-      max_at_once = ItemHandlers.triggerUseOnPokemonMaximum(item, pkmn)
-      max_at_once = [max_at_once, $bag.quantity(itm)].min	
-      if max_at_once > 1
-        qty = screen.pbChooseNumber(
-          _INTL("¿Qué cantidad {1} quieres usar?", GameData::Item.get(item).name), max_at_once
-        )
-        scene.pbSetHelpText("") if screen.is_a?(PokemonPartyScreen)
-      end
-      if qty > 0
-        ret = ItemHandlers.triggerUseOnPokemon(item, qty, pkmn, screen)
-        if ret && useType == 1 # Usable on Pokémon, consumed
-          $bag.remove(item, qty)  if itm.consumed_after_use? { screen.pbRefresh }
-        end 
-        if !$bag.has?(item) && itm.num_pocket != 8
-          screen.pbDisplay(_INTL("No te quedan más {1}.", itm.portion_name)) { screen.pbUpdate }
-          screen.pbChangeCursor(2)
+      machine = itm.move
+      return 0 if !machine
+      movename = GameData::Move.get(machine).name
+      move     = GameData::Move.get(machine).id
+      movelist = nil; bymachine = itm.is_machine?; oneusemachine = itm.consumed_after_use?
+      if movelist != nil && movelist.is_a?(Array)
+        for i in 0...movelist.length
+          movelist[i] = GameData::Move.get(movelist[i]).id
         end
       end
+      if pkmn.egg?
+        pbMessage(_INTL("Los Huevos no pueden aprender movimientos.")) { screen.pbUpdate }
+      elsif pkmn.shadowPokemon?
+        pbMessage(_INTL("Los Pokémon Oscuros no pueden aprender movimientos.")) { screen.pbUpdate }
+      elsif movelist && !movelist.any? { |j| j == pkmn.species }
+        pbMessage(_INTL("{1} no puede aprender {2}.", pkmn.name, movename)) { screen.pbUpdate }
+      elsif !pkmn.compatible_with_move?(move)
+        pbMessage(_INTL("{1} no puede aprender {2}.", pkmn.name, movename)) { screen.pbUpdate }
+      else
+        if pbLearnMove(pkmn, move, false, bymachine) { screen.pbUpdate }
+          pkmn.add_first_move(move) if oneusemachine
+          bag.remove(itm) if itm.consumed_after_use?
+        end
+      end
+      screen.pbRefresh; screen.pbUpdate
+      return 1
+    elsif useType == 1 # Item is usable on a Pokémon
+      if $player.pokemon_count == 0
+        pbMessage(_INTL("No hay Pokémon.")) { screen.pbUpdate }
+        return 0
+      end
+      qty = 1
+      ret = false
       screen.pbRefresh
+      if pbCheckUseOnPokemon(item, pkmn, screen)
+        #ret = ItemHandlers.triggerUseOnPokemon(item, qty, pkmn, screen)
+        max_at_once = ItemHandlers.triggerUseOnPokemonMaximum(item, pkmn)
+        max_at_once = [max_at_once, $bag.quantity(itm)].min	
+        if max_at_once > 1
+          qty = screen.pbChooseNumber(
+            _INTL("¿Qué cantidad {1} quieres usar?", GameData::Item.get(item).name), max_at_once
+          )
+          scene.pbSetHelpText("") if screen.is_a?(PokemonPartyScreen)
+        end
+        if qty > 0
+          ret = ItemHandlers.triggerUseOnPokemon(item, qty, pkmn, screen)
+          if ret && useType == 1 # Usable on Pokémon, consumed
+            $bag.remove(item, qty) if itm.consumed_after_use?
+            screen.pbRefresh
+          end 
+          if !$bag.has?(item) && itm.num_pocket != 8
+            screen.pbDisplay(_INTL("No te quedan más {1}.", itm.portion_name)) { screen.pbUpdate }
+            screen.pbChangeCursor(2)
+          end
+        end
+        screen.pbRefresh
+      end
+      bagscene.pbRefresh if bagscene
+      return 1
+    else
+      pbMessage(_INTL("Aquí no se puede usar.")) { screen.pbUpdate }
+      return 0
     end
-    bagscene.pbRefresh if bagscene
-    return 1
-  else
-    pbMessage(_INTL("Aquí no se puede usar.")) { screen.pbUpdate }
+  rescue Exception => e
+    if defined?(write_crash_report)
+      write_crash_report(e, "pbBagUseItem(#{item}, pkmn=#{chosen})")
+    else
+      log_compat("[ERROR pbBagUseItem] #{e.class}: #{e.message}") rescue nil
+    end
+    pbMessage(_INTL("Ocurrió un error al usar el objeto: {1}", e.message)) rescue nil
+    screen.pbRefresh rescue nil
+    screen.pbUpdate rescue nil
     return 0
   end
 end

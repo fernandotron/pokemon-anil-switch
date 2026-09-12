@@ -239,7 +239,13 @@ class Battle::Scene
         elsif @battle.pbCanUsePokeBall?(idxBattler)
           switchUI = 2
           break
+        else
+          switchUI = 3
+          break
         end
+      elsif (Input.respond_to?(:trigger_zr?) && Input.trigger_zr?) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:D)) || (Input.trigger?(Input::AUX2) rescue false)
+        switchUI = 3
+        break
       end
       if oldSide != idxSide || oldPoke != idxPoke
         pbUpdateBattlerSelection(idxSide, idxPoke)
@@ -256,6 +262,7 @@ class Battle::Scene
     when 0 then pbPlayCloseMenuSE; pbRefreshUIPrompt
     when 1 then pbToggleMoveInfo(cw.battler, :none, cw)
     when 2 then pbToggleBallInfo(idxBattler)
+    when 3 then pbToggleHealInfo(idxBattler)
     end
   end
   
@@ -302,9 +309,24 @@ class Battle::Scene
         break
       elsif (Input.trigger?(Input::JUMPUP) || Input.trigger?(Input::ACTION)) && !pbInSafari?
         pbToggleBattleInfo
+        if @choices[idxBattler][0] == :UseItem
+          ret = 1
+          break
+        end
         promptTimer = System.uptime
       elsif (Input.trigger?(Input::JUMPDOWN) || (Input.respond_to?(:trigger_zl?) && Input.trigger_zl?)) && !pbInSafari?
-        if pbToggleBallInfo(idxBattler)
+        if @battle.pbCanUsePokeBall?(idxBattler)
+          if pbToggleBallInfo(idxBattler)
+            ret = 1
+            break
+          end
+        elsif pbToggleHealInfo(idxBattler)
+          ret = 1
+          break
+        end
+        promptTimer = System.uptime
+      elsif ((Input.respond_to?(:trigger_zr?) && Input.trigger_zr?) || (Input.respond_to?(:triggerex?) && Input.triggerex?(:D)) || (Input.trigger?(Input::AUX2) rescue false)) && !pbInSafari?
+        if pbToggleHealInfo(idxBattler)
           ret = 1
           break
         end

@@ -227,15 +227,21 @@ class Scene_Map
   alias __followingpkmn__update update unless method_defined?(:__followingpkmn__update)
   def update(*args)
     __followingpkmn__update(*args)
-    if FollowingPkmn.can_check? && ($PokemonGlobal&.follower_toggled != false) && $player&.first_able_pokemon
-      if !FollowingPkmn.get
-        $PokemonGlobal.follower_toggled = true
+    if FollowingPkmn.can_check?
+      if ($PokemonGlobal&.follower_toggled != false) && $player&.first_able_pokemon
+        if !FollowingPkmn.get
+          $PokemonGlobal.follower_toggled = true
+          $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
+          $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil
+          $game_temp.followers.add_follower($game_player, "FollowingPkmn", FollowingPkmn::FOLLOWER_COMMON_EVENT) rescue nil
+          FollowingPkmn.refresh(false) rescue nil
+        elsif !FollowingPkmn.active?
+          FollowingPkmn.refresh(false) rescue nil
+        end
+      elsif !$player&.first_able_pokemon && FollowingPkmn.get
+        FollowingPkmn.remove_sprite rescue nil
         $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
-        $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil
-        $game_temp.followers.add_follower($game_player, "FollowingPkmn", FollowingPkmn::FOLLOWER_COMMON_EVENT) rescue nil
-        FollowingPkmn.refresh(false) rescue nil
-      elsif !FollowingPkmn.active?
-        FollowingPkmn.refresh(false) rescue nil
+        $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil if $game_temp&.followers
       end
     end
     toggle_triggered = false
@@ -246,7 +252,9 @@ class Scene_Map
       end
     end
     if toggle_triggered
-      FollowingPkmn.toggle(nil, true)
+      if $player&.first_able_pokemon
+        FollowingPkmn.toggle(nil, true)
+      end
       return
     end
     return if !FollowingPkmn.active?
@@ -363,6 +371,10 @@ EventHandlers.add(:on_enter_map, :following_pkmn_spawn_on_map, proc { |_old_map_
       end
       FollowingPkmn.refresh(false) rescue nil
     end
+  else
+    FollowingPkmn.remove_sprite rescue nil
+    $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
+    $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil if $game_temp&.followers
   end
 })
 
@@ -374,6 +386,10 @@ EventHandlers.add(:on_map_or_spriteset_change, :following_pkmn_ensure_spawn, pro
       $game_temp.followers.add_follower($game_player, "FollowingPkmn", FollowingPkmn::FOLLOWER_COMMON_EVENT) rescue nil
     end
     FollowingPkmn.refresh(false) rescue nil
+  elsif $player && !$player.first_able_pokemon
+    FollowingPkmn.remove_sprite rescue nil
+    $PokemonGlobal.followers.delete_if { |f| f.name == "FollowingPkmn" } if $PokemonGlobal&.followers
+    $game_temp.followers.remove_follower_by_name("FollowingPkmn") rescue nil if $game_temp&.followers
   end
 })
 

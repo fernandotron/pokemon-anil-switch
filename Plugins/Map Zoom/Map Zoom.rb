@@ -207,68 +207,22 @@ end
 
 
 
-def pbShowCommands(msgwindow,commands=nil,cmdIfCancel=0,defaultCmd=0)
-  return 0 if !commands
-  $game_temp.cmd_window = Window_CommandPokemonEx.new(commands) # Added
-  cmdwindow = $game_temp.cmd_window # Added
-  cmdwindow.z=99999
-  cmdwindow.visible=true
-  cmdwindow.resizeToFit(cmdwindow.commands)
-  pbPositionNearMsgWindow(cmdwindow,msgwindow,:right)
-  cmdwindow.index=defaultCmd
-  command=0
-  loop do
-    Graphics.update
-    Input.update
-    cmdwindow.update
-    msgwindow.update if msgwindow
-    yield if block_given?
-    if Input.trigger?(Input::BACK)
-      if cmdIfCancel>0
-        command=cmdIfCancel-1
-        break
-      elsif cmdIfCancel<0
-        command=cmdIfCancel
-        break
-      end
-    end
-    if Input.trigger?(Input::USE)
-      command=cmdwindow.index
-      break
-    end
-    pbUpdateSceneMap
-  end
-  ret=command
-  cmdwindow.dispose
-  Input.update
-  return ret
-end
-
-def pbShowCommandsWithHelp(msgwindow,commands,help,cmdIfCancel=0,defaultCmd=0)
-  msgwin=msgwindow
-  msgwin=pbCreateMessageWindow(nil) if !msgwindow
-  oldlbl=msgwin.letterbyletter
-  msgwin.letterbyletter=false
-  if commands
+module Kernel
+  def pbShowCommands(msgwindow,commands=nil,cmdIfCancel=0,defaultCmd=0, &block)
+    return 0 if !commands
     $game_temp.cmd_window = Window_CommandPokemonEx.new(commands) # Added
     cmdwindow = $game_temp.cmd_window # Added
     cmdwindow.z=99999
     cmdwindow.visible=true
     cmdwindow.resizeToFit(cmdwindow.commands)
-    cmdwindow.height=msgwin.y if cmdwindow.height>msgwin.y
+    pbPositionNearMsgWindow(cmdwindow,msgwindow,:right)
     cmdwindow.index=defaultCmd
     command=0
-    msgwin.text=help[cmdwindow.index]
-    msgwin.width=msgwin.width   # Necessary evil to make it use the proper margins
     loop do
       Graphics.update
       Input.update
-      oldindex=cmdwindow.index
       cmdwindow.update
-      if oldindex!=cmdwindow.index
-        msgwin.text=help[cmdwindow.index]
-      end
-      msgwin.update
+      msgwindow.update if msgwindow
       yield if block_given?
       if Input.trigger?(Input::BACK)
         if cmdIfCancel>0
@@ -288,8 +242,66 @@ def pbShowCommandsWithHelp(msgwindow,commands,help,cmdIfCancel=0,defaultCmd=0)
     ret=command
     cmdwindow.dispose
     Input.update
+    return ret
   end
-  msgwin.letterbyletter=oldlbl
-  msgwin.dispose if !msgwindow
-  return ret
+  module_function :pbShowCommands rescue nil
+
+  def pbShowCommandsWithHelp(msgwindow,commands,help,cmdIfCancel=0,defaultCmd=0, &block)
+    msgwin=msgwindow
+    msgwin=pbCreateMessageWindow(nil) if !msgwindow
+    oldlbl=msgwin.letterbyletter
+    msgwin.letterbyletter=false
+    if commands
+      $game_temp.cmd_window = Window_CommandPokemonEx.new(commands) # Added
+      cmdwindow = $game_temp.cmd_window # Added
+      cmdwindow.z=99999
+      cmdwindow.visible=true
+      cmdwindow.resizeToFit(cmdwindow.commands)
+      cmdwindow.height=msgwin.y if cmdwindow.height>msgwin.y
+      cmdwindow.index=defaultCmd
+      command=0
+      msgwin.text=help[cmdwindow.index]
+      msgwin.width=msgwin.width   # Necessary evil to make it use the proper margins
+      loop do
+        Graphics.update
+        Input.update
+        oldindex=cmdwindow.index
+        cmdwindow.update
+        if oldindex!=cmdwindow.index
+          msgwin.text=help[cmdwindow.index]
+        end
+        msgwin.update
+        yield if block_given?
+        if Input.trigger?(Input::BACK)
+          if cmdIfCancel>0
+            command=cmdIfCancel-1
+            break
+          elsif cmdIfCancel<0
+            command=cmdIfCancel
+            break
+          end
+        end
+        if Input.trigger?(Input::USE)
+          command=cmdwindow.index
+          break
+        end
+        pbUpdateSceneMap
+      end
+      ret=command
+      cmdwindow.dispose
+      Input.update
+    end
+    msgwin.letterbyletter=oldlbl
+    msgwin.dispose if !msgwindow
+    return ret
+  end
+  module_function :pbShowCommandsWithHelp rescue nil
+end
+
+def pbShowCommands(*args, &block)
+  Kernel.pbShowCommands(*args, &block)
+end
+
+def pbShowCommandsWithHelp(*args, &block)
+  Kernel.pbShowCommandsWithHelp(*args, &block)
 end

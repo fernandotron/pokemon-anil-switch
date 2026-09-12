@@ -248,7 +248,7 @@ class Scene_Map
     if !pbMapInterpreterRunning? && !$PokemonGlobal.forced_movement?
       if Input.trigger?(Input::USE)
         $game_temp.interact_calling = true
-      elsif Input.trigger?(Input::BACK)
+      elsif (Input.respond_to?(:trigger_action?) && Input.trigger_action?(:menu)) || Input.trigger?(Input::BACK)
         if !$game_system.menu_disabled && !$game_player.moving?
           $game_temp.menu_calling = true
           $game_temp.menu_beep = true
@@ -259,11 +259,21 @@ class Scene_Map
         $game_temp.debug_calling = true if $DEBUG
       elsif (Input.respond_to?(:trigger_plus?) && Input.trigger_plus?)
         @plus_calling = true if !$game_system.menu_disabled
+      elsif (Input.respond_to?(:trigger_controls?) && Input.trigger_controls?)
+        @controls_calling = true if !$game_system.menu_disabled
       end
     end
     if !$game_player.moving?
       if $game_temp.menu_calling
         call_menu
+      elsif @controls_calling
+        @controls_calling = false
+        $game_player.straighten
+        pbFadeOutIn {
+          scene = PokemonControls_Scene.new
+          screen = PokemonControlsScreen.new(scene)
+          screen.pbStartScreen
+        }
       elsif @plus_calling
         @plus_calling = false
         call_plus_action

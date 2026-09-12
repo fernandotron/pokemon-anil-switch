@@ -23,7 +23,7 @@
 # Settings
 #===============================================================================
 module VisibleEncounterSettings
-  AUTO_SPAWN_SPEED = 60 # default 60 (checked once per second instead of every frame)
+  AUTO_SPAWN_SPEED = 45 # Ajustado para aparición natural en reposo (cada 0.75s a 60 FPS)
   #You can set the speed of automatic pokemon spawning, i.e. the ability of pokemon
   # to spawn automatically even without even moving the player.
   #0   - means that pokemon only spawn while the player is moving
