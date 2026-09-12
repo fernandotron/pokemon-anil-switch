@@ -130,25 +130,29 @@ const releaseNotes = `## 🎮 Pokémon Añil 4.0 — Port Nintendo Switch (${ver
 ¡Versión oficial y optimizada de **Pokémon Añil 4.0** para **Nintendo Switch**!
 
 ### 📥 Archivos Disponibles para Descarga:
-1. **👑 \`Pokemon Anil 4.0.rar\` (~580 MB):** Pack completo recomendado para nuevos jugadores. Incluye el juego entero listo para MicroSD, Forwarder NSP, guía de instalación y manuales en PDF.
-2. **⚡ \`Pokemon_Anil_Switch_Update_${version}.zip\` (~18 MB):** Para quienes ya tienen el juego instalado. Actualiza scripts, shims y binarios NRO en segundos sin tener que descargar de nuevo gráficos y audios.
+1. **👑 \`Pokemon Anil 4.0.rar\` (~767 MB):** Pack completo recomendado para nuevos jugadores. Incluye el juego entero estructurado para MicroSD, Forwarder NSP, guía de instalación y manuales en PDF.
+2. **⚡ \`Pokemon_Anil_Switch_Update_${version}.zip\` (~20 MB):** Para quienes ya tienen el juego instalado. Actualiza scripts, shims y binarios NRO en segundos sin tener que descargar de nuevo gráficos y audios.
 3. **🎮 \`Pokemon Anil [01ab776ba9c10000].nsp\` (~395 KB):** Acceso directo para el Menú Home que desbloquea los 3.5 GB de RAM.
+4. **📚 \`MANUALES/\` (~12 MB):** Las 4 guías completas en PDF (Modo Clásico, Modo Completo, Modo Radical y Preguntas Frecuentes).
 
 ---
 
-### ✨ Novedades y Mejoras Incluidas:
-- ⚡ **Arranque instantáneo:** Eliminada la espera de 34s de pantalla negra; inicio rápido con barra de progreso.
-- 🛡️ **Combates blindados:** Precarga de animaciones en RAM; cero pantallas negras o congelaciones en batallas.
-- 💡 **QoL - Recordar Movimientos desde el Menú:** Accede al sumario de tu Pokémon y recuerda cualquier ataque olvidado al estilo moderno (Gen 8/9).
-- 💾 **Guardado Atómico:** Protección contra apagados inesperados (escritura en \`.tmp\` con respaldo \`.bak\`).
-- 🧠 **Caché en RAM:** Más de 115.000 gráficos y 35.000 sonidos indexados a bajo nivel para 60 FPS estables.
-- 🎮 **Controles ergonómicos:** Mapeo para Joy-Con y Pro Controller con botón Turbo (ZR) y Quick Save (ZL).
+### ✨ Novedades y Mejoras Incluidas en ${version}:
+- 🎮 **Reasignación Completa de Controles:** Menú interactivo en Controles/Opciones para mapear cualquier acción a cualquier botón físico del Joy-Con o Pro Controller, con detección en vivo y persistencia atómica en \`controls.dat\`.
+- ⚡ **Arranque Instantáneo:** Reducción de más de 24.000 comprobaciones lentas a disco a menos de 300 en memoria; pantalla de carga visual con progreso.
+- 🛡️ **Blindaje de Combates y Captura:** Precarga de animaciones en RAM; corregido el crasheo fatal al capturar Pokémon con objetos equipados (\`pbDisplayConfirm\`).
+- 💊 **Menú Rápido de Medicina en Batalla:** Usa pociones, revivir y curaciones directamente en combate sin abrir la mochila entera, con selector de objetivo y visualización de PS/estados.
+- 🎒 **Mochila a 60 FPS Fluidos:** Eliminado el lag en la mochila con equipo interactivo y corregido el cursor con MTs/MOs.
+- 🌿 **Sobremundo Dinámico (VOE):** Los Pokémon salvajes visibles permanecen 25 pasos en el mapa para alcanzarlos fácilmente y aparecen con cadencia natural en parches de hierba.
+- 💡 **Recordar Movimientos desde el Sumario:** Recupera ataques olvidados al estilo moderno (Gen 8/9) directamente desde los datos del Pokémon.
+- 💾 **Guardado Atómico:** Protección contra apagados involuntarios (escritura en \`.tmp\` con respaldo \`.bak\`).
+- 🔊 **Audio Calibrado para Switch:** +35% de volumen en BGM/ME para compensar los altavoces de la consola con balance óptimo de efectos.
 
 ---
 
 ### 📖 Instrucciones de Instalación:
 - **Nuevos Jugadores:** Descomprime el juego en la raíz de tu tarjeta MicroSD para que quede en \`sdmc:/switch/pokemon_anil/\` e instala el NSP en el Menú Home con DBI, TinWoo o Tinfoil.
-- **Actualizar:** Extrae \`Pokemon_Anil_Switch_Update_${version}.zip\` y copia los archivos en \`sdmc:/switch/pokemon_anil/\` reemplazando los existentes.
+- **Actualizar:** Extrae \`Pokemon_Anil_Switch_Update_${version}.zip\` y copia los archivos en \`sdmc:/switch/pokemon_anil/\` reemplazando los existentes (tu partida se mantendrá al 100%).
 `;
 
 fs.writeFileSync(path.join(distDir, 'RELEASE_NOTES.md'), releaseNotes, 'utf8');
