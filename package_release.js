@@ -127,7 +127,9 @@ try {
 fs.rmSync(updateTempDir, { recursive: true, force: true });
 
 // 7. Verificar o enlazar el paquete completo (.rar)
-const rarFuente = path.join(__dirname, 'Nueva carpeta', 'Pokemon Anil 4.0.rar');
+const rarFuente414 = path.join(__dirname, 'Nueva carpeta', 'Pokemon Anil 4.14.rar');
+const rarFuente400 = path.join(__dirname, 'Nueva carpeta', 'Pokemon Anil 4.0.rar');
+const rarFuente = fs.existsSync(rarFuente414) ? rarFuente414 : rarFuente400;
 if (fs.existsSync(rarFuente)) {
   const rarSizeMB = (fs.statSync(rarFuente).size / (1024 * 1024)).toFixed(2);
   console.log(`\n[OK] Encontrado el Pack Completo en: "${rarFuente}" (${rarSizeMB} MB)`);
@@ -139,7 +141,7 @@ const releaseNotes = `## 🎮 Pokémon Añil 4.14 — Port Nintendo Switch (${ve
 ¡Versión oficial y optimizada de **Pokémon Añil 4.14** para **Nintendo Switch**!
 
 ### 📥 Archivos Disponibles para Descarga:
-1. **👑 \`Pokemon Anil 4.0.rar\` (~800 MB):** Pack completo recomendado para nuevas instalaciones. Incluye el juego entero estructurado para MicroSD, Forwarder NSP, guía de instalación y manuales en PDF.
+1. **👑 \`Pokemon Anil 4.14.rar\` (~800 MB):** Pack completo recomendado para nuevas instalaciones. Incluye el juego entero estructurado para MicroSD, Forwarder NSP, guía de instalación y manuales en PDF.
 2. **⚡ \`Pokemon_Anil_Switch_Update_${version}.zip\` (~20 MB):** Para quienes ya tienen el juego instalado. Actualiza scripts, plugins, shims, assets index y binarios NRO en segundos sin tener que descargar de nuevo gráficos y audios.
 3. **🎮 \`Pokemon Anil [01ab776ba9c10000].nsp\` (~395 KB):** Acceso directo para el Menú Home que desbloquea los 3.5 GB de RAM.
 4. **📚 \`MANUALES/\` (~12 MB):** Las 4 guías completas en PDF (Modo Clásico, Modo Completo, Modo Radical y Preguntas Frecuentes).

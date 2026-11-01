@@ -2,13 +2,13 @@
 
 <img src="icon_switch_512.png" alt="Pokémon Añil Switch" width="180" style="border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"/>
 
-# ⚡ Pokémon Añil 4.0 — Nintendo Switch Port
+# ⚡ Pokémon Añil v4.14 — Nintendo Switch Port
 
 **El aclamado fangame de Eric Lostie llevado a Nintendo Switch con rendimiento nativo, 60 FPS, arranque ultra rápido y mejoras exclusivas de calidad de vida.**
 
 [![Nintendo Switch](https://img.shields.io/badge/Platform-Nintendo%20Switch-E60012?style=for-the-badge&logo=nintendoswitch&logoColor=white)](https://github.com/fernandotron/pokemon-anil-switch)
 [![Motor mkxp-z](https://img.shields.io/badge/Engine-mkxp--z%20ARM64-blue?style=for-the-badge)](https://github.com/mkxp-z/mkxp-z)
-[![Versión](https://img.shields.io/badge/Versión-v4.0.1%20Estable-brightgreen?style=for-the-badge)](https://github.com/fernandotron/pokemon-anil-switch/releases/latest)
+[![Versión](https://img.shields.io/badge/Versión-v4.14%20Estable-brightgreen?style=for-the-badge)](https://github.com/fernandotron/pokemon-anil-switch/releases/latest)
 [![Descargas](https://img.shields.io/badge/Descargas-GitHub%20Releases-orange?style=for-the-badge)](https://github.com/fernandotron/pokemon-anil-switch/releases/latest)
 
 ---
@@ -21,8 +21,8 @@ Todas las descargas oficiales se alojan directamente en la sección de **[GitHub
 
 | Paquete | Archivo | Tamaño | Descripción | Enlace |
 | :--- | :--- | :--- | :--- | :---: |
-| 👑 **Pack Completo (Recomendado)** | `Pokemon Anil 4.0.rar` | **~767 MB** | **Todo incluido:** Juego completo estructurado para microSD, Forwarder NSP, guía de instalación y los 4 manuales en PDF. | [**Descargar Pack**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
-| ⚡ **Actualización Rápida** | `Pokemon_Anil_Switch_Update_v4.0.1.zip` | **~20 MB** | **Para jugadores existentes:** Solo archivos modificados (scripts, shims, NROs corregidos). Se copia en segundos sin volver a transferir audios ni gráficos. | [**Descargar Update**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
+| 👑 **Pack Completo (Recomendado)** | `Pokemon Anil 4.14.rar` | **~767 MB** | **Todo incluido:** Juego completo estructurado para microSD, Forwarder NSP, guía de instalación y los 4 manuales en PDF. | [**Descargar Pack**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
+| ⚡ **Actualización Rápida** | `Pokemon_Anil_Switch_Update_v4.14.zip` | **~20 MB** | **Para jugadores existentes:** Solo archivos modificados (scripts v4.14, shims, NROs corregidos). Se copia en segundos sin volver a transferir audios ni gráficos. | [**Descargar Update**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | 🎮 **Forwarder NSP** | `Pokemon Anil [01ab776ba9c10000].nsp` | **~395 KB** | Acceso directo para el Menú Home de Switch. Desbloquea los **3.5 GB de memoria RAM**. | [**Descargar NSP**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 | 📚 **Manuales y Guías** | Carpeta `MANUALES/` | **~12 MB** | Guías oficiales: Modo Clásico, Modo Completo, Modo Radical y Preguntas Frecuentes. | [**Ver Guías**](https://github.com/fernandotron/pokemon-anil-switch/releases/latest) |
 
@@ -68,7 +68,7 @@ Este port ha sido reconstruido y optimizado a bajo nivel para ofrecer una experi
 
 ### Método 1: Instalación Nueva (Jugadores Primerizos)
 
-1. **Descarga el archivo** `Pokemon Anil 4.0.rar` desde [GitHub Releases](https://github.com/fernandotron/pokemon-anil-switch/releases/latest).
+1. **Descarga el archivo** `Pokemon Anil 4.14.rar` desde [GitHub Releases](https://github.com/fernandotron/pokemon-anil-switch/releases/latest).
 2. **Descomprime el archivo** en tu PC. Encontrarás:
    * `switch.zip` (el juego para Switch).
    * `Pokemon Anil [01ab776ba9c10000].nsp` (el acceso directo para el Menú Home).

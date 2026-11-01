@@ -199,10 +199,10 @@ if (fs.existsSync(manualsSrc)) {
   console.log(`  -> Copiada carpeta MANUALES con los 4 PDFs.`);
 }
 
-// 13. Comprimir todo en Pokemon Anil 4.0.rar con WinRAR
+// 13. Comprimir todo en Pokemon Anil 4.14.rar con WinRAR
 console.log('\n=== 10. GENERANDO ARCHIVO RAR DEFINITIVO ===');
-const outRarDist = path.join(distDir, 'Pokemon Anil 4.0.rar');
-const outRarNuevaCarpeta = path.join(__dirname, 'Nueva carpeta', 'Pokemon Anil 4.0.rar');
+const outRarDist = path.join(distDir, 'Pokemon Anil 4.14.rar');
+const outRarNuevaCarpeta = path.join(__dirname, 'Nueva carpeta', 'Pokemon Anil 4.14.rar');
 
 // Usar Rar.exe para crear el rar con compresión normal (-m3)
 const cmdRar = `"${rarExe}" a -m3 -ep1 -r "${outRarDist}" "${stagingDir}\\*"`;
@@ -212,7 +212,7 @@ execSync(cmdRar, { stdio: 'inherit' });
 const rarSizeMB = (fs.statSync(outRarDist).size / (1024 * 1024)).toFixed(2);
 console.log(`\n  [OK] Creado archivo RAR con éxito: ${outRarDist} (${rarSizeMB} MB)`);
 
-// Sincronizar hacia "Nueva carpeta/Pokemon Anil 4.0.rar"
+// Sincronizar hacia "Nueva carpeta/Pokemon Anil 4.14.rar"
 fs.copyFileSync(outRarDist, outRarNuevaCarpeta);
 console.log(`  [OK] Sincronizado hacia: ${outRarNuevaCarpeta}`);
 
