@@ -24,7 +24,11 @@ class Scene_Map
     @spritesets = {}
     $map_factory.maps.each do |map|
       log_compat("[Scene_Map]   -> Spriteset_Map.new for map #{map.map_id}...") rescue nil
-      @spritesets[map.map_id] = Spriteset_Map.new(map)
+      begin
+        @spritesets[map.map_id] = Spriteset_Map.new(map)
+      rescue Exception => e
+        log_compat("[Scene_Map] CRITICAL ERROR creating Spriteset_Map for map #{map.map_id}: #{e.class} - #{e.message}\n#{e.backtrace&.take(8)&.join("\n")}") rescue nil
+      end
     end
     log_compat("[Scene_Map] createSpritesets: 4. setSceneStarted...") rescue nil
     $map_factory.setSceneStarted(self)
@@ -42,14 +46,21 @@ class Scene_Map
   end
 
   def disposeSpritesets
-    return if !@spritesets
-    @spritesets.each_key do |i|
-      next if !@spritesets[i]
-      @spritesets[i].dispose
-      @spritesets[i] = nil
+    log_compat("[Scene_Map] disposeSpritesets...") rescue nil
+    if @spritesets
+      @spritesets.each_key do |i|
+        next if !@spritesets[i]
+        @spritesets[i].dispose rescue nil
+        @spritesets[i] = nil
+      end
+      @spritesets.clear
+      @spritesets = {}
     end
-    @spritesets.clear
-    @spritesets = {}
+    if @map_renderer
+      @map_renderer.dispose rescue nil
+      @map_renderer = nil
+    end
+    log_compat("[Scene_Map] disposeSpritesets OK") rescue nil
   end
 
   def dispose
@@ -105,11 +116,18 @@ class Scene_Map
     if $game_temp.transition_processing
       $game_temp.transition_processing = false
       Graphics.transition
+    else
+      Graphics.transition rescue nil
     end
+    if $game_screen && ($game_screen.tone.red <= -150 && $game_screen.tone.green <= -150 && $game_screen.tone.blue <= -150)
+      $game_screen.start_tone_change(Tone.new(0, 0, 0, 0), 6)
+    end
+    Graphics.transition(10) rescue nil
     $game_map.autoplay
     Graphics.frame_reset
     Input.update
     $game_player.reset_movement_state if $game_player.respond_to?(:reset_movement_state)
+    log_compat("[Scene_Map] transfer_player completado -> Mapa #{$game_map.map_id} (tone: #{$game_screen&.tone&.inspect})") rescue nil
   end
 
   def call_menu
@@ -229,6 +247,11 @@ class Scene_Map
       break if !$game_temp.player_transferring
       transfer_player(false)
       break if $game_temp.transition_processing
+    end
+    if $game_screen && ($game_screen.tone.red <= -150 && $game_screen.tone.green <= -150 && $game_screen.tone.blue <= -150)
+      if !pbMapInterpreterRunning? && !$game_temp.transition_processing && !$game_temp.player_transferring
+        $game_screen.start_tone_change(Tone.new(0, 0, 0, 0), 6)
+      end
     end
     updateSpritesets
     if $game_temp.title_screen_calling

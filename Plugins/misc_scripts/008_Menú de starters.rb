@@ -149,8 +149,9 @@ class StarterMenu_Scene
         result =  pbMessage(_INTL("¿Quieres elegir a los iniciales de {1}? Estos serán los que estén en el Laboratorio.", @options_to_use[@index][0]), [_INTL("Sí"), _INTL("No")], -1)
         if result == 0
           pbPlayDecisionSE
-          switch = 334 + @index
-          $game_switches[switch] = true
+          region_switches = [334, 335, 336, 337, 338, 339, 340, 341, nil, nil, 343]
+          switch = region_switches[@index]
+          $game_switches[switch] = true if switch
           # if MonotypeChallenge.enabled? 
           #   chosen_starters = @options_to_use[@index][1]
           #   monotype_starters = pbGet(31)

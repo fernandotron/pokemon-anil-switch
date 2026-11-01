@@ -51,8 +51,12 @@ module TrainerSensor
     @bottom.z = 1 if @bottom.respond_to?(:z=)
 
     if !@created
-      # Se crea la barra superior
-      @top.bitmap = Bitmap.new(Graphics.width, BAR_HEIGHT)
+      # Se crea o reutiliza la barra superior (evita fugas de Bitmap en Switch)
+      if !@top.bitmap || @top.bitmap.disposed?
+        @top.bitmap = Bitmap.new(Graphics.width, BAR_HEIGHT)
+      else
+        @top.bitmap.clear
+      end
       @top.bitmap.fill_rect(0,0,@top.bitmap.width,@top.bitmap.height,
         Color.new(-255,-255,-255, BAR_OPACITY*(6-distance)))
       @top.oy = 0 # Posición donde tiene que terminar.      
@@ -60,8 +64,12 @@ module TrainerSensor
       @top.x = 0 if $PokemonSystem
       @top.visible = true
 
-      # Se crea la barra inferior
-      @bottom.bitmap = Bitmap.new(Graphics.width, BAR_HEIGHT)
+      # Se crea o reutiliza la barra inferior
+      if !@bottom.bitmap || @bottom.bitmap.disposed?
+        @bottom.bitmap = Bitmap.new(Graphics.width, BAR_HEIGHT)
+      else
+        @bottom.bitmap.clear
+      end
       @bottom.bitmap.fill_rect(0,0,@bottom.bitmap.width,@bottom.bitmap.height,
         Color.new(-255,-255,-255, BAR_OPACITY*(6-distance)))
       @bottom.oy = BAR_HEIGHT-Graphics.height  # Posición donde tiene que terminar.
@@ -74,12 +82,18 @@ module TrainerSensor
       @top.visible = true if @top && !@top.disposed?
       @bottom.visible = true if @bottom && !@bottom.disposed?
       # Rellenamos la barra superior
-      @top.bitmap.fill_rect(0,0,@top.bitmap.width,@top.bitmap.height,
-        Color.new(-255,-255,-255, BAR_OPACITY*(6-distance)))
+      if @top.bitmap && !@top.bitmap.disposed?
+        @top.bitmap.clear
+        @top.bitmap.fill_rect(0,0,@top.bitmap.width,@top.bitmap.height,
+          Color.new(-255,-255,-255, BAR_OPACITY*(6-distance)))
+      end
       
       # Rellenamos la barra inferior
-      @bottom.bitmap.fill_rect(0,0,@bottom.bitmap.width,@bottom.bitmap.height,
-        Color.new(-255,-255,-255, BAR_OPACITY*(6-distance)))
+      if @bottom.bitmap && !@bottom.bitmap.disposed?
+        @bottom.bitmap.clear
+        @bottom.bitmap.fill_rect(0,0,@bottom.bitmap.width,@bottom.bitmap.height,
+          Color.new(-255,-255,-255, BAR_OPACITY*(6-distance)))
+      end
     end
   end
   

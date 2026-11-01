@@ -79,6 +79,7 @@ module PokeAPI
 	end
 	
 	def get_data(species)
+		return nil if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
 		# Generate cache key for this species
 		cache_key = generate_cache_key(species)
 		
@@ -411,6 +412,7 @@ module PokeAPI
 	
 	# Download animated sprite from PokeAPI directly without caching
 	def download_animated_sprite(pokemon, back = false)
+		return nil if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
 		return nil unless network_available?
 		
 		# Get Pokemon data from API first

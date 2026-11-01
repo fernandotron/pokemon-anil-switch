@@ -82,7 +82,7 @@ module RandomizedChallenge
   # Probabilidad de movimientos con stab en el learnset por nivel
   # Porcentaje de probabilidad de que un movimiento sea del stab del pokemon
   # Solo se tendra en cuenta si la constante PRIORIZE_STAB_IN_LEARNSET está en true
-  STAB_IN_LEARNSET = 15
+  STAB_IN_LEARNSET = 30
 
   # Formas diferentes de la misma especie tienen movesets distintos
   # Si está en true, cada forma tendrá su propio set de movimientos aleatorios
@@ -347,7 +347,7 @@ module RandomizerConfigurator
     },
     :PRIORIZE_STAB_IN_LEARNSET => {
       :name  => _INTL("Probabilidad de STAB"),
-      :desc  => _INTL("Los movimientos de tipo STAB tendrán prioridad al ser elegidos en el learnset. (es un 15%)"),
+      :desc  => _INTL("Los movimientos de tipo STAB tendrán prioridad al ser elegidos en el learnset. (es un 30%)"),
       :order => 5,
       :check => lambda { RandomizedChallenge.prioritize_stab_in_learnset? },
       :toggle => lambda { RandomizerConfigurator.toggle_prioritize_stab_in_learnset },
@@ -624,7 +624,7 @@ module RandomizerConfigurator
 
   def toggle_consistent_wild_encounters
     if $PokemonGlobal.consistent_wild_encounters.nil?
-      $PokemonGlobal.consistent_wild_encounters = RandomizedChallenge::CONSISTENT_WILD_ENCOUNTERS_DEFAULT_VALUE
+      $PokemonGlobal.consistent_wild_encounters = RandomizedChallenge::CONSISTENT_WILD_ENCOUNTERS
     end
     $PokemonGlobal.consistent_wild_encounters = !$PokemonGlobal.consistent_wild_encounters
   end

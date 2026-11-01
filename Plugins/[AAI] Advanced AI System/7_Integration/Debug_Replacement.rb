@@ -3,8 +3,9 @@
 #===============================================================================
 
 class Battle::AI
-  alias debug_choose_best_replacement_pokemon choose_best_replacement_pokemon
+  alias debug_choose_best_replacement_pokemon choose_best_replacement_pokemon unless method_defined?(:debug_choose_best_replacement_pokemon)
   def choose_best_replacement_pokemon(idxBattler, terrible_moves = false)
+    return debug_choose_best_replacement_pokemon(idxBattler, terrible_moves) unless AdvancedAI.active? && $DEBUG
     echoln "=" * 80
     echoln "=== AI REPLACEMENT POKEMON DEBUG ==="
     echoln "  Battler Index: #{idxBattler}"

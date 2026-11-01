@@ -4,15 +4,17 @@ class PokemonGlobalMetadata
     attr_accessor :permalocke_shields
     attr_accessor :permalocke_max_shields
 
-    alias init_permalocke initialize
+    alias init_permalocke initialize unless method_defined?(:init_permalocke)
     def initialize
         init_permalocke
+        @max_party_size ||= Settings::MAX_PARTY_SIZE
         valor_vidas = $PokemonGlobal&.challenge_lives || 0
         @permalocke_max_shields ||= valor_vidas
         @permalocke_shields ||= @permalocke_max_shields
     end
 end
 def permalocke_remove_fainted
+  $PokemonGlobal.max_party_size ||= Settings::MAX_PARTY_SIZE
   fainted_count = 0
   fainted = {}
   $player.party.each_with_index do |pkmn, index|
@@ -32,7 +34,7 @@ def permalocke_remove_fainted
   slots_to_lock = fainted_count - shields_to_remove
   return if permalocke_shields > 0
 
-  $PokemonGlobal.max_party_size -= slots_to_lock
+  $PokemonGlobal.max_party_size = [1, $PokemonGlobal.max_party_size - slots_to_lock].max
   
   fainted.keys.sort.reverse.each do |index|
     pkmn = fainted[index]
@@ -72,6 +74,7 @@ end
 
 def permalocke_restore_slots(slot_count = 1)
   return if !defined?(ChallengeModes) || !ChallengeModes.on?(:PERMALOCKE)
+  $PokemonGlobal.max_party_size ||= Settings::MAX_PARTY_SIZE
   
   # Calculate how many slots can actually be restored to party
   max_restorable_to_party = Settings::MAX_PARTY_SIZE - $PokemonGlobal.max_party_size

@@ -51,8 +51,13 @@ class HallDeLaFama
     # Dispose de viewports adicionales
     [@bg_v, @bg_w].each { |v| v.dispose if v && !v.disposed? }
     
-    # Dispose de todos los sprites
-    pbDisposeSpriteHash(@s) if @s
+    # Dispose de todos los sprites y sus bitmaps no cacheados
+    if @s
+      bmps = @s.values.filter_map { |sp| (sp && !sp.disposed? && sp.respond_to?(:bitmap)) ? (sp.bitmap rescue nil) : nil }
+      pbDisposeSpriteHash(@s)
+      bmps.each { |b| b.dispose if b && !b.disposed? }
+    end
+    HallOfFameResources.clear_cache if defined?(HallOfFameResources)
     
     # Dispose del viewport principal
     @vista.dispose if @vista && !@vista.disposed?

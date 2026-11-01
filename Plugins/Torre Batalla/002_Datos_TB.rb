@@ -380,7 +380,7 @@ class TorreBatallaDinamica
     ["Yugen", :Male, [:HELIOLISK, :CHANDELURE, :ALTARIA]],
     ["Javier", :Male, [:STARAPTOR, :EXCADRILL, :LANTURN]],
     ["Adriar", :Male, [:FROSLASS, :FALINKS, :GOLISOPOD]],
-    ["Iñigo", :Male, [:DARMANITAN, :GOODRA_1, :MIMIKYU]],
+    ["Iñigo", :Male, [:DARMANITAN, :GOODRA, :MIMIKYU]],
     ["SSamurai", :Male, [:LUCARIO, :BLAZIKEN, :SCEPTILE]],
     ["Ina", :Male, [:KINGDRA, :DUSKNOIR, :GARDEVOIR]],
     ["Luis", :Male, [:EISCUE, :CLAYDOL, :SHIINOTIC]],
@@ -407,7 +407,7 @@ class TorreBatallaDinamica
     ["Compy", :Male, [:NOIVERN, :TYRANITAR, :SKELEDIRGE]],
     ["Tóbal", :Male, [:SMEARGLE, :SNORLAX, :GHOLDENGO]],
     ["Batin", :Male, [:AGGRON, :SWALOT, :FLYGON]],
-    ["Dani", :Male, [:KLEAVOR, :GOODRA_1, :CERULEDGE]],
+    ["Dani", :Male, [:KLEAVOR, :GOODRA, :CERULEDGE]],
     ["Junge", :Male, [:SHIINOTIC, :STARMIE, :LUXRAY]],
     ["Nieves", :Female, [:GARCHOMP, :BLISSEY, :HYDRAPPLE]],
     ["Blaze", :Male, [:TOXTRICITY, :TREVENANT, :BLAZIKEN]],
@@ -427,7 +427,7 @@ class TorreBatallaDinamica
     ["Tatix", :Female, [:MEGANIUM, :PRIMARINA, :UMBREON]],
     ["Niso", :Male, [:RILLABOOM, :WOBBUFFET, :FALINKS]],
     ["Diamante", :Male, [:SNEASLER, :SCOLIPEDE, :BEEDRILL]],
-    ["DualGemini", :Male, [:ZOROARK_1, :NINETALES_1, :STARAPTOR]],
+    ["DualGemini", :Male, [:ZOROARK, :NINETALES, :STARAPTOR]],
     ["EBaru", :Male, [:TOGEKISS, :VENUSAUR, :DRAGONITE]],
   ]
 

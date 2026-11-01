@@ -658,12 +658,15 @@ class Battle
     priority = pbPriority(true)   # in order of fastest -> slowest speeds only
     # Weather
     pbEOREndWeather(priority)
+    return if @decision > 0
     # Future Sight/Doom Desire
-    @positions.each_with_index { |pos, idxPos| pbEORUseFutureSight(pos, idxPos) }
+    @positions.each_with_index { |pos, idxPos| pbEORUseFutureSight(pos, idxPos); break if @decision > 0 }
+    return if @decision > 0
     # Wish
     pbEORWishHealing
     # Sea of Fire damage (Fire Pledge + Grass Pledge combination)
     pbEORSeaOfFireDamage(priority)
+    return if @decision > 0
     # Status-curing effects/abilities and HP-healing items
     priority.each do |battler|
       pbEORTerrainHealing(battler)
@@ -700,6 +703,7 @@ class Battle
     end
     # Healing from Aqua Ring, Ingrain, Leech Seed
     pbEORHealingEffects(priority)
+    return if @decision > 0
     # Damage from Hyper Mode (Shadow Pokémon)
     priority.each do |battler|
       next if !battler.inHyperMode? || @choices[battler.index][0] != :UseMove
@@ -708,13 +712,18 @@ class Battle
       battler.pbReduceHP(hpLoss, false)
       pbDisplay(_INTL("¡El poder salvaje hiere a {1}!", battler.pbThis(true)))
       battler.pbFaint if battler.fainted?
+      break if @decision > 0
     end
+    return if @decision > 0
     # Damage from poison/burn
     pbEORStatusProblemDamage(priority)
+    return if @decision > 0
     # Damage from Nightmare and Curse
     pbEOREffectDamage(priority)
+    return if @decision > 0
     # Trapping attacks (Bind/Clamp/Fire Spin/Magma Storm/Sand Tomb/Whirlpool/Wrap)
-    priority.each { |battler| pbEORTrappingDamage(battler) }
+    priority.each { |battler| pbEORTrappingDamage(battler); break if @decision > 0 }
+    return if @decision > 0
     # Octolock
     priority.each do |battler|
       next if battler.fainted? || battler.effects[PBEffects::Octolock] < 0

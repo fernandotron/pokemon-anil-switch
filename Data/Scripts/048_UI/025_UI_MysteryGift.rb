@@ -329,6 +329,10 @@ end
 #===============================================================================
 # Called from the Continue/New Game screen.
 def pbDownloadMysteryGift(trainer)
+  if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
+    pbMessage(_INTL("Las funciones en línea de Regalo Misterioso no están disponibles en Nintendo Switch."))
+    return
+  end
   sprites = {}
   @viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
   @viewport.z = 99999
@@ -370,12 +374,12 @@ def pbDownloadGiftWithoutPassword(trainer)
     pbMessage(_INTL("Parece que no tienes conexión a Internet, No se pueden buscar regalos."))
     return
   end
-  if !data
+  if nil_or_empty?(data)
     pbMessage(_INTL("No se pudo descargar la lista de regalos."))
     return
   end
   # Desencriptar los datos recibidos
-  online = pbMysteryGiftDecrypt(data, false)
+  online = pbMysteryGiftDecrypt(data, false) || []
   pending = []
   online.each do |gift|
     notgot = true
@@ -430,13 +434,13 @@ def pbDownloadGiftWithPassword(trainer)
     pbMessage(_INTL("Parece que no tienes conexión a Internet, No se pueden buscar regalos."))
     return
   end
-  if !data
+  if nil_or_empty?(data)
     pbMessage(_INTL("No se pudo descargar la lista de regalos."))
     pbMessage(_INTL("Parece que hay problemas para establecer la conexión a Internet."))
     return
   end
   # Desencriptar los datos recibidos
-  online = pbMysteryGiftDecrypt(data, false)
+  online = pbMysteryGiftDecrypt(data, false) || []
   pending = []
   online.each do |gift|
     notgot = true

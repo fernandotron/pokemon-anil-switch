@@ -45,6 +45,8 @@ def setBattleRule(*args)
   args.each do |arg|
     if r
       case r
+      when "midbattle", "midbattlescript"
+        r = "midbattleScript"
       when "editWildPokemon2"
         if !$game_temp.battle_rules["editWildPokemon"]
           $game_temp.add_battle_rule("editWildPokemon", {})
@@ -85,7 +87,7 @@ def additionalRules
     "tempplayer", "tempbag", "tempparty", 
     "battlebgm", "victorybgm", "captureme", "lowhealthbgm", 
     "editwildpokemon", "editwildpokemon2", "editwildpokemon3", 
-    "midbattlescript", "nomegaevolution"
+    "midbattlescript", "midbattle", "nomegaevolution"
   ]
 end
 
@@ -250,12 +252,8 @@ end
 #===============================================================================
 class Battle::Battler
   def pbRaidStyleCapture(target, chance = nil, fleeMsg = nil, bgm = nil)
-    fainted_count = 0
-    @battle.battlers.each do |b|
-      next if !b || !b.opposes?(target) || b.hp > 0
-      fainted_count += 1
-    end
-    return if fainted_count >= @battle.pbSideSize(0)
+    has_conscious = @battle.battlers.any? { |b| b && b.opposes?(target) && b.hp > 0 }
+    return false if !has_conscious
     if @battle.pbAbleCount(target.index) <= 1
       @battle.raidCaptureMode = true
       @battle.field.initialize
@@ -272,7 +270,7 @@ class Battle::Battler
     @battle.scene.pbRevertBattlerStart
     @battle.scene.pbPauseScene(0.5)
     cmd = @battle.pbShowCommands(
-      _INTL("¿Quieres capturar a {1}?", target.pbThis(true)), ["Capturar", "No capturar"], 1)
+      _INTL("¿Quieres capturar a {1}?", target.pbThis(true)), [_INTL("Capturar"), _INTL("Debilitar")], 1)
     pbPlayDecisionSE
     @battle.scene.pbRevertBattlerEnd
     case cmd
@@ -281,21 +279,23 @@ class Battle::Battler
         is_valid, type_text = MonotypeChallenge.valid_monotype_with_text?(target.pokemon)
         if !is_valid
           @battle.pbDisplayPaused(_INTL("¡Solo puedes capturar a Pokémon de tipo {1}!", type_text))
-          target.wild_flee(fleeMsg)
-          return
+          return false
         end
       end
       @battle.sendToBoxes = 1
       if $PokemonStorage.full?
         @battle.pbDisplay(_INTL("¡No hay espacio en el PC!"))
-        target.wild_flee(fleeMsg)
+        return false
       else
         ball = nil
+        old_disable_balls = @battle.disablePokeBalls
+        @battle.disablePokeBalls = false
         pbFadeOutIn {
           scene  = PokemonBag_Scene.new
           screen = PokemonBagScreen.new(scene, $bag)
           ball   = screen.pbChooseItemScreen(Proc.new{ |item| GameData::Item.get(item).is_poke_ball? })
         }
+        @battle.disablePokeBalls = old_disable_balls
         if ball
           $bag.remove(ball, 1)
           if !chance.nil? && chance > 0
@@ -309,17 +309,19 @@ class Battle::Battler
             end
           end
           @battle.pbThrowPokeBall(target.index, ball)
-          target.wild_flee(fleeMsg) if @battle.poke_ball_failed
+          return false if @battle.poke_ball_failed
+          return true
         else
-          target.wild_flee(fleeMsg)
+          return false
         end
       end
     else
-      target.wild_flee(fleeMsg)
+      return false
     end
   end
   
   def canRaidCapture?
+    return false if @raid_capture_attempted
     return false if !@battle.raidStyleCapture # Only if raid style capture enabled.
     return false if @battle.trainerBattle?    # Only in wild battles.
     return false if @battle.decision > 0      # Only if battle outcome hasn't already been decided.
@@ -346,9 +348,11 @@ class Battle::Battler
     end
   end
   
-  alias dx_pbFaint pbFaint
+  alias dx_pbFaint pbFaint unless method_defined?(:dx_pbFaint)
   def pbFaint(showMessage = true)
+    return if @fainted || !@pokemon || @battle.decision == 4
     if self.canRaidCapture?
+      @raid_capture_attempted = true
       self.hp = 1
       if defined?(@vanished)
         @battle.scene.pbAnimateSubstitute(@index, :hide)
@@ -358,12 +362,19 @@ class Battle::Battler
         @battle.scene.pbChangePokemon(self, self.visiblePokemon, true)
       end
       raid = @battle.raidStyleCapture
+      captured = false
       if raid.is_a?(Hash)
-        pbRaidStyleCapture(self, raid[:capture_chance], raid[:flee_msg], raid[:capture_bgm])
+        captured = pbRaidStyleCapture(self, raid[:capture_chance], raid[:flee_msg], raid[:capture_bgm])
       else
-        pbRaidStyleCapture(self)
+        captured = pbRaidStyleCapture(self)
+      end
+      return if captured || @battle.decision > 0 || !@pokemon
+      if @battle.decision == 0
+        self.hp = 0
+        dx_pbFaint(showMessage)
       end
     else
+      self.hp = 0 if isRaidBoss? && @hp > 0 && @raid_capture_attempted
       dx_pbFaint(showMessage)
       if @battle.pbAllFainted? && @battle.raidStyleCapture && !@battle.canLose
         @battle.caughtPokemon.clear

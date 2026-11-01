@@ -23,8 +23,12 @@ class Battle::Scene
     def pbTrainerBattleSuccess
         pbTrainerBattleSuccessPoints
         pts=pbGet(POKEBATTLE_POINTS_VARIABLE)+POKEBATTLE_POINTS_DEFEAT_TRAINER
-        if SPECIAL_TRAINERS[@battle.opponent[0].name]
-          pts+=SPECIAL_TRAINERS[@battle.opponent.name]
+        if @battle.opponent.is_a?(Array)
+          @battle.opponent.each do |tr|
+            pts += SPECIAL_TRAINERS[tr.name] if tr && SPECIAL_TRAINERS[tr.name]
+          end
+        elsif @battle.opponent && SPECIAL_TRAINERS[@battle.opponent.name]
+          pts += SPECIAL_TRAINERS[@battle.opponent.name]
         end
         pbSet(POKEBATTLE_POINTS_VARIABLE,pts)
     end

@@ -354,7 +354,7 @@ class Battle::Move
     dx_pbReduceDamage(user, target)
     return if target.damageState.disguise || target.damageState.iceFace
     damage = target.damageState.hpLost
-    if damage > 1
+    if damage >= 1
       target.stopBoostedHPScaling = true
       return if target.damageState.substitute
       return if !target.damageThreshold

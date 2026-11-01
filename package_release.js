@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// 1. Obtener la versión (por defecto v4.0.0 o pasada como argumento: node package_release.js v4.0.1)
-const version = process.argv[2] || 'v4.0.0';
+// 1. Obtener la versión (por defecto v4.14 o pasada como argumento: node package_release.js v4.14)
+const version = process.argv[2] || 'v4.14';
 console.log(`=======================================================`);
 console.log(`   EMPAQUETADOR DE RELEASE OFICIAL POKÉMON AÑIL SWITCH`);
 console.log(`   Versión objetivo: ${version}`);
@@ -51,7 +51,8 @@ fs.mkdirSync(path.join(updateTempDir, 'Data'), { recursive: true });
 const rootFilesToCopy = [
   'preload.rb',
   'mkxp.json',
-  'mkxp.switch.json'
+  'mkxp.switch.json',
+  'Game.ini'
 ];
 
 rootFilesToCopy.forEach(f => {
@@ -82,6 +83,13 @@ dataFilesToCopy.forEach(f => {
   }
 });
 
+if (fs.existsSync('Data/data_for_showdown')) {
+  fs.mkdirSync(path.join(updateTempDir, 'Data', 'data_for_showdown'), { recursive: true });
+  fs.readdirSync('Data/data_for_showdown').forEach(f => {
+    fs.copyFileSync(path.join('Data', 'data_for_showdown', f), path.join(updateTempDir, 'Data', 'data_for_showdown', f));
+  });
+}
+
 // Crear archivo de instrucciones para la actualización
 const leemeUpdate = `====================================================================
 ACTUALIZACIÓN RÁPIDA PARA NINTENDO SWITCH - POKÉMON AÑIL ${version}
@@ -100,7 +108,7 @@ ACTUALIZACIÓN RÁPIDA PARA NINTENDO SWITCH - POKÉMON AÑIL ${version}
 ====================================================================`;
 fs.writeFileSync(path.join(updateTempDir, 'LEEME_INSTRUCCIONES.txt'), leemeUpdate, 'utf8');
 
-// Comprimir en zip usando tar (nativo en Windows)
+// Comprimir en zip usando PowerShell Compress-Archive
 const updateZipName = `Pokemon_Anil_Switch_Update_${version}.zip`;
 const updateZipPath = path.join(distDir, updateZipName);
 if (fs.existsSync(updateZipPath)) {
@@ -108,10 +116,11 @@ if (fs.existsSync(updateZipPath)) {
 }
 
 try {
-  execSync(`tar -a -c -f "${updateZipPath}" -C "${updateTempDir}" .`, { stdio: 'inherit' });
+  const psCmd = `powershell -NoProfile -Command "Compress-Archive -Path '${updateTempDir}\\*' -DestinationPath '${updateZipPath}' -Force"`;
+  execSync(psCmd, { stdio: 'inherit' });
   console.log(`[OK] Creado paquete de actualización: dist/${updateZipName} (${(fs.statSync(updateZipPath).size / (1024 * 1024)).toFixed(2)} MB)`);
 } catch (err) {
-  console.error('[ERROR] No se pudo empaquetar con tar:', err.message);
+  console.error('[ERROR] No se pudo empaquetar con Compress-Archive:', err.message);
 }
 
 // Limpiar temporal
@@ -125,34 +134,41 @@ if (fs.existsSync(rarFuente)) {
 }
 
 // 8. Generar las notas de la release listas para publicar en GitHub
-const releaseNotes = `## 🎮 Pokémon Añil 4.0 — Port Nintendo Switch (${version})
+const releaseNotes = `## 🎮 Pokémon Añil 4.14 — Port Nintendo Switch (${version})
 
-¡Versión oficial y optimizada de **Pokémon Añil 4.0** para **Nintendo Switch**!
+¡Versión oficial y optimizada de **Pokémon Añil 4.14** para **Nintendo Switch**!
 
 ### 📥 Archivos Disponibles para Descarga:
-1. **👑 \`Pokemon Anil 4.0.rar\` (~767 MB):** Pack completo recomendado para nuevos jugadores. Incluye el juego entero estructurado para MicroSD, Forwarder NSP, guía de instalación y manuales en PDF.
-2. **⚡ \`Pokemon_Anil_Switch_Update_${version}.zip\` (~20 MB):** Para quienes ya tienen el juego instalado. Actualiza scripts, shims y binarios NRO en segundos sin tener que descargar de nuevo gráficos y audios.
+1. **👑 \`Pokemon Anil 4.0.rar\` (~800 MB):** Pack completo recomendado para nuevas instalaciones. Incluye el juego entero estructurado para MicroSD, Forwarder NSP, guía de instalación y manuales en PDF.
+2. **⚡ \`Pokemon_Anil_Switch_Update_${version}.zip\` (~20 MB):** Para quienes ya tienen el juego instalado. Actualiza scripts, plugins, shims, assets index y binarios NRO en segundos sin tener que descargar de nuevo gráficos y audios.
 3. **🎮 \`Pokemon Anil [01ab776ba9c10000].nsp\` (~395 KB):** Acceso directo para el Menú Home que desbloquea los 3.5 GB de RAM.
 4. **📚 \`MANUALES/\` (~12 MB):** Las 4 guías completas en PDF (Modo Clásico, Modo Completo, Modo Radical y Preguntas Frecuentes).
 
 ---
 
-### ✨ Novedades y Mejoras Incluidas en ${version}:
-- 🎮 **Reasignación Completa de Controles:** Menú interactivo en Controles/Opciones para mapear cualquier acción a cualquier botón físico del Joy-Con o Pro Controller, con detección en vivo y persistencia atómica en \`controls.dat\`.
-- ⚡ **Arranque Instantáneo:** Reducción de más de 24.000 comprobaciones lentas a disco a menos de 300 en memoria; pantalla de carga visual con progreso.
-- 🛡️ **Blindaje de Combates y Captura:** Precarga de animaciones en RAM; corregido el crasheo fatal al capturar Pokémon con objetos equipados (\`pbDisplayConfirm\`).
-- 💊 **Menú Rápido de Medicina en Batalla:** Usa pociones, revivir y curaciones directamente en combate sin abrir la mochila entera, con selector de objetivo y visualización de PS/estados.
-- 🎒 **Mochila a 60 FPS Fluidos:** Eliminado el lag en la mochila con equipo interactivo y corregido el cursor con MTs/MOs.
-- 🌿 **Sobremundo Dinámico (VOE):** Los Pokémon salvajes visibles permanecen 25 pasos en el mapa para alcanzarlos fácilmente y aparecen con cadencia natural en parches de hierba.
-- 💡 **Recordar Movimientos desde el Sumario:** Recupera ataques olvidados al estilo moderno (Gen 8/9) directamente desde los datos del Pokémon.
-- 💾 **Guardado Atómico:** Protección contra apagados involuntarios (escritura en \`.tmp\` con respaldo \`.bak\`).
-- 🔊 **Audio Calibrado para Switch:** +35% de volumen en BGM/ME para compensar los altavoces de la consola con balance óptimo de efectos.
+### ✨ Novedades y Correcciones Incluidas en ${version}:
+- 🔄 **Sincronización Oficial con Pokémon Añil v4.14:** Integrada la última versión oficial de EricLostie (v4.14 / v4.13): balance en Modo Random (STAB aumentado), compatibilidad con DLC y desactivación limpia de sistemas de IA inestables.
+- 🐉 **Solución Definitiva a Combates de Jefes y Legendarios:** Corregido el bucle donde los legendarios quedaban atrapados entre 1% y 0% de vida, eliminado el crash \`NoMethodError\` al capturarlos con movimientos directos o multi-golpe, y corregido el cambio de forma de Terapagos Astral al 25% de PS.
+- 🗼 **Estabilización de Torre Batalla:** Corregida la congelación de pantalla al iniciar combates (*"empieza el combate, adelante"*), guardado de récord de victorias y persistencia del pool de 39 jefes especiales entre sesiones.
+- 🔍 **Solución de Búsqueda en Pokédex y Mochila:** Resuelto el cuelgue al escribir y buscar por nombre en la Pokédex y en la mochila.
+- ⚡ **Optimización de Rendimiento y Cero Fugas de Memoria en Switch:**
+  - Apertura instantánea del Álbum de Fotos eliminando recargas síncronas de la tarjeta microSD.
+  - Modo Turbo (\`L\`) con caché en memoria evitando cientos de accesos a disco por segundo.
+  - Liberación completa de texturas, ventanas y Viewports (\`Bitmap\` y \`Viewport\`) en combate, menús y sobremundo.
+  - Reducción del uso de CPU en mapas grandes mediante memoización de eventos climáticos.
+- 🚢 **Corrección de Eventos e Historia:** Registrado equipo para la entrenadora Celia en el S.S. Anne, selección de iniciales de Hisui y Paldea sin desfase de interruptores, y protección de transiciones tras desmayo.
+- 🎮 **Controles y Experiencia de Usuario:** Menú de reasignación completa de controles en opciones de Switch, atajos y visualización adaptada a botones de Switch (A/B/X/Y).
 
 ---
 
 ### 📖 Instrucciones de Instalación:
-- **Nuevos Jugadores:** Descomprime el juego en la raíz de tu tarjeta MicroSD para que quede en \`sdmc:/switch/pokemon_anil/\` e instala el NSP en el Menú Home con DBI, TinWoo o Tinfoil.
-- **Actualizar:** Extrae \`Pokemon_Anil_Switch_Update_${version}.zip\` y copia los archivos en \`sdmc:/switch/pokemon_anil/\` reemplazando los existentes (tu partida se mantendrá al 100%).
+- **Nuevos Jugadores (Nueva Instalación):**
+  1. Descomprime el pack completo en la raíz de tu tarjeta MicroSD de modo que los archivos queden en \`sdmc:/switch/pokemon_anil/\`.
+  2. Instala el NSP de acceso directo en el Menú Home usando DBI, TinWoo o Tinfoil (o lanza el juego desde el Homebrew Menu manteniendo pulsado \`R\` sobre cualquier juego para modo Title Override).
+- **Actualizar una Instalación Existente:**
+  1. Extrae \`Pokemon_Anil_Switch_Update_${version}.zip\`.
+  2. Copia todo su contenido directamente en \`sdmc:/switch/pokemon_anil/\` de tu tarjeta MicroSD, aceptando sobrescribir todos los archivos cuando el sistema lo solicite.
+  3. ¡Tu partida guardada se mantendrá intacta al 100%!
 `;
 
 fs.writeFileSync(path.join(distDir, 'RELEASE_NOTES.md'), releaseNotes, 'utf8');

@@ -909,10 +909,10 @@ def pbFreeText(msgwindow, currenttext, passwordbox, maxlength, width = 240)
   loop do
     Graphics.update
     Input.update
-    if Input.triggerex?(:ESCAPE)
+    if Input.triggerex?(:ESCAPE) || Input.trigger?(Input::BACK)
       ret = currenttext
       break
-    elsif Input.triggerex?(:RETURN)
+    elsif Input.triggerex?(:RETURN) || Input.trigger?(Input::USE)
       ret = window.text
       break
     end
@@ -927,6 +927,9 @@ def pbFreeText(msgwindow, currenttext, passwordbox, maxlength, width = 240)
 end
 
 def pbMessageFreeText(message, currenttext, passwordbox, maxlength, width = 240, &block)
+  if defined?(pbEnterText)
+    return pbEnterText(message, 0, [maxlength || 12, 16].min, currenttext || "", 0, nil, false)
+  end
   msgwindow = pbCreateMessageWindow
   retval = pbMessageDisplay(msgwindow, message, true,
                             proc { |msgwndw|
@@ -954,10 +957,10 @@ end
 def handle_input(window, msg_window, current_text = '')
   Graphics.update
   Input.update
-  if Input.triggerex?(:ESCAPE)
+  if Input.triggerex?(:ESCAPE) || Input.trigger?(Input::BACK)
     window.text = current_text
     return true
-  elsif Input.triggerex?(:RETURN)
+  elsif Input.triggerex?(:RETURN) || Input.trigger?(Input::USE)
     return true
   end
 
@@ -976,6 +979,9 @@ def configure_window(window, msg_window, password_box, max_length, current_text)
 end
 
 def pb_message_free_text_with_on_input(message, currenttext, passwordbox, maxlength, width = 240, on_input = nil, &block)
+  if defined?(pbEnterText)
+    return pbEnterText(message, 0, [maxlength || 12, 16].min, currenttext || "", 0, nil, false)
+  end
   msgwindow = pbCreateMessageWindow
   retval = pbMessageDisplay(msgwindow, message, true,
                             proc { |msgwndw|

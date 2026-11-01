@@ -167,22 +167,30 @@ if (failed) {
 console.log('\n=== 8. COMPRIMIENDO JUEGO COMPLETO EN switch.zip ===');
 const switchZipPath = path.join(stagingDir, 'switch.zip');
 console.log('  -> Creando switch.zip con estructura sdmc:/switch/pokemon_anil/...');
-execSync(`tar -a -c -f "${switchZipPath}" -C "${tempDir}" switch`, { stdio: 'inherit' });
+execSync(`powershell -NoProfile -Command "Compress-Archive -Path '${tempDir}\\switch' -DestinationPath '${switchZipPath}' -Force"`, { stdio: 'inherit' });
 const zipSizeMB = (fs.statSync(switchZipPath).size / (1024 * 1024)).toFixed(2);
 console.log(`  [OK] switch.zip creado correctamente (${zipSizeMB} MB)`);
 
 // 12. Copiar archivos adicionales al staging del RAR
 console.log('\n=== 9. PREPARANDO PAQUETE FINAL PARA WinRAR ===');
-const nspFile = 'Pokemon Anil [01ab776ba9c10000].nsp';
-if (fs.existsSync(nspFile)) {
-  fs.copyFileSync(nspFile, path.join(stagingDir, nspFile));
-  console.log(`  -> Copiado Forwarder: ${nspFile}`);
+const nspCandidates = [
+  path.join(__dirname, 'Pokemon Anil [01ab776ba9c10000].nsp'),
+  path.join(__dirname, 'Nueva carpeta', 'Pokemon Anil [01ab776ba9c10000].nsp')
+];
+const nspFound = nspCandidates.find(p => fs.existsSync(p));
+if (nspFound) {
+  fs.copyFileSync(nspFound, path.join(stagingDir, 'Pokemon Anil [01ab776ba9c10000].nsp'));
+  console.log(`  -> Copiado Forwarder: ${nspFound}`);
 }
 
-const docFile = 'INSTRUCCIONES_INSTALACION.txt';
-if (fs.existsSync(docFile)) {
-  fs.copyFileSync(docFile, path.join(stagingDir, docFile));
-  console.log(`  -> Copiado: ${docFile}`);
+const docCandidates = [
+  path.join(__dirname, 'INSTRUCCIONES_INSTALACION.txt'),
+  path.join(__dirname, 'Nueva carpeta', 'INSTRUCCIONES_INSTALACION.txt')
+];
+const docFound = docCandidates.find(p => fs.existsSync(p));
+if (docFound) {
+  fs.copyFileSync(docFound, path.join(stagingDir, 'INSTRUCCIONES_INSTALACION.txt'));
+  console.log(`  -> Copiado: ${docFound}`);
 }
 
 const manualsSrc = path.join(__dirname, 'Nueva carpeta', 'MANUALES');

@@ -7,7 +7,7 @@
 
 module Settings
   # Esta es la versión de tu juego. El formato debe ser MAYOR.MENOR.PARCHE.
-  GAME_VERSION = "4.1.1"
+  GAME_VERSION = "4.1.4"
 
   # Esto indica de qué generación son las mecánicas que se apliquen en tu juego.
   # Esto se usa en batallas, scripts y otras secciones que son usadas dentro y

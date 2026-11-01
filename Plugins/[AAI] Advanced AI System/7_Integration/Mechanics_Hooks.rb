@@ -107,6 +107,7 @@ class Battle::AI
   #-----------------------------------------------------------------------------
   module AAI_GimmickHook
     def pbRegisterEnemySpecialAction(idxBattler)
+      return super(idxBattler) if defined?(super) && !AdvancedAI.active?
       # Recursion guard — Z-Power's alias cycles back into this prepended method
       return if @_aai_registering
       @_aai_registering = true

@@ -146,6 +146,7 @@ module Sprites
       bmp = Graphics.snap_to_bitmap
       self.bitmap = Bitmap.new(viewport.width, viewport.height)
       self.bitmap.blt(0, 0, bmp, Rect.new(viewport.x, viewport.y, viewport.width, viewport.height))
+      bmp.dispose
     end
     #-------------------------------------------------------------------------
     #  draw bitmap stretched across entire screen
@@ -455,6 +456,11 @@ class Sprite
   #  blurs the contents of the sprite bitmap
   #-----------------------------------------------------------------------------
   def blur_sprite(blur_val = 2, opacity = 35)
+    return if !self.bitmap || self.bitmap.disposed?
+    if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
+      self.color = Color.new(0, 0, 0, 64) unless self.disposed?
+      return
+    end
     bitmap = self.bitmap
     self.bitmap = Bitmap.new(bitmap.width,bitmap.height)
     self.bitmap.blt(0,0,bitmap,Rect.new(0,0,bitmap.width,bitmap.height))
@@ -465,6 +471,7 @@ class Sprite
       y += (1 + (i / 8))*([1,4,5,6].include?(dir) ? -1 : 1)*([3,7].include?(dir) ? 0 : 1)
       self.bitmap.blt(x-blur_val,y+(blur_val*2),bitmap,Rect.new(0,0,bitmap.width,bitmap.height),opacity)
     end
+    bitmap.dispose if bitmap && !bitmap.disposed?
   end
   #-----------------------------------------------------------------------------
   #  gets average sprite color
@@ -494,6 +501,7 @@ class Sprite
   #-----------------------------------------------------------------------------
   def create_outline(color, thickness = 2)
     return false if !self.bitmap
+    r = thickness
     # creates temp outline bmp
     out = Bitmap.new(self.bitmap.width, self.bitmap.height)
     for i in 0...4 # corners
@@ -526,10 +534,12 @@ class Sprite
   def colorize(color, amt = 255)
     return false if !self.bitmap
     alpha = amt/255.0
+    old_bmp = self.bitmap
     # clone current bitmap
-    bmp = self.bitmap.clone
+    bmp = old_bmp.clone
     # create new one in cache
     self.bitmap = Bitmap.new(bmp.width, bmp.height)
+    old_bmp.dispose if old_bmp && !old_bmp.disposed?
     # get pixels from bitmap
     pixels = bmp.raw_data.unpack('I*')
     for i in 0...pixels.length
@@ -550,6 +560,7 @@ class Sprite
     end
     # pack data
     self.bitmap.raw_data = pixels.pack('I*')
+    bmp.dispose if bmp && !bmp.disposed?
   end
   #-----------------------------------------------------------------------------
   #  creates a glow around sprite
@@ -563,6 +574,8 @@ class Sprite
     self.bitmap.clear
     self.bitmap.stretch_blt(Rect.new(-0.005*src.width,-0.015*src.height,src.width*1.01,1.02*src.height),src,Rect.new(0,0,src.width,src.height))
     self.bitmap.blt(0,0,temp_bmp,Rect.new(0,0,temp_bmp.width,temp_bmp.height)) if keep
+    src.dispose if src && !src.disposed?
+    temp_bmp.dispose if temp_bmp && !temp_bmp.disposed?
   end
   #-----------------------------------------------------------------------------
   #  fuzzes sprite outlines
@@ -574,6 +587,7 @@ class Sprite
     src = self.bitmap.clone
     self.bitmap.clear
     self.bitmap.stretch_blt(Rect.new(-0.005*src.width,-0.015*src.height,src.width*1.01,1.02*src.height),src,Rect.new(0,0,src.width,src.height))
+    src.dispose if src && !src.disposed?
   end
   #-----------------------------------------------------------------------------
   #  caches current bitmap additionally

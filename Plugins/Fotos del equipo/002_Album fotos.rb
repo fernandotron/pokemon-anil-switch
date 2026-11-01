@@ -77,7 +77,8 @@ class AlbumFotos_Scene
 		end
 
         if $actualizarCacheAlbum == true
-            System.reload_cache if defined?(System.reload_cache)
+            $FILE_EXIST_CACHE.delete_if { |k, _| k.to_s =~ /(?:^|\/)fotos\//i } if defined?($FILE_EXIST_CACHE) && $FILE_EXIST_CACHE
+            $RESOLVED_BITMAP_CACHE.delete_if { |k, _| k.to_s =~ /(?:^|\/)fotos\//i } if defined?($RESOLVED_BITMAP_CACHE) && $RESOLVED_BITMAP_CACHE
             $actualizarCacheAlbum = false
         end
 		
@@ -109,8 +110,8 @@ class AlbumFotos_Scene
         textpos = []
         textpos.push(
             ["FOTOS",Graphics.width/2,10,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
-            ["C: Abrir foto",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
-            ["X: Salir",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
+            ["A: Abrir foto",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
+            ["B: Salir",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
             ["Página: #{@page+1}/#{@numpages}",Graphics.width-20,Graphics.height-30,1,Color.new(255,255,255),Color.new(20,20,20,120),1]
         )
         pbSetSystemFont(@overlay.bitmap)
@@ -179,7 +180,7 @@ class AlbumFotos_Scene
                             mes = parts[-2].to_i
                             anyo = parts[-1].to_i
                             textpos.push(
-                                ["C/X: Salir",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
+                                ["A/B: Salir",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
                                 ["#{dia}/#{mes}/#{anyo}",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
                                 ["Captura: #{numcaptura_ui}",Graphics.width-20,Graphics.height-30,1,Color.new(255,255,255),Color.new(20,20,20,120),1]
                             )
@@ -241,7 +242,7 @@ class AlbumFotos_Scene
                             mes = parts[-2].to_i
                             anyo = parts[-1].to_i
                             textpos.push(
-                                ["C/X: Salir",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
+                                ["A/B: Salir",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
                                 ["#{dia}/#{mes}/#{anyo}",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
                                 ["Captura: #{numcaptura_ui}",Graphics.width-20,Graphics.height-30,1,Color.new(255,255,255),Color.new(20,20,20,120),1]
                             )
@@ -288,7 +289,7 @@ class AlbumFotos_Scene
                     mes = parts[-2].to_i
                     anyo = parts[-1].to_i
                     textpos.push(
-                        ["C/X: Salir",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
+                        ["A/B: Salir",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
                         ["#{dia}/#{mes}/#{anyo}",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
                         ["Captura: #{numcaptura_ui}",Graphics.width-20,Graphics.height-30,1,Color.new(255,255,255),Color.new(20,20,20,120),1]
                     )
@@ -322,8 +323,8 @@ class AlbumFotos_Scene
         textpos = []
         textpos.push(
             ["FOTOS",Graphics.width/2,10,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
-            ["C: Abrir foto",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
-            ["X: Salir",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
+            ["A: Abrir foto",20,Graphics.height-30,0,Color.new(255,255,255),Color.new(20,20,20,120),1],
+            ["B: Salir",Graphics.width/2,Graphics.height-30,2,Color.new(255,255,255),Color.new(20,20,20,120),1],
             ["Página: #{@page+1}/#{@numpages}",Graphics.width-20,Graphics.height-30,1,Color.new(255,255,255),Color.new(20,20,20,120),1]
         )
         pbSetSystemFont(@overlay.bitmap)
@@ -397,11 +398,16 @@ class AlbumFotos_Scene
 	end
 
 	def pbEndScene
-		@overlay.bitmap.clear
+		if @overlay && !@overlay.disposed?
+			if @overlay.bitmap && !@overlay.bitmap.disposed?
+				@overlay.bitmap.clear
+				@overlay.bitmap.dispose
+			end
+			@overlay.dispose
+		end
 		pbFadeOutAndHide(@sprites)
-		@overlay.dispose
-		@viewport.dispose
 		pbDisposeSpriteHash(@sprites)
+		@viewport.dispose if @viewport && !@viewport.disposed?
 	end	
 end
 

@@ -62,6 +62,9 @@ class HallOfFameViewerScene
 
   def pbEndScene
     pbFadeOutAndHide(@sprites)
+    if @sprites["bg"] && !@sprites["bg"].disposed? && @sprites["bg"].bitmap && !@sprites["bg"].bitmap.disposed?
+      @sprites["bg"].bitmap.dispose
+    end
     pbDisposeSpriteHash(@sprites)
     @viewport.dispose
   end
@@ -164,7 +167,7 @@ class HallOfFameViewerScene
        Color.new(255, 255, 255), Color.new(0, 0, 0)],
       [_INTL("Acción: Cambiar Equipo"), 32, Graphics.height - 16, :left, 
        Color.new(255, 255, 255), Color.new(0, 0, 0)],
-      [_INTL("X: Salir"), Graphics.width - 32, Graphics.height - 16, :right, 
+      [_INTL("B: Salir"), Graphics.width - 32, Graphics.height - 16, :right, 
        Color.new(255, 255, 255), Color.new(0, 0, 0)]
     ]
     
@@ -183,12 +186,12 @@ class HallOfFameViewerScene
         @pokemonIndex -= 1
         @pokemonIndex = @hallEntry.size - 1 if @pokemonIndex < 0
         update_display
-        pbSEPlay("GUI menu cursor")
+        pbPlayCursorSE
       elsif Input.trigger?(Input::RIGHT)
         @pokemonIndex += 1
         @pokemonIndex = 0 if @pokemonIndex >= @hallEntry.size
         update_display
-        pbSEPlay("GUI menu cursor")
+        pbPlayCursorSE
       elsif Input.trigger?(Input::USE)
         # Cambiar equipo
         @hallIndex -= 1
@@ -198,7 +201,7 @@ class HallOfFameViewerScene
         @hallEntry = $PokemonGlobal.hallOfFame[@hallIndex]
         @pokemonIndex = 0
         update_display
-        pbSEPlay("GUI menu cursor")
+        pbPlayCursorSE
       end
     end
   end
@@ -371,9 +374,8 @@ module HallOfFameBGM
   def self.play
     if pbResolveAudioFile("Audio/BGM/#{HALL_BGM}")
       pbBGMPlay(HALL_BGM)
-    else
-      # Fallback a música por defecto
-      pbBGMPlay("victory")
+    elsif pbResolveAudioFile("Audio/BGM/Hall of Fame")
+      pbBGMPlay("Hall of Fame")
     end
   end
   
@@ -397,11 +399,11 @@ def pbHandleHallOfFameError(error)
   pbMessage(error_message)
   
   if $DEBUG
-    puts "=== Hall of Fame Error Debug Info ==="
-    puts "Error: #{error.message}"
-    puts "Backtrace:"
-    error.backtrace.each { |line| puts "  #{line}" }
-    puts "======================================"
+    log_compat("=== Hall of Fame Error Debug Info ===")
+    log_compat("Error: #{error.message}")
+    log_compat("Backtrace:")
+    error.backtrace.each { |line| log_compat("  #{line}") }
+    log_compat("======================================")
   end
   
   # Intentar limpiar recursos si es posible

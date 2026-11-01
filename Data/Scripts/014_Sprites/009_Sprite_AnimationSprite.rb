@@ -48,8 +48,11 @@ class Spriteset_Map
   alias _animationSprite_dispose dispose unless method_defined?(:_animationSprite_dispose)
 
   def initialize(map = nil)
+    map_id = (map || $game_map)&.map_id || 0
+    log_compat("[Scene_Map] AnimationSprite: initialize START for map #{map_id}") rescue nil
     @usersprites = []
     _animationSprite_initialize(map)
+    log_compat("[Scene_Map] AnimationSprite: initialize DONE for map #{map_id}") rescue nil
   end
 
   def addUserAnimation(animID, x, y, tinting = false, height = 3)

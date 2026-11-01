@@ -1,7 +1,35 @@
 #===============================================================================
 #
 #===============================================================================
+def pbEnsureMissingAnilTrainers(tr_type, tr_name)
+  if tr_type == :CABALLERA && tr_name == "Celia" && !GameData::Trainer.exists?(:CABALLERA, "Celia", 0)
+    GameData::Trainer.register({
+      :id           => [:CABALLERA, "Celia", 0],
+      :trainer_type => :CABALLERA,
+      :real_name    => "Celia",
+      :version      => 0,
+      :lose_text    => "¡Vaya modales! Mis Pokémon no estaban listos para esto.",
+      :pokemon      => [
+        { :species => :CLEFAIRY, :level => 24 },
+        { :species => :PONYTA,   :level => 25 }
+      ]
+    })
+    GameData::Trainer.register({
+      :id           => [:CABALLERA, "Celia", 1],
+      :trainer_type => :CABALLERA,
+      :real_name    => "Celia",
+      :version      => 1,
+      :lose_text    => "¡Vaya modales! Mis Pokémon no estaban listos para esto.",
+      :pokemon      => [
+        { :species => :CLEFAIRY, :level => 24 },
+        { :species => :HATTREM,  :level => 25 }
+      ]
+    })
+  end
+end
+
 def pbLoadTrainer(tr_type, tr_name, tr_version = 0)
+  pbEnsureMissingAnilTrainers(tr_type, tr_name)
   tr_type_data = GameData::TrainerType.try_get(tr_type)
   raise _INTL("Trainer type {1} does not exist.", tr_type) if !tr_type_data
   tr_type = tr_type_data.id

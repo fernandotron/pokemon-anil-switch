@@ -196,25 +196,25 @@ if MonotypeChallenge::Config::BLOQUEAR_EVOLUCIONES_A_OTROS_TIPOS
       nil
     end
 
-    alias check_evolution_on_level_up_mono check_evolution_on_level_up
+    alias check_evolution_on_level_up_mono check_evolution_on_level_up unless method_defined?(:check_evolution_on_level_up_mono)
     def check_evolution_on_level_up
       new_species = check_evolution_on_level_up_mono
       validate_monotype_evolution(new_species)
     end
 
-    alias check_evolution_on_use_item_mono check_evolution_on_use_item
+    alias check_evolution_on_use_item_mono check_evolution_on_use_item unless method_defined?(:check_evolution_on_use_item_mono)
     def check_evolution_on_use_item(item_used)
       new_species = check_evolution_on_use_item_mono(item_used)
       validate_monotype_evolution(new_species)
     end
 
-    alias check_evolution_on_trade_mono check_evolution_on_trade
+    alias check_evolution_on_trade_mono check_evolution_on_trade unless method_defined?(:check_evolution_on_trade_mono)
     def check_evolution_on_trade(other_pkmn)
       new_species = check_evolution_on_trade_mono(other_pkmn)
       validate_monotype_evolution(new_species)
     end
 
-    alias check_evolution_after_battle_mono check_evolution_after_battle
+    alias check_evolution_after_battle_mono check_evolution_after_battle unless method_defined?(:check_evolution_after_battle_mono)
     def check_evolution_after_battle(party_index)
       new_species = check_evolution_after_battle_mono(party_index)
       validate_monotype_evolution(new_species)

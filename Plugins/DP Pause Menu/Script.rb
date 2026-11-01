@@ -211,9 +211,11 @@ class DP_PauseMenu
     reset_shortcut_positioning
     draw_fly_shortcut if $bag.has?(:POKERIDER) && ADD_POKERIDER_SHORTCUT_IN_MENU
     draw_vial_shortcut if $bag.has?(:VIAL) || $bag.has?(:EMPTYVIAL)
-    if !$bag.has?(:INFREPEL) && !$bag.has?(:INFREPELOFF) && ($PokemonGlobal.respond_to?(:infRepel) && !$PokemonGlobal.infRepel.nil?)
+    draw_radar_shortcut if $bag.has?(:RADAR) && (!RandomizedChallenge.enabled? || RandomizedChallenge.consistent_wild_encounters?)
+    if !$bag.has?(:INFREPEL) && !$bag.has?(:INFREPELOFF)
       $bag.add(:INFREPELOFF)
     end
+    $PokemonGlobal.infRepel = false if $PokemonGlobal.respond_to?(:infRepel) && $PokemonGlobal.infRepel.nil?
     draw_repel_shortcut if $bag.has?(:INFREPEL) || $bag.has?(:INFREPELOFF)
     draw_helpful_text
     
@@ -268,11 +270,11 @@ class DP_PauseMenu
              (Input.trigger?(Input::R) rescue false) ||
              (Input.trigger?(Input::AUX2) rescue false) ||
              (defined?(Input::Controller) && Input::Controller.triggerex?(:RIGHTSHOULDER) rescue false) ||
-             (Input.respond_to?(:triggerex?) && Input.triggerex?(:R) rescue false)) &&
-            ($bag.has?(:INFREPEL) || $bag.has?(:INFREPELOFF) || ($PokemonGlobal.respond_to?(:infRepel) && !$PokemonGlobal.infRepel.nil?))
+             (Input.respond_to?(:triggerex?) && Input.triggerex?(:R) rescue false))
         if !$bag.has?(:INFREPEL) && !$bag.has?(:INFREPELOFF)
           $bag.add(:INFREPELOFF)
         end
+        $PokemonGlobal.infRepel = false if $PokemonGlobal.respond_to?(:infRepel) && $PokemonGlobal.infRepel.nil?
         pbPlayDecisionSE
         pbToggleInfiniteRepel
         draw_repel_shortcut(true)
@@ -364,7 +366,8 @@ class DP_PauseMenu
   end
   def dispose
     @sprites.dispose
-    @viewport.dispose
+    @viewport.dispose if @viewport && !@viewport.disposed?
+    @viewport2.dispose if @viewport2 && !@viewport2.disposed?
     Input.update
   end
 end

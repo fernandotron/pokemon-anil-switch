@@ -1,0 +1,310 @@
+STENCH,Stench
+DRIZZLE,Drizzle
+SPEEDBOOST,Speed Boost
+BATTLEARMOR,Battle Armor
+STURDY,Sturdy
+DAMP,Damp
+LIMBER,Limber
+SANDVEIL,Sand Veil
+STATIC,Static
+VOLTABSORB,Volt Absorb
+WATERABSORB,Water Absorb
+OBLIVIOUS,Oblivious
+CLOUDNINE,Cloud Nine
+COMPOUNDEYES,Compound Eyes
+INSOMNIA,Insomnia
+COLORCHANGE,Color Change
+IMMUNITY,Immunity
+FLASHFIRE,Flash Fire
+SHIELDDUST,Shield Dust
+OWNTEMPO,Own Tempo
+SUCTIONCUPS,Suction Cups
+INTIMIDATE,Intimidate
+SHADOWTAG,Shadow Tag
+ROUGHSKIN,Rough Skin
+WONDERGUARD,Wonder Guard
+LEVITATE,Levitate
+EFFECTSPORE,Effect Spore
+SYNCHRONIZE,Synchronize
+CLEARBODY,Clear Body
+NATURALCURE,Natural Cure
+LIGHTNINGROD,Lightning Rod
+SERENEGRACE,Serene Grace
+SWIFTSWIM,Swift Swim
+CHLOROPHYLL,Chlorophyll
+ILLUMINATE,Illuminate
+TRACE,Trace
+HUGEPOWER,Huge Power
+POISONPOINT,Poison Point
+INNERFOCUS,Inner Focus
+MAGMAARMOR,Magma Armor
+WATERVEIL,Water Veil
+MAGNETPULL,Magnet Pull
+SOUNDPROOF,Soundproof
+RAINDISH,Rain Dish
+SANDSTREAM,Sand Stream
+PRESSURE,Pressure
+THICKFAT,Thick Fat
+EARLYBIRD,Early Bird
+FLAMEBODY,Flame Body
+RUNAWAY,Run Away
+KEENEYE,Keen Eye
+HYPERCUTTER,Hyper Cutter
+PICKUP,Pickup
+TRUANT,Truant
+HUSTLE,Hustle
+CUTECHARM,Cute Charm
+PLUS,Plus
+MINUS,Minus
+FORECAST,Forecast
+STICKYHOLD,Sticky Hold
+SHEDSKIN,Shed Skin
+GUTS,Guts
+MARVELSCALE,Marvel Scale
+LIQUIDOOZE,Liquid Ooze
+OVERGROW,Overgrow
+BLAZE,Blaze
+TORRENT,Torrent
+SWARM,Swarm
+ROCKHEAD,Rock Head
+DROUGHT,Drought
+ARENATRAP,Arena Trap
+VITALSPIRIT,Vital Spirit
+WHITESMOKE,White Smoke
+PUREPOWER,Pure Power
+SHELLARMOR,Shell Armor
+AIRLOCK,Air Lock
+TANGLEDFEET,Tangled Feet
+MOTORDRIVE,Motor Drive
+RIVALRY,Rivalry
+STEADFAST,Steadfast
+SNOWCLOAK,Snow Cloak
+GLUTTONY,Gluttony
+ANGERPOINT,Anger Point
+UNBURDEN,Unburden
+HEATPROOF,Heatproof
+SIMPLE,Simple
+DRYSKIN,Dry Skin
+DOWNLOAD,Download
+IRONFIST,Iron Fist
+POISONHEAL,Poison Heal
+ADAPTABILITY,Adaptability
+SKILLLINK,Skill Link
+HYDRATION,Hydration
+SOLARPOWER,Solar Power
+QUICKFEET,Quick Feet
+NORMALIZE,Normalize
+SNIPER,Sniper
+MAGICGUARD,Magic Guard
+NOGUARD,No Guard
+STALL,Stall
+TECHNICIAN,Technician
+LEAFGUARD,Leaf Guard
+KLUTZ,Klutz
+MOLDBREAKER,Mold Breaker
+SUPERLUCK,Super Luck
+AFTERMATH,Aftermath
+ANTICIPATION,Anticipation
+FOREWARN,Forewarn
+UNAWARE,Unaware
+TINTEDLENS,Tinted Lens
+FILTER,Filter
+SLOWSTART,Slow Start
+SCRAPPY,Scrappy
+STORMDRAIN,Storm Drain
+ICEBODY,Ice Body
+SOLIDROCK,Solid Rock
+SNOWWARNING,Snow Warning
+HONEYGATHER,Honey Gather
+FRISK,Frisk
+RECKLESS,Reckless
+MULTITYPE,Multitype
+FLOWERGIFT,Flower Gift
+BADDREAMS,Bad Dreams
+PICKPOCKET,Pickpocket
+SHEERFORCE,Sheer Force
+CONTRARY,Contrary
+UNNERVE,Unnerve
+DEFIANT,Defiant
+DEFEATIST,Defeatist
+CURSEDBODY,Cursed Body
+HEALER,Healer
+FRIENDGUARD,Friend Guard
+WEAKARMOR,Weak Armor
+HEAVYMETAL,Heavy Metal
+LIGHTMETAL,Light Metal
+MULTISCALE,Multiscale
+TOXICBOOST,Toxic Boost
+FLAREBOOST,Flare Boost
+HARVEST,Harvest
+TELEPATHY,Telepathy
+MOODY,Moody
+OVERCOAT,Overcoat
+POISONTOUCH,Poison Touch
+REGENERATOR,Regenerator
+BIGPECKS,Big Pecks
+SANDRUSH,Sand Rush
+WONDERSKIN,Wonder Skin
+ANALYTIC,Analytic
+ILLUSION,Illusion
+IMPOSTER,Imposter
+INFILTRATOR,Infiltrator
+MUMMY,Mummy
+MOXIE,Moxie
+JUSTIFIED,Justified
+RATTLED,Rattled
+MAGICBOUNCE,Magic Bounce
+SAPSIPPER,Sap Sipper
+PRANKSTER,Prankster
+SANDFORCE,Sand Force
+IRONBARBS,Iron Barbs
+ZENMODE,Zen Mode
+VICTORYSTAR,Victory Star
+TURBOBLAZE,Turboblaze
+TERAVOLT,Teravolt
+AROMAVEIL,Aroma Veil
+FLOWERVEIL,Flower Veil
+CHEEKPOUCH,Cheek Pouch
+PROTEAN,Protean
+FURCOAT,Fur Coat
+MAGICIAN,Magician
+BULLETPROOF,Bulletproof
+COMPETITIVE,Competitive
+STRONGJAW,Strong Jaw
+REFRIGERATE,Refrigerate
+SWEETVEIL,Sweet Veil
+STANCECHANGE,Stance Change
+GALEWINGS,Gale Wings
+MEGALAUNCHER,Mega Launcher
+GRASSPELT,Grass Pelt
+SYMBIOSIS,Symbiosis
+TOUGHCLAWS,Tough Claws
+PIXILATE,Pixilate
+GOOEY,Gooey
+AERILATE,Aerilate
+PARENTALBOND,Parental Bond
+DARKAURA,Dark Aura
+FAIRYAURA,Fairy Aura
+AURABREAK,Aura Break
+PRIMORDIALSEA,Primordial Sea
+DESOLATELAND,Desolate Land
+DELTASTREAM,Delta Stream
+STAMINA,Stamina
+WIMPOUT,Wimp Out
+EMERGENCYEXIT,Emergency Exit
+WATERCOMPACTION,Water Compaction
+MERCILESS,Merciless
+SHIELDSDOWN,Shields Down
+STAKEOUT,Stakeout
+WATERBUBBLE,Water Bubble
+STEELWORKER,Steelworker
+BERSERK,Berserk
+SLUSHRUSH,Slush Rush
+LONGREACH,Long Reach
+LIQUIDVOICE,Liquid Voice
+TRIAGE,Triage
+GALVANIZE,Galvanize
+SURGESURFER,Surge Surfer
+SCHOOLING,Schooling
+DISGUISE,Disguise
+BATTLEBOND,Battle Bond
+POWERCONSTRUCT,Power Construct
+CORROSION,Corrosion
+COMATOSE,Comatose
+QUEENLYMAJESTY,Queenly Majesty
+INNARDSOUT,Innards Out
+DANCER,Dancer
+BATTERY,Battery
+FLUFFY,Fluffy
+DAZZLING,Dazzling
+SOULHEART,Soul-Heart
+TANGLINGHAIR,Tangling Hair
+RECEIVER,Receiver
+POWEROFALCHEMY,Power of Alchemy
+BEASTBOOST,Beast Boost
+RKSSYSTEM,RKS System
+ELECTRICSURGE,Electric Surge
+PSYCHICSURGE,Psychic Surge
+MISTYSURGE,Misty Surge
+GRASSYSURGE,Grassy Surge
+FULLMETALBODY,Full Metal Body
+SHADOWSHIELD,Shadow Shield
+PRISMARMOR,Prism Armor
+NEUROFORCE,Neuroforce
+INTREPIDSWORD,Intrepid Sword
+DAUNTLESSSHIELD,Dauntless Shield
+LIBERO,Libero
+BALLFETCH,Ball Fetch
+COTTONDOWN,Cotton Down
+PROPELLERTAIL,Propeller Tail
+MIRRORARMOR,Mirror Armor
+GULPMISSILE,Gulp Missile
+STALWART,Stalwart
+STEAMENGINE,Steam Engine
+PUNKROCK,Punk Rock
+SANDSPIT,Sand Spit
+ICESCALES,Ice Scales
+RIPEN,Ripen
+ICEFACE,Ice Face
+POWERSPOT,Power Spot
+MIMICRY,Mimicry
+SCREENCLEANER,Screen Cleaner
+STEELYSPIRIT,Steely Spirit
+PERISHBODY,Perish Body
+WANDERINGSPIRIT,Wandering Spirit
+GORILLATACTICS,Gorilla Tactics
+NEUTRALIZINGGAS,Neutralizing Gas
+PASTELVEIL,Pastel Veil
+HUNGERSWITCH,Hunger Switch
+QUICKDRAW,Quick Draw
+UNSEENFIST,Unseen Fist
+CURIOUSMEDICINE,Curious Medicine
+TRANSISTOR,Transistor
+DRAGONSMAW,Dragon's Maw
+CHILLINGNEIGH,Chilling Neigh
+GRIMNEIGH,Grim Neigh
+ASONECHILLINGNEIGH,As One
+ASONEGRIMNEIGH,As One
+ANGERSHELL,Coraza Ira
+ARMORTAIL,Armor Tail
+BEADSOFRUINBEADSOFRUIN,Beads of Ruin
+COMMANDER,Commander
+COSTAR,Costar
+CUDCHEW,Cud Chew
+EARTHEATER,Earth Eater
+ELECTROMORPHOSIS,Electromorphosis
+GOODASGOLD,Good As Gold
+GUARDDOG,Guard Dog
+HADRONENGINE,Hadron Engine
+LINGERINGAROMA,Lingering Aroma
+MYCELIUMMIGHT,Mycelium Might
+OPPORTUNIST,Opportunist
+ORICHALCUMPULSE,Orichalcum Pulse
+PROTOSYNTHESIS,Protosynthesis
+PURIFYINGSALT,Purifying Salt
+QUARKDRIVE,Quark Drive
+ROCKYPAYLOAD,Rocky Payload
+SEEDSOWER,Seed Sower
+SHARPNESS,Sharpness
+SUPREMEOVERLORD,Supreme Overlord
+SWORDOFRUIN,Sword of Ruin
+TABLETSOFRUIN,Tablets of Ruin
+THERMALEXCHANGE,Thermal Exchange
+TOXICDEBRIS,Toxic Debris
+VESSELOFRUIN,Vessel of Ruin
+WELLBAKEDBODY,Well-Baked Body
+WINDPOWER,Wind Power
+WINDRIDER,Wind Rider
+ZEROTOHERO,Zero to Hero
+SUPERSWEETSYRUP,Supersweet Syrup
+HOSPITALITY,Hospitality
+TOXICCHAIN,Toxic Chain
+MINDSEYE,Mind's Eye
+EMBODYASPECT,Embody Aspect
+EMBODYASPECT_1,Embody Aspect
+EMBODYASPECT_2,Embody Aspect
+EMBODYASPECT_3,Embody Aspect
+POISONPUPPETEER,Poison Puppeteer
+TERASHIFT,Tera Shift
+TERASHELL,Tera Shell
+TERAFORMZERO,Teraform Zero

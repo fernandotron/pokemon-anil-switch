@@ -124,7 +124,7 @@ ItemHandlers::UseInField.add(:SACREDASH, proc { |item|
     screen.pbStartScene(_INTL("Usando objeto..."), false)
     pbSEPlay("Use item in party")
     $player.party.each_with_index do |pkmn, i|
-      next if !pkmn.fainted? || i.perma_faint
+      next if !pkmn.fainted? || pkmn.perma_faint
       revived += 1
       pkmn.heal
       screen.pbRefreshSingle(i)

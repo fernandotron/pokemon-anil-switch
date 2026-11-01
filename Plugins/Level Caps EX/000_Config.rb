@@ -58,7 +58,7 @@ module LevelCapsEX
   LEVELGYM9 = 100
 
   def self.get_level_cap
-    return Settings::MAXIMUM_LEVEL if ($DEBUG && BYPASS_LEVEL_CAP_ON_DEBUG) || !enabled? || $player.connecting_online?
+    return Settings::MAXIMUM_LEVEL if ($DEBUG && BYPASS_LEVEL_CAP_ON_DEBUG) || !enabled? || $player&.connecting_online? || ($game_map && $game_map.map_id == 215)
     $PokemonGlobal.level_cap_enabled ||= true
     gym_levels = {
       SWITCHGYM1  => LEVELGYM1,

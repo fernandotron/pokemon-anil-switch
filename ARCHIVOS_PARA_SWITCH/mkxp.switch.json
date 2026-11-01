@@ -3,7 +3,7 @@
     // Configuración optimizada de mkxp-z para Nintendo Switch (Horizon OS)
     // =========================================================================
 
-    "windowTitle": "Pokémon Añil 4.0",
+    "windowTitle": "Pokémon Añil 4.14",
 
     // Resolución del framebuffer en Switch (512x384)
     "defScreenW": 512,

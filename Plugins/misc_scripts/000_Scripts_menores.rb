@@ -39,9 +39,11 @@ def battle_mewtwo_armadura
   setBattleRule("outcomevar", 1)
   setBattleRule("unrandomized") if RandomizedChallenge.enabled?
   setBattleRule("editWildPokemon", {
-    :moves   => [:PSYSTRIKE, :AURASPHERE, :FLAMETHROWER, :SHADOWBALL],
-    :iv      => 31,
-    :ev      => 100
+    :immunities => [:ALLSTATUS, :FLINCH, :STATDROPS, :PPLOSS, :OHKO,
+                    :ESCAPE, :INDIRECT, :SELFKO, :PERISHSONG, :TRANSFORM],
+    :moves      => [:PSYSTRIKE, :AURASPHERE, :FLAMETHROWER, :SHADOWBALL],
+    :iv         => 31,
+    :ev         => 100
   })
   WildBattle.start(:MEWTWO_5, 70)
   $game_switches[COMBATE_MEWTWO] = false
@@ -330,5 +332,20 @@ def todas_entrenadores_importantes_hechos?
     $game_switches[375] = true
     pbMEPlay("Voltorb Flip win")
     pbMessage("¡Has obtenido una <b>Estrella</b> en tu Tarjeta de Entrenador!")
+  end
+end
+
+# Shims de compatibilidad para eventos heredados (Map 28 Ev#25 blackout temprano y Switch[409])
+unless Kernel.private_method_defined?(:pbPokemonFollow) || Kernel.method_defined?(:pbPokemonFollow)
+  def pbPokemonFollow(_event_id = nil)
+    FollowingPkmn.toggle_on if defined?(FollowingPkmn) && FollowingPkmn.respond_to?(:toggle_on)
+  rescue Exception => e
+    log_compat("[Compat] pbPokemonFollow error: #{e.class}: #{e.message}") if defined?(log_compat)
+  end
+end
+
+unless Kernel.private_method_defined?(:getItemRandomFromPokeball) || Kernel.method_defined?(:getItemRandomFromPokeball)
+  def getItemRandomFromPokeball
+    return :POKEBALL
   end
 end

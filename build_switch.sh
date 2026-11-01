@@ -367,7 +367,7 @@ fi
 echo "Binario ELF generado: $ELF_BINARY"
 
 echo "=== [5/6] Creando NACP y Metadatos ==="
-nacptool --create "Pokemon Anil" "Eric Lostie / Switch Port" "4.0.0" "$NACP_FILE"
+nacptool --create "Pokemon Anil" "Eric Lostie / Switch Port" "4.14.0" "$NACP_FILE"
 
 # Generar un icono genérico de 256x256 si no existe
 if [ ! -f "$ICON_FILE" ]; then

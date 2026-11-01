@@ -176,26 +176,44 @@ class Spriteset_Map
   alias shadow_initialize initialize unless private_method_defined?(:shadow_initialize)
 
   def initialize(map = nil)
+    map_id = (map || $game_map)&.map_id || 0
+    log_compat("[Scene_Map] Shadows: initialize START for map #{map_id}") rescue nil
     @shadows = []
     warn = false
     map = $game_map if !map
-    map.events.keys.sort.each do |k|
-      ev = map.events[k]
-      warn = true if ev.list && ev.list.length > 0 && ev.list[0].code == 108 &&
-                     (ev.list[0].parameters == ["s"] || ev.list[0].parameters == ["o"])
-      params = XPML_read(map, "Shadow Source", ev, 4)
-      @shadows.push([ev] + params) if params
+    begin
+      if map && map.events
+        map.events.keys.sort.each do |k|
+          ev = map.events[k]
+          next if !ev
+          warn = true if ev.list && ev.list.length > 0 && ev.list[0].code == 108 &&
+                         (ev.list[0].parameters == ["s"] || ev.list[0].parameters == ["o"])
+          params = XPML_read(map, "Shadow Source", ev, 4) rescue nil
+          @shadows.push([ev] + params) if params
+        end
+      end
+    rescue Exception => e
+      log_compat("[Scene_Map] Shadows: XPML error: #{e.class} - #{e.message}") rescue nil
     end
     if warn == true
-      p "Warning : At least one event on this map uses the obsolete way to add shadows"
+      log_compat("[Scene_Map] Shadows: Warning : At least one event on map #{map_id} uses obsolete shadow syntax") rescue nil
     end
+    log_compat("[Scene_Map] Shadows: calling shadow_initialize for map #{map_id}") rescue nil
     shadow_initialize(map)
-    @character_sprites.each do |sprite|
-      sprite.setShadows(map, @shadows)
+    log_compat("[Scene_Map] Shadows: shadow_initialize completed for map #{map_id}") rescue nil
+    if @character_sprites
+      @character_sprites.each do |sprite|
+        begin
+          sprite.setShadows(map, @shadows) if sprite.respond_to?(:setShadows)
+        rescue Exception => e
+          log_compat("[Scene_Map] Shadows: setShadows error: #{e.class} - #{e.message}") rescue nil
+        end
+      end
     end
     if $scene && $scene.respond_to?(:spritesetGlobal) && $scene.spritesetGlobal && $scene.spritesetGlobal.playersprite
       $scene.spritesetGlobal.playersprite.setShadows(map, @shadows) rescue nil
     end
+    log_compat("[Scene_Map] Shadows: initialize DONE for map #{map_id}") rescue nil
   end
 end
 

@@ -1588,8 +1588,8 @@ end`
 end`
     );
     s.code = s.code.replace(
-      /when "terrain", "weather", "environment", "environ", "backdrop",\s*\n\s*"battleback", "base", "outcome", "outcomevar"/g,
-      'when "terrain", "weather", "environment", "environ", "backdrop", "battleback", "base", "outcome", "outcomevar", "midbattlescript", "midbattle"'
+      /when "terrain", "weather", "environment", "environ", "backdrop",\s*\n\s*"battleback", "base", "outcome", "outcomevar"(?!,\s*"midbattle)/g,
+      'when "terrain", "weather", "environment", "environ", "backdrop", "battleback", "base", "outcome", "outcomevar", "midbattlescript", "midbattle", "opponentlosetext", "opponentwintext", "battlebgm", "victorybgm"'
     );
     s.code = s.code.replace(
       /raise _INTL\("Argumento \{1\} esperaba una variable después pero no la tiene\.", r\) if r/g,

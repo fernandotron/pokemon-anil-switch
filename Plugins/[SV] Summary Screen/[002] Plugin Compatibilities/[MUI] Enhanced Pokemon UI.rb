@@ -6,9 +6,9 @@ if PluginManager.installed?("[MUI] Enhanced Pokemon UI")
     #-----------------------------------------------------------------------------
     # Aliased to add shiny leaf display.
     #-----------------------------------------------------------------------------
-    alias enhanced_drawPage drawPage
+    alias sv_enhanced_drawPage drawPage unless method_defined?(:sv_enhanced_drawPage)
     def drawPage(page)
-      enhanced_drawPage(page)
+      sv_enhanced_drawPage(page)
       return if !Settings::SUMMARY_SHINY_LEAF
       overlay = @sprites["overlay"].bitmap
       coords = [195, 244]
@@ -18,9 +18,9 @@ if PluginManager.installed?("[MUI] Enhanced Pokemon UI")
     #-----------------------------------------------------------------------------
     # Aliased to add happiness meter display.
     #-----------------------------------------------------------------------------
-    alias enhanced_drawPageOne drawPageOne
+    alias sv_enhanced_drawPageOne drawPageOne unless method_defined?(:sv_enhanced_drawPageOne)
     def drawPageOne
-      enhanced_drawPageOne
+      sv_enhanced_drawPageOne
       return if !Settings::SUMMARY_HAPPINESS_METER
       overlay = @sprites["overlay"].bitmap
       coords = [230, 352]
@@ -51,7 +51,7 @@ if PluginManager.installed?("[MUI] Enhanced Pokemon UI")
     #-----------------------------------------------------------------------------
     # Aliased to add Legacy data display.
     #-----------------------------------------------------------------------------
-    alias enhanced_pbStartScene pbStartScene
+    alias sv_enhanced_pbStartScene pbStartScene unless method_defined?(:sv_enhanced_pbStartScene)
     def pbStartScene(*args)
       if defined?(Settings::SUMMARY_LEGACY_DATA) && Settings::SUMMARY_LEGACY_DATA
         UIHandlers.edit_hash(:summary, :page_info, "options", 
@@ -198,14 +198,14 @@ if PluginManager.installed?("[MUI] Enhanced Pokemon UI")
     #-----------------------------------------------------------------------------
     # Aliased to add IV ratings.
     #-----------------------------------------------------------------------------
-    alias enhanced_drawPageThree drawPageThree
+    alias sv_enhanced_drawPageThree drawPageThree unless method_defined?(:sv_enhanced_drawPageThree)
     def drawPageThree
       if @statToggle
         @sprites["background"].setBitmap("Graphics/UI/Summary/bg_skills_eviv")
       else
         @sprites["background"].setBitmap("Graphics/UI/Summary/bg_skills")
       end
-      (@statToggle) ? drawEnhancedStats : enhanced_drawPageThree
+      (@statToggle) ? drawEnhancedStats : sv_enhanced_drawPageThree
       return if !defined?(Settings::SUMMARY_IV_RATINGS) || !Settings::SUMMARY_IV_RATINGS
       overlay = @sprites["overlay"].bitmap
       pbDisplayIVRatingsSV(@pokemon, overlay, @statToggle)

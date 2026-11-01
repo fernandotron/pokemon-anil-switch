@@ -56,13 +56,8 @@ def pbBitmap(filename)
   end
 end
 
-def pbDisposeSpriteHash(hash)
-  return if !hash
-  hash.each_value { |sprite| sprite&.dispose }
-end
-
 class Sprite
-  def blur_sprite
+  def blur_sprite(*_args)
     self.color = Color.new(0, 0, 0, 64) unless self.disposed?
   end
 end
@@ -221,6 +216,7 @@ def ebWildAnimationRegi(viewport, species)
   end
   
   # Limpiar sprites
+  fp["back"].bitmap.dispose if fp["back"] && fp["back"].bitmap && !fp["back"].bitmap.disposed?
   pbDisposeSpriteHash(fp)
 end
 
@@ -292,6 +288,7 @@ def ebWildAnimationMinor(viewport, special = false)
   
   # Limpiar sprites
   pbDisposeSpriteHash(frames)
+  bmp.dispose if bmp && !bmp.disposed?
 end
 
 

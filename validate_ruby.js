@@ -17,6 +17,11 @@ function validateRuby(src) {
     const words = line.trim().split(/\s+/).filter(Boolean);
     if (words.length === 0) continue;
 
+    if (/defined\?\s*\(\s*::[a-z_]/.test(line)) {
+      console.error(`[SYNTAX ERROR] defined?(::identifier) requires a Constant at line ${i + 1}: ${lines[i]}`);
+      extraEnds++;
+    }
+
     // Tokenize
     const tokens = line.match(/\b(?:class|module|def|if|unless|case|while|until|for|begin|do|end)\b/g) || [];
 

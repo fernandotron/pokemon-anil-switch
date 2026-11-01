@@ -88,6 +88,7 @@ class Battle::Battler
       return
     end
     return if @fainted   # Has already fainted properly
+    @fainted = true
     @battle.pbDisplayBrief(_INTL("¡{1} se debilitó!", pbThis)) if showMessage
     PBDebug.log("[Pokémon fainted] #{pbThis} (#{@index})") if !showMessage
     @battle.scene.pbFaintBattler(self)
@@ -192,10 +193,14 @@ class Battle::Battler
   def pbChangeForm(newForm, msg)
     return if fainted? || @effects[PBEffects::Transform] || @form == newForm
     oldForm = @form
+    wasAlive = (@hp > 0)
+    hpRatio  = (@totalhp > 0) ? (@hp.to_f / @totalhp) : 0.0
     oldDmg = @totalhp - @hp
     self.form = newForm
     pbUpdate(true)
-    @hp = @totalhp - oldDmg
+    newHP = (@totalhp > oldDmg) ? (@totalhp - oldDmg) : (@totalhp * hpRatio).round
+    newHP = 1 if wasAlive && newHP < 1
+    self.hp = newHP
     @effects[PBEffects::WeightChange] = 0 if Settings::MECHANICS_GENERATION >= 6
     @battle.scene.pbChangePokemon(self, @pokemon)
     @battle.scene.pbRefreshOne(@index)

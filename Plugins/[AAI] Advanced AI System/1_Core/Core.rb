@@ -389,8 +389,9 @@ Battle::AI::Handlers::ShouldSwitch.add(:advanced_ai_switch_intelligence,
 # Override replacement Pokemon selection to use Advanced AI logic
 #===============================================================================
 class Battle::AI
-  alias aai_choose_best_replacement_pokemon choose_best_replacement_pokemon
+  alias aai_choose_best_replacement_pokemon choose_best_replacement_pokemon unless method_defined?(:aai_choose_best_replacement_pokemon)
   def choose_best_replacement_pokemon(idxBattler, terrible_moves = false)
+    return aai_choose_best_replacement_pokemon(idxBattler, terrible_moves) unless AdvancedAI.active?
     begin
       # Detect MANDATORY switches (faint, U-turn / Volt Switch / Flip Turn /
       # Baton Pass / Parting Shot / Teleport / Chilly Reception / Shed Tail,

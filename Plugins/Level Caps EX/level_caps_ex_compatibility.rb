@@ -1,8 +1,6 @@
 module LevelCapsEX
-  LEVEL_CAP_VARIABLE = 40 # Beispiel-Variable für Level-Cap
-
   def self.current_level_cap
-    return $game_variables[LEVEL_CAP_VARIABLE] || 0
+    return level_cap
   end
 
   def self.voltseons_pause_menu_exists?

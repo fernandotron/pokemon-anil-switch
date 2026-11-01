@@ -4,10 +4,12 @@
 # ********************************************************
 # MEGAS RANDOMIZE TO MEGAS
 # ********************************************************
-alias pbLoadTrainer_random pbLoadTrainer
+alias pbLoadTrainer_random pbLoadTrainer unless method_defined?(:pbLoadTrainer_random)
 def pbLoadTrainer(tr_type, tr_name, tr_version = 0)
+  pbEnsureMissingAnilTrainers(tr_type, tr_name) if defined?(pbEnsureMissingAnilTrainers)
   return pbLoadTrainer_random(tr_type, tr_name, tr_version) unless RandomizedChallenge.enabled?
   trainer_data = GameData::Trainer.try_get(tr_type, tr_name, tr_version)
+  return pbLoadTrainer_random(tr_type, tr_name, tr_version) if trainer_data.nil?
 
   if !RandomizedChallenge.randomize_trainers? || RandomizedChallenge::UNRANDOMIZABLE_TRAINERS.include?(trainer_data.id)
     RandomizedChallenge.pause

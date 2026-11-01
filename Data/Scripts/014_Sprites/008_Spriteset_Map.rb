@@ -52,24 +52,57 @@ class Spriteset_Map
 
   def initialize(map = nil)
     @map = (map) ? map : $game_map
+    m_id = @map&.map_id || 0
+    log_compat("[Scene_Map] Spriteset_Map.initialize START for map #{m_id}") rescue nil
     if $scene && $scene.respond_to?(:map_renderer) && $scene.map_renderer
-      $scene.map_renderer.add_tileset(@map.tileset_name) rescue nil
-      @map.autotile_names.each { |filename| $scene.map_renderer.add_autotile(filename) rescue nil }
-      $scene.map_renderer.add_extra_autotiles(@map.tileset_id) rescue nil
+      log_compat("[Scene_Map] Spriteset_Map: adding tileset #{@map.tileset_name}") rescue nil
+      begin
+        $scene.map_renderer.add_tileset(@map.tileset_name)
+      rescue Exception => e
+        log_compat("[Scene_Map] ERROR add_tileset: #{e.class} - #{e.message}") rescue nil
+      end
+      log_compat("[Scene_Map] Spriteset_Map: adding autotiles") rescue nil
+      begin
+        @map.autotile_names.each { |filename| $scene.map_renderer.add_autotile(filename) rescue nil }
+      rescue Exception => e
+        log_compat("[Scene_Map] ERROR add_autotiles: #{e.class} - #{e.message}") rescue nil
+      end
+      begin
+        $scene.map_renderer.add_extra_autotiles(@map.tileset_id) rescue nil
+      rescue Exception
+      end
     end
+    log_compat("[Scene_Map] Spriteset_Map: panorama and fog") rescue nil
     @panorama = AnimatedPlane.new(@@viewport0) rescue nil
     @fog = AnimatedPlane.new(@@viewport1) rescue nil
     @fog.z = 3000 if @fog
     @character_sprites = []
     if @map && @map.events
+      ev_count = @map.events.size rescue 0
+      log_compat("[Scene_Map] Spriteset_Map: creating #{ev_count} character sprites") rescue nil
       @map.events.keys.sort.each do |i|
         next if !@map.events[i]
-        sprite = Sprite_Character.new(@@viewport1, @map.events[i]) rescue nil
-        @character_sprites.push(sprite) if sprite
+        begin
+          sprite = Sprite_Character.new(@@viewport1, @map.events[i])
+          @character_sprites.push(sprite) if sprite
+        rescue Exception => e
+          log_compat("[Scene_Map] ERROR creating character sprite #{i} (#{@map.events[i]&.name}): #{e.class} - #{e.message}") rescue nil
+        end
       end
     end
-    EventHandlers.trigger(:on_new_spriteset_map, self, @@viewport1) rescue nil
-    update rescue nil
+    log_compat("[Scene_Map] Spriteset_Map: on_new_spriteset_map trigger") rescue nil
+    begin
+      EventHandlers.trigger(:on_new_spriteset_map, self, @@viewport1)
+    rescue Exception => e
+      log_compat("[Scene_Map] ERROR on_new_spriteset_map: #{e.class} - #{e.message}") rescue nil
+    end
+    log_compat("[Scene_Map] Spriteset_Map: update") rescue nil
+    begin
+      update
+    rescue Exception => e
+      log_compat("[Scene_Map] ERROR Spriteset_Map#update: #{e.class} - #{e.message}") rescue nil
+    end
+    log_compat("[Scene_Map] Spriteset_Map.initialize COMPLETED for map #{m_id}") rescue nil
   end
 
   def dispose

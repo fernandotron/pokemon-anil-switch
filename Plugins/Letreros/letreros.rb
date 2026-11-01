@@ -305,8 +305,8 @@ class LocationWindow
   
   def initialize(name)
     return if $game_temp.jess_letreros_activo==true
-    vista=Viewport.new(0,0,Graphics.width,Graphics.height)
-    @pic=Sprite.new(vista)
+    @vista=Viewport.new(0,0,Graphics.width,Graphics.height)
+    @pic=Sprite.new(@vista)
     @pic.z=99999
     @pic.bitmap=RPG::Cache.load_bitmap(JESS_PATH, JESS_LETREROS_ESTILO)
     @pic.y=-48
@@ -422,6 +422,7 @@ class LocationWindow
     @pic3.dispose if @pic3
     @pic2.dispose if @pic2
     @w2.dispose   if @w2
+    @vista.dispose if @vista && !@vista.disposed?
   end
 
   def update
@@ -432,11 +433,7 @@ class LocationWindow
     @pic2.update if (JESS_LETREROS_ESTILO=="BW2" && JESS_LETREROS_BW2_EST==true) || JESS_LETREROS_ESTILO=="ORAS" || JESS_LETREROS_ESTILO=="LetsGO" 
     @w2.update if JESS_LETREROS_ESTILO=="BW2" && JESS_LETREROS_BW2_EST==true
     if jess_letreros_isDispose?
-      @window.dispose
-      @pic.dispose
-      @pic3.dispose if JESS_LETREROS_ESTILO=="LetsGO"
-      @pic2.dispose if (JESS_LETREROS_ESTILO=="BW2" && JESS_LETREROS_BW2_EST==true) || JESS_LETREROS_ESTILO=="ORAS" || JESS_LETREROS_ESTILO=="LetsGO"
-      @w2.dispose if JESS_LETREROS_ESTILO=="BW2" && JESS_LETREROS_BW2_EST==true
+      dispose
       return
     end
     if JESS_LETREROS_ESTILO=="BW"
@@ -502,13 +499,10 @@ class LocationWindow
         @pic.y+=4 
         @pic2.y+=4
         @pic3.y-=4 if @frames<83
+      elsif @frames>83 && @pic2.x<(-Graphics.width)
+         dispose
       elsif @frames>82
          @pic2.x-=20; @pic3.x+=20
-      elsif @frames>83 && @pic2.x<(-Graphics.width)
-         @pic.dispose
-         @pic2.dispose
-         @pic3.dispose
-         @window.dispose
       end
       @frames+=1
     else  

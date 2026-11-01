@@ -98,7 +98,7 @@ module MonotypeMenu
       result = screen.pbStartScreen
       
       case result
-      when :terminar
+      when :terminar, :cancelar
         break
       when :show_not_recommended
         current_type = :not_recommended
@@ -219,6 +219,9 @@ module MonotypeMenu
         elsif Input.trigger?(Input::USE)
           result = handle_selection
           return result if result
+        elsif Input.trigger?(Input::BACK)
+          pbPlayCancelSE
+          return @primary_list ? :cancelar : :show_recommended
         end
       end
     end

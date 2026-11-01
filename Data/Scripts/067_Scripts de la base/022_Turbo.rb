@@ -241,33 +241,28 @@ MenuHandlers.add(:options_menu, :turbo, {
 
 module Graphics
   class << self
-    alias _old_update_turbo update
+    alias _old_update_turbo update unless method_defined?(:_old_update_turbo)
     def update
       _old_update_turbo
       $buttonframes = 150 if !$buttonframes
       if $buttonframes < 150 # Frames en pantalla
         if !@boton_turbo || @boton_turbo.disposed?
           @boton_turbo = Sprite.new
-          if $GameSpeed == 0
-            @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo0")
-          elsif $GameSpeed == 1
-            @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo1")
-          else
-            @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo2")
-          end
           @boton_turbo.z = 999999
-        elsif @boton_turbo
-          if $GameSpeed == 0
-            @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo0")
-          elsif $GameSpeed == 1
-            @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo1")
-          else
-            @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo2")
-          end
+          @boton_turbo_speed = nil
+        end
+        target_speed = ($GameSpeed == 0) ? 0 : (($GameSpeed == 1) ? 1 : 2)
+        if @boton_turbo_speed != target_speed
+          @boton_turbo.bitmap.dispose if @boton_turbo.bitmap && !@boton_turbo.bitmap.disposed?
+          @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo#{target_speed}")
+          @boton_turbo_speed = target_speed
         end
         $buttonframes += 1
         if $buttonframes == 150
+          @boton_turbo.bitmap.dispose if @boton_turbo.bitmap && !@boton_turbo.bitmap.disposed?
           @boton_turbo.dispose
+          @boton_turbo = nil
+          @boton_turbo_speed = nil
         end
       end
     end

@@ -1,3 +1,8 @@
+class PokemonGlobalMetadata
+  attr_accessor :tb_jefes_disponibles
+  attr_accessor :tb_jefe_pendiente
+end
+
 # Variables globales para mantener los pools de entrenadores disponibles
 $entrenadores_disponibles = nil
 $jefes_disponibles = nil
@@ -7,13 +12,31 @@ $jefes_reiniciados = 0
 # Nueva variable para almacenar los datos del entrenador generado
 $entrenador_actual_torre = nil
 
-def inicializar_pools_entrenadores
+def tb_sync_boss_pool_from_global
+  if defined?($PokemonGlobal) && $PokemonGlobal
+    $jefes_disponibles = $PokemonGlobal.tb_jefes_disponibles if !$PokemonGlobal.tb_jefes_disponibles.nil?
+    $jefe_pendiente = $PokemonGlobal.tb_jefe_pendiente if !$PokemonGlobal.tb_jefe_pendiente.nil?
+  end
+end
+
+def tb_sync_boss_pool_to_global
+  if defined?($PokemonGlobal) && $PokemonGlobal
+    $PokemonGlobal.tb_jefes_disponibles = $jefes_disponibles
+    $PokemonGlobal.tb_jefe_pendiente = $jefe_pendiente
+  end
+end
+
+def inicializar_pools_entrenadores(reset_jefes = true)
   # Inicializa o resetea los pools copiando los arrays originales
   $entrenadores_disponibles = TorreBatallaDinamica::ENTRENADORES_TORRE_BATALLA.dup
-  $jefes_disponibles = TorreBatallaDinamica::JEFES_TORRE_BATALLA.dup
+  if reset_jefes
+    $jefes_disponibles = TorreBatallaDinamica::JEFES_TORRE_BATALLA.dup
+    tb_sync_boss_pool_to_global
+  end
 end
 
 def obtener_entrenador_unico(es_jefe = false)
+  tb_sync_boss_pool_from_global
   # Inicializar pools si es la primera vez o si están vacíos
   if es_jefe
     # Si hay un jefe pendiente (perdiste contra él), devuelve ese jefe
@@ -22,20 +45,16 @@ def obtener_entrenador_unico(es_jefe = false)
     end
     
     if $jefes_disponibles.nil? || $jefes_disponibles.empty?
-      if $jefes_reiniciados == 1
-        $player.stars += 1 
-        pbMEPlay("Voltorb Flip win")
-        pbMessage("¡Has obtenido una <b>Estrella</b> en tu Tarjeta de Entrenador!")
-      end
-      inicializar_pools_entrenadores
+      inicializar_pools_entrenadores(true)
       $jefes_reiniciados += 1
     end
     # Seleccionar uno al azar y eliminarlo del pool
     indice_aleatorio = rand($jefes_disponibles.size)
     entrenador_seleccionado = $jefes_disponibles.delete_at(indice_aleatorio)
+    tb_sync_boss_pool_to_global
   else
     if $entrenadores_disponibles.nil? || $entrenadores_disponibles.empty?
-      inicializar_pools_entrenadores
+      inicializar_pools_entrenadores(false)
     end
     # Seleccionar uno al azar y eliminarlo del pool
     indice_aleatorio = rand($entrenadores_disponibles.size)
@@ -73,6 +92,7 @@ def generar_entrenador_torre_batalla(es_jefe = false, entrenador_seleccionado = 
   # Si es un jefe, almacénalo como pendiente antes de la batalla
   if es_jefe
     $jefe_pendiente = entrenador_seleccionado
+    tb_sync_boss_pool_to_global
   end
   
   # Crear los datos del entrenador pero NO registrarlo todavía
@@ -88,8 +108,17 @@ def generar_entrenador_torre_batalla(es_jefe = false, entrenador_seleccionado = 
   
   trainer_data = []
   pokemon_usados.each do |pokemon_species|
+    form = 0
+    if !GameData::Species.exists?(pokemon_species) && pokemon_species.to_s =~ /^(.+)_(\d+)$/
+      base_sym = $1.to_sym
+      if GameData::Species.exists?(base_sym)
+        pokemon_species = base_sym
+        form = $2.to_i
+      end
+    end
     trainer_data << {
       :species => pokemon_species,
+      :form    => form,
       :level   => nivel_ajustado,
       :iv      => iv_hash.dup
     }
@@ -116,7 +145,7 @@ end
 def combate_torre_batalla
   # Verificar que hay un entrenador generado
   if $entrenador_actual_torre.nil?
-    puts "Error: No hay entrenador generado. Usa generar_entrenador_torre_batalla primero."
+    log_compat("[TorreBatalla] Error: No hay entrenador generado. Usa generar_entrenador_torre_batalla primero.") if defined?(log_compat)
     return false
   end
   
@@ -139,21 +168,31 @@ def combate_torre_batalla
   })
 
   # Configurar las reglas de batalla
-  TrainerBattle.setBattleRule("opponentlosetext", TorreBatallaDinamica::FRASES_TORRE_BATALLA_GANAR.sample.to_s)
-  TrainerBattle.setBattleRule("opponentwintext",  TorreBatallaDinamica::FRASES_TORRE_BATALLA_PERDER.sample.to_s)
+  setBattleRule("opponentlosetext", TorreBatallaDinamica::FRASES_TORRE_BATALLA_GANAR.sample.to_s)
+  setBattleRule("opponentwintext",  TorreBatallaDinamica::FRASES_TORRE_BATALLA_PERDER.sample.to_s)
 
   # Combate sin mochila y en modo sin cambios
-  TrainerBattle.setBattleRule("setstyle")
-  TrainerBattle.setBattleRule("nobag")
-  TrainerBattle.setBattleRule("noExp")
-  TrainerBattle.setBattleRule("battleBGM", "Batalla Jefe Torre") if es_jefe
+  setBattleRule("setstyle")
+  setBattleRule("nobag")
+  setBattleRule("noExp")
+  setBattleRule("canLose")
+  setBattleRule("battleBGM", "Batalla Jefe Torre") if es_jefe
 
   # Inicia la batalla usando la versión registrada
   resultado_batalla = TrainerBattle.start(trainer_type, nombre, version_libre)
   
+  # Switch 1 indica si se ha perdido en el evento del mapa 215
+  $game_switches[1] = !resultado_batalla
+
+  # Guardar récord (Var 50) al perder antes de que Map 215 Ev#19 reinicie Var 192 a 0
+  if !resultado_batalla && $game_variables && $game_variables[192].to_i > $game_variables[50].to_i
+    $game_variables[50] = $game_variables[192].to_i
+  end
+
   # Si es un jefe y el jugador ganó, limpia el jefe pendiente
   if es_jefe && resultado_batalla
     $jefe_pendiente = nil
+    tb_sync_boss_pool_to_global
   end
   
   # Limpiar los datos del entrenador actual después del combate
@@ -199,16 +238,18 @@ def crear_entrenador_dinamico(trainer_type, nombre, pokemon_list, nivel, max_pok
   return version_libre
 end
 
-# Función auxiliar para resetear manualmente los pools (opcional)
+# Función auxiliar para resetear manualmente los pools al retirarse (conserva pool de 39 jefes únicos)
 def resetear_entrenadores_torre
-  inicializar_pools_entrenadores
+  inicializar_pools_entrenadores(false)
   $jefe_pendiente = nil  # También resetea el jefe pendiente
+  tb_sync_boss_pool_to_global
   $entrenador_actual_torre = nil  # Limpia el entrenador actual
 end
 
 # Función para limpiar manualmente el jefe pendiente
 def limpiar_jefe_pendiente
   $jefe_pendiente = nil
+  tb_sync_boss_pool_to_global
 end
 
 # Función para obtener información del entrenador actual (para mostrar gráfico)
@@ -225,22 +266,18 @@ end
 
 # Función para ver el estado actual (opcional, para debug)
 def estado_torre_batalla
+  tb_sync_boss_pool_from_global
   jefes_restantes = $jefes_disponibles.nil? ? TorreBatallaDinamica::JEFES_TORRE_BATALLA.size : $jefes_disponibles.size
   entrenadores_restantes = $entrenadores_disponibles.nil? ? TorreBatallaDinamica::ENTRENADORES_TORRE_BATALLA.size : $entrenadores_disponibles.size
   
-  puts "Jefes restantes: #{jefes_restantes}"
-  puts "Entrenadores restantes: #{entrenadores_restantes}"
-  
-  if $jefe_pendiente
-    puts "Jefe pendiente (debe repetirse): #{$jefe_pendiente[0]}"
-  else
-    puts "No hay jefe pendiente"
-  end
-  
-  if $entrenador_actual_torre
-    puts "Entrenador actual generado: #{$entrenador_actual_torre[:nombre]} (#{$entrenador_actual_torre[:trainer_type]})"
-  else
-    puts "No hay entrenador actual generado"
+  if defined?(log_compat)
+    log_compat("[TorreBatalla] Jefes restantes: #{jefes_restantes}, Entrenadores restantes: #{entrenadores_restantes}")
+    if $jefe_pendiente
+      log_compat("[TorreBatalla] Jefe pendiente: #{$jefe_pendiente[0]}")
+    end
+    if $entrenador_actual_torre
+      log_compat("[TorreBatalla] Entrenador actual: #{$entrenador_actual_torre[:nombre]} (#{$entrenador_actual_torre[:trainer_type]})")
+    end
   end
 end
 
@@ -279,11 +316,13 @@ def validar_especies_torre_batalla
   
   # Mostrar resultados
   if especies_invalidas.empty?
-    puts "Todas las especies son válidas"
+    log_compat("[TorreBatalla] Todas las especies son válidas") if defined?(log_compat)
     return true
   else
-    puts "Especies inválidas encontradas:"
-    especies_invalidas.each { |error| puts "  #{error}" }
+    if defined?(log_compat)
+      log_compat("[TorreBatalla] Especies inválidas encontradas:")
+      especies_invalidas.each { |error| log_compat("  #{error}") }
+    end
     return false
   end
 end

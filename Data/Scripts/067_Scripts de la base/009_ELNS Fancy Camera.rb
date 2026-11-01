@@ -375,10 +375,15 @@ class Scene_Map
       $game_temp.transition_processing = false
       Graphics.transition
     end
+    if $game_screen && ($game_screen.tone.red <= -150 && $game_screen.tone.green <= -150 && $game_screen.tone.blue <= -150)
+      $game_screen.start_tone_change(Tone.new(0, 0, 0, 0), 6)
+    end
+    Graphics.transition(10) rescue nil
     $game_map.autoplay
     Graphics.frame_reset
     Input.update
     $game_player.reset_movement_state if $game_player.respond_to?(:reset_movement_state)
+    log_compat("[Scene_Map] Fancy Camera transfer_player completado -> Mapa #{$game_map.map_id} (tone: #{$game_screen&.tone&.inspect})") rescue nil
   end
 end
 

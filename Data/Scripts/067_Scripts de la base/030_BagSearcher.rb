@@ -13,8 +13,7 @@ class BagSearcher
 	end
 
 	def open_search_box(itemwindow)
-		on_input = ->(text, char = '') { search_by_name(text, itemwindow, char) }
-		term = pb_message_free_text_with_on_input(_INTL("¿Qué objeto deseas buscar?"), "", false, 32, width = 240, on_input = on_input)
+		term = pbEnterText(_INTL("¿Qué objeto deseas buscar?"), 0, 16, "", 0, nil, false)
 
 		return false if ['', nil].include?(term)
 

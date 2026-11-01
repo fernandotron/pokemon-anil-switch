@@ -166,6 +166,7 @@ module Game
   def self.load(save_data)
     __level_caps__load(save_data)
     LevelCapsEX.toggle if !LevelCapsEX.enabled?
+    LevelCapsEX.get_level_cap if $game_variables
   end
 end
 
@@ -195,11 +196,13 @@ module LevelCapsEX
   end
 
   def hard_cap?
-    return level_cap_mode == 1 && $game_variables[LEVEL_CAP_VARIABLE] > 0
+    return false if !$game_variables
+    return level_cap_mode == 1 && (get_level_cap || 0) > 0
   end
 
   def soft_cap?
-    return [2, 3].include?(level_cap_mode) && $game_variables[LEVEL_CAP_VARIABLE] > 0
+    return false if !$game_variables
+    return [2, 3].include?(level_cap_mode) && (get_level_cap || 0) > 0
   end
 
   def hard_level_cap

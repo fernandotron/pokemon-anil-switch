@@ -386,11 +386,14 @@ end
 # Weatername(Enable weather distance, Disable weather distance +1, Looking for player directional)
 #===============================================================================
 class Game_Map
-  alias weather_update update
+  AIFM_WEATHER_REGEX = /(\w+)\((\d+),(\d+),(\w+)\)/
+  alias weather_update update unless method_defined?(:weather_update)
   def update
     weather_update
     $game_map.events.each_value do |event|
-      match = event.name.match(/(\w+)\((\d+),(\d+),(\w+)\)/)
+      @aifm_ev_match_cache ||= {}
+      ev_name = event.name.to_s
+      match = @aifm_ev_match_cache.key?(ev_name) ? @aifm_ev_match_cache[ev_name] : (@aifm_ev_match_cache[ev_name] = (ev_name.include?("(") ? ev_name.match(AIFM_WEATHER_REGEX) : nil))
       if match
         weather_type = match[1].to_sym
         start_distance = match[2].to_i

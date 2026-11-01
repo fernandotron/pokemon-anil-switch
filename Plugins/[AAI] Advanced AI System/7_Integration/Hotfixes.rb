@@ -283,7 +283,7 @@ module AdvancedAI
   end
 end
 
-puts "[Advanced AI] Hotfixes loaded: Wonder Launcher, Item AI, Type Effectiveness"
+log_compat("[Advanced AI] Hotfixes loaded: Wonder Launcher, Item AI, Type Effectiveness") if defined?(log_compat)
 
 #===============================================================================
 # Nil-Safe Comparisons for PBEffects

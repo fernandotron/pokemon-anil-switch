@@ -55,10 +55,11 @@ class Battle::Battler
     end
     if !@stopBoostedHPScaling
       if self.dynamax?
-        args[0] = (args[0] / self.dynamax_boost).round
+        args[0] = (args[0].to_f / self.dynamax_boost).round
       else
-        args[0] = (args[0] / @pokemon.hp_boost).round
+        args[0] = (args[0].to_f / @pokemon.hp_boost).round
       end
+      args[0] = 1 if args[0] < 1 && args[0] > 0
     end
     ret = dx_pbReduceHP(*args)
     @stopBoostedHPScaling = false
@@ -69,10 +70,11 @@ class Battle::Battler
   def pbRecoverHP(*args)
     if !@stopBoostedHPScaling
       if self.dynamax?
-        args[0] = (args[0] / self.dynamax_boost).round
+        args[0] = (args[0].to_f / self.dynamax_boost).round
       else
-        args[0] = (args[0] / @pokemon.hp_boost).round
+        args[0] = (args[0].to_f / @pokemon.hp_boost).round
       end
+      args[0] = 1 if args[0] < 1 && args[0] > 0
     end
     ret = dx_pbRecoverHP(*args)
     @stopBoostedHPScaling = false
@@ -90,8 +92,11 @@ class Battle::Battler
   #-----------------------------------------------------------------------------
   def isRaidBoss?
     return false if self.idxOwnSide == 0
-    return false if @battle.pbSideBattlerCount(@index) 
-    return @pokemon&.immunities.include?(:RAIDBOSS)
+    return false if @battle.pbSideBattlerCount(@index) > 1
+    return true if @pokemon&.immunities&.include?(:RAIDBOSS)
+    return true if @pokemon&.hp_level && @pokemon.hp_level > 0
+    return true if @battle.raidStyleCapture
+    return false
   end
   
   #-----------------------------------------------------------------------------

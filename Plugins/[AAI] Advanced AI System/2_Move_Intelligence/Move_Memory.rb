@@ -15,6 +15,7 @@ module AdvancedAI
     
     # Remembers a Move
     def self.remember_move(battle, battler, move)
+      return unless AdvancedAI.active?
       return unless battle && battler && move
       initialize_battle(battle)
       

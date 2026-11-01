@@ -9,7 +9,7 @@ module AdvancedAI
   # ============================================================================
   
   # Enable/Disable the entire system
-  ENABLED = true
+  ENABLED = false
   
   # Auto-activate with Challenge Modes plugin (if installed)
   ACTIVATE_WITH_CHALLENGE_MODES = true
@@ -18,16 +18,16 @@ module AdvancedAI
   MIN_SKILL_FOR_AUTO_ACTIVATION = 50
   
   # Debug mode - detailed logging in console
-  DEBUG_MODE = true
+  DEBUG_MODE = false
   
   # Debug switch intelligence specifically (verbose logging)
   DEBUG_SWITCH_INTELLIGENCE = false
   
   # Show move explanations in battle text (e.g., "Thunder Wave (Paralyze fast threat)")
-  SHOW_MOVE_EXPLANATIONS = true
+  SHOW_MOVE_EXPLANATIONS = false
   
   # Logging options
-  LOG_TO_CONSOLE = true   # Print logs to console window
+  LOG_TO_CONSOLE = false  # Print logs to console window
   LOG_TO_FILE = false     # Write logs to file (Logs/ai_log.txt)
   
   # ============================================================================

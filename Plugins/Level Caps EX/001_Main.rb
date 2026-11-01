@@ -318,9 +318,8 @@ module GameData
       alias_method :original_max_level, :max_level unless method_defined?(:original_max_level)
       
       def max_level
-        # During PBS compilation, use the original maximum level
-        # PBS compilation can be detected by checking the stack trace
-        if caller.any? { |c| c.include?("compile") }
+        # During PBS compilation (or before game variables exist), use the original maximum level
+        if !$game_variables || ($DEBUG && caller_locations(1, 8).any? { |c| c.path&.include?("Compiler") || c.base_label&.include?("compile") })
           return @original_max_level || Settings::MAXIMUM_LEVEL
         end
         # Normal gameplay - use the level cap

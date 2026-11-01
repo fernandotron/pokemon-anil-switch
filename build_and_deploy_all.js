@@ -122,6 +122,9 @@ targets.forEach(dir => {
   }
 
   // Archivos de Data
+  if (fs.existsSync('Data/data_for_showdown')) {
+    copyDir('Data/data_for_showdown', path.join(dir, 'Data', 'data_for_showdown'));
+  }
   ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.dat', 'switch_assets_index.rb', 'PkmnAnimations.rxdata', 'Animations.rxdata', 'move2anim.dat'].forEach(f => {
     const s = path.join('Data', f);
     if (fs.existsSync(s)) {
@@ -162,6 +165,9 @@ if (fs.existsSync('ARCHIVOS_MODIFICADOS_SWITCH')) {
       copyAndTouch(f, path.join('ARCHIVOS_MODIFICADOS_SWITCH', f));
     }
   });
+  if (fs.existsSync('Data/data_for_showdown')) {
+    copyDir('Data/data_for_showdown', path.join('ARCHIVOS_MODIFICADOS_SWITCH/Data', 'data_for_showdown'));
+  }
   ['Scripts.rxdata', 'PluginScripts.rxdata', 'switch_assets_index.dat', 'switch_assets_index.rb'].forEach(f => {
     const s = path.join('Data', f);
     if (fs.existsSync(s)) {

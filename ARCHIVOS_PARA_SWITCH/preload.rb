@@ -1,5 +1,5 @@
 # ==============================================================================
-# Nintendo Switch (Horizon OS) & Modern Ruby Compatibility Shims for mkxp-z
+# Nintendo Switch (Horizon OS) & Modern Ruby Compatibility Shims for mkxp-z (Pokémon Añil 4.14)
 # ==============================================================================
 
 # Guard against duplicate preload execution (mkxp-z C++ patch + mkxp.json preloadScript)
@@ -224,7 +224,7 @@ end
 
 $LOG_COMPAT_DEDUP ||= {}
 $LOG_COMPAT_COUNT ||= 0
-$LOG_COMPAT_MAX_LINES ||= 5000
+$LOG_COMPAT_MAX_LINES ||= 25000
 $SWITCH_STRICT_EVENTS ||= false
 
 def write_crash_report(e, context = "Global")
@@ -244,9 +244,11 @@ end
 def log_compat(msg)
   return if $LOG_COMPAT_COUNT >= $LOG_COMPAT_MAX_LINES
   msg_str = msg.to_s
-  dedup_key = msg_str[0, 120]
-  return if $LOG_COMPAT_DEDUP[dedup_key]
-  $LOG_COMPAT_DEDUP[dedup_key] = true
+  unless msg_str.start_with?("[Scene_Map") || msg_str.start_with?("[Map") || msg_str.start_with?("[Spriteset_Map") || msg_str.start_with?("[Tileset") || msg_str.start_with?("[Shadows") || msg_str.start_with?("[CRASH REPORT") || msg_str.start_with?("[ERROR") || msg_str.include?("transfer")
+    dedup_key = msg_str[0, 120]
+    return if $LOG_COMPAT_DEDUP[dedup_key]
+    $LOG_COMPAT_DEDUP[dedup_key] = true
+  end
 
   lines = msg_str.split("\n")
   if lines.length > 20
@@ -296,6 +298,11 @@ def pbLoadSwitchAssetsIndex
       if raw && !raw.empty?
         t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
         $GRAPHICS_LOOKUP_TABLE, $AUDIO_LOOKUP_TABLE = Marshal.load(raw)
+        if $AUDIO_LOOKUP_TABLE.is_a?(Hash)
+          autotomize_fallback = $AUDIO_LOOKUP_TABLE["audio/se/anim/prsfx- autotomize"] || "Audio/SE/Anim/PRSFX- Autotomize.wav"
+          $AUDIO_LOOKUP_TABLE["audio/se/anim/prsfx- autotomize1"] ||= autotomize_fallback
+          $AUDIO_LOOKUP_TABLE["anim/prsfx- autotomize1"] ||= autotomize_fallback
+        end
         t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC) rescue Time.now.to_f
         log_compat(sprintf("[Switch Assets] Cargados %d graficos y %d audios desde .dat en %.3fs (Arranque Instantaneo).", ($GRAPHICS_LOOKUP_TABLE.length rescue 0), ($AUDIO_LOOKUP_TABLE.length rescue 0), (t1 - t0))) rescue nil
       end
@@ -304,6 +311,7 @@ def pbLoadSwitchAssetsIndex
     end
   end
 end
+pbLoadSwitchAssetsIndex rescue nil
 
 
 
@@ -1396,6 +1404,14 @@ module NXTeclado
         end
         nx_pbEnterText_con_teclado(*args)
       end
+      Object.send(:define_method, :pb_message_free_text_with_on_input) do |message, currenttext, passwordbox, maxlength, width = 240, on_input = nil, &block|
+        max_len = [maxlength || 12, 16].min
+        pbEnterText(message, 0, max_len, currenttext || "", 0, nil, false)
+      end
+      Object.send(:define_method, :pbMessageFreeText) do |message, currenttext, passwordbox, maxlength, width = 240, &block|
+        max_len = [maxlength || 12, 16].min
+        pbEnterText(message, 0, max_len, currenttext || "", 0, nil, false)
+      end
       true
     rescue Exception
       @hecho = true
@@ -1656,7 +1672,7 @@ def setBattleRule(*args)
       r = nil
     else
       case arg.to_s.downcase
-      when "terrain", "weather", "environment", "environ", "backdrop", "battleback", "base", "outcome", "outcomevar", "midbattlescript", "midbattle"
+      when "terrain", "weather", "environment", "environ", "backdrop", "battleback", "base", "outcome", "outcomevar", "midbattlescript", "midbattle", "opponentlosetext", "opponentwintext", "battlebgm", "victorybgm"
         r = arg
         next
       end
@@ -2814,7 +2830,7 @@ class ::File
 
       res = (open(p, "rb") { true } rescue false)
       res = ::Dir.exist?(p) if !res
-      writable = (p =~ /\.(rxdata|bak|sav|log|txt|dat|tmp)$/i || p.include?("options"))
+      writable = (p =~ /\.(rxdata|bak|sav|log|txt|dat|tmp)$/i || p.include?("options") || p =~ /(?:^|\/)fotos\//i)
       $FILE_EXIST_CACHE[p] = res if !writable
       res
     end

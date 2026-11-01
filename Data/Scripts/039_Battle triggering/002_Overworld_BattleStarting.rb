@@ -79,7 +79,8 @@ def setBattleRule(*args)
     else
       case arg.to_s.downcase
       when "terrain", "weather", "environment", "environ", "backdrop",
-           "battleback", "base", "outcome", "outcomevar", "midbattlescript", "midbattle"
+           "battleback", "base", "outcome", "outcomevar", "midbattlescript", "midbattle",
+           "opponentlosetext", "opponentwintext", "battlebgm", "victorybgm"
         r = arg
         next
       end

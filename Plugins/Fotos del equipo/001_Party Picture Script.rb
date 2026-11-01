@@ -105,7 +105,7 @@ class PartyPicture
     pbStartPictureScene(ev1, ev2, ev3, ev4, ev5, ev6)
 
     pbWait(1)
-    pbMessage(_INTL("\\l[2]Usa las flechas para elegir la posición y pulsa Enter para ver las distintas opciones."))
+    pbMessage(_INTL("\\l[2]Usa la cruceta para elegir la posición y pulsa A para ver las distintas opciones o B para salir."))
     pbMessage(_INTL("\\l[2]Es aconsejable desactivar el turbo para que la foto salga correctamente."))
     
     # Starts the commands such as movement, buttons being pressed...
@@ -199,6 +199,9 @@ class PartyPicture
             ])
             if overlay_choice != self.class.overlays.size + 1
               if overlay_choice != self.class.overlays.size
+                if @sprites["filter_overlay"].bitmap && !@sprites["filter_overlay"].bitmap.disposed?
+                  @sprites["filter_overlay"].bitmap.dispose
+                end
                 @sprites["filter_overlay"].bitmap = Bitmap.new("Graphics/UI/Party Pictures/" + @overlays_images[overlay_choice])
                 @sprites["filter_overlay"].visible = true
               else
@@ -213,6 +216,10 @@ class PartyPicture
           pbMessage(_INTL("\\l[2]Tienes además la opción de añadir tanto efectos como filtros. Puedes combinar ambos para tomar tu foto."))
           pbMessage(_INTL("\\l[2]Cuando tengas claro cómo quieres la foto, elige la opción de tomar foto."))
         end  
+      elsif Input.trigger?(Input::BACK)
+        pbPlayCancelSE rescue nil
+        pbEndPictureScene
+        return false
       end
       break if @picture_taken
     end
@@ -242,9 +249,15 @@ class PartyPicture
     end
 
     # Take a screenshot and save it directly and instantly
+    out_path = File.join(folder_path, exporter_filename)
     bmp = Graphics.snap_to_bitmap
-    bmp.save_to_png(File.join(folder_path, exporter_filename)) rescue nil
+    bmp.save_to_png(out_path) rescue nil
     bmp.dispose rescue nil
+    norm_key = out_path.to_s.tr("\\", "/").sub(/^\.\//, "")
+    $FILE_EXIST_CACHE.delete(norm_key) if defined?($FILE_EXIST_CACHE) && $FILE_EXIST_CACHE
+    $FILE_EXIST_CACHE.delete(norm_key.downcase) if defined?($FILE_EXIST_CACHE) && $FILE_EXIST_CACHE
+    $RESOLVED_BITMAP_CACHE.delete(norm_key) if defined?($RESOLVED_BITMAP_CACHE) && $RESOLVED_BITMAP_CACHE
+    $RESOLVED_BITMAP_CACHE.delete(norm_key.downcase) if defined?($RESOLVED_BITMAP_CACHE) && $RESOLVED_BITMAP_CACHE
 
     pbWait(6.0/20)
     pbEndPictureScene
@@ -259,11 +272,12 @@ class PartyPicture
         next if pkmn.egg?
         shiny = pkmn.shiny?
         ev_id = events[i]
-        next unless ev_id
+        next unless ev_id && $game_map && $game_map.events && $game_map.events[ev_id]
+        next if $game_map.events[ev_id].name.to_s =~ /FlechaSalida|Condo door/i
         file = GameData::Species.ow_sprite_filename(pkmn.species, pkmn.form, pkmn.gender, shiny, pkmn.shadow) rescue ""
         file = file.to_s.sub(/^Graphics\/Characters\//i, "")
-        $game_map.events[ev_id].character_name = file if $game_map.events[ev_id]
-        pbMoveRoute($game_map.events[ev_id], [PBMoveRoute::STEP_ANIME_ON], false) if $game_map.events[ev_id]
+        $game_map.events[ev_id].character_name = file
+        pbMoveRoute($game_map.events[ev_id], [PBMoveRoute::STEP_ANIME_ON], false)
       end
       
       # Toggles Following Pokémon if it's currently active
@@ -290,6 +304,14 @@ class PartyPicture
       # Removes any active filters
       pbToneChangeAll(Tone.new(0, 0, 0, 0), 4) rescue nil
       # Disposes all sprites and viewports
+      if @sprites
+        ["filter_overlay", "overlay"].each do |k|
+          sp = @sprites[k]
+          if sp && !sp.disposed? && sp.bitmap && !sp.bitmap.disposed?
+            sp.bitmap.dispose rescue nil
+          end
+        end
+      end
       pbDisposeSpriteHash(@sprites) rescue nil
       @viewport.dispose rescue nil
       # Refreshes the map before fading in
@@ -310,7 +332,8 @@ end
 
 def terminarFoto(ev1, ev2, ev3, ev4, ev5, ev6)
   [ev1, ev2, ev3, ev4, ev5, ev6].each do |i|
-    if $game_map && $game_map.events && $game_map.events[i]
+    if i && $game_map && $game_map.events && $game_map.events[i]
+      next if $game_map.events[i].name.to_s =~ /FlechaSalida|Condo door/i
       $game_map.events[i].character_name = ''
       pbMoveRoute($game_map.events[i], [PBMoveRoute::STEP_ANIME_OFF], false) rescue nil
     end

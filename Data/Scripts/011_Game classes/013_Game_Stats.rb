@@ -171,12 +171,18 @@ class GameStats
   end
 
   def play_time
-    if $game_temp&.last_uptime_refreshed_play_time
-      now = System.real_uptime #uptime
-      @play_time += now - $game_temp.last_uptime_refreshed_play_time
-      $game_temp.last_uptime_refreshed_play_time = now
+    if $game_temp
+      now = (System.real_uptime rescue nil) || (System.uptime rescue nil) || (Graphics.frame_count / 40.0)
+      $game_temp.last_uptime_refreshed_play_time ||= now
+      delta = now - $game_temp.last_uptime_refreshed_play_time
+      if delta > 0
+        @play_time += delta
+        $game_temp.last_uptime_refreshed_play_time = now
+      elsif delta < 0
+        $game_temp.last_uptime_refreshed_play_time = now
+      end
     end
-    return @play_time
+    return @play_time || 0
   end
 
   def play_time_per_session

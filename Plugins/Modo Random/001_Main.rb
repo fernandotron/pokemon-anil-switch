@@ -611,7 +611,6 @@ class Pokemon
       is_compatible = rand(100) < 40
     end
     $PokemonGlobal.tm_compatibility_random[self.species] << [move_id, is_compatible]
-    RandomizedChallenge.save_tm_compatibility_data($PokemonGlobal.tm_compatibility_random)
     is_compatible
   end
 
@@ -634,11 +633,15 @@ def generate_random_starters(type = nil)
         species_list << species if evolutions.size >= 2 && evolutions.one? {|e| e[0] == species.id }
       end
       species_list.shuffle!
-      species_list = species_list.select { |s| s.types.include?(type) } if type
+      if type
+        typed_list = species_list.select { |s| s.types.include?(type) }
+        species_list = typed_list.length >= starter_count ? typed_list : (typed_list + (species_list - typed_list))
+      end
       starters = species_list.sample(starter_count)
     end
   else
     valid_starters = RandomizedChallenge.gens.empty? ? RandomizedChallenge::RANDOM_STARTERS_LIST : RandomizedChallenge::RANDOM_STARTERS_LIST.select { |s| RandomizedChallenge.gens.include?(GameData::Species.get(s).generation) }
+    valid_starters = RandomizedChallenge::RANDOM_STARTERS_LIST if valid_starters.length < starter_count
     starters = valid_starters.sample(starter_count)
   end
 
@@ -646,7 +649,7 @@ def generate_random_starters(type = nil)
   if RandomizedChallenge.progressive?
     RandomizedChallenge.pause_random_species
     RandomizedChallenge::RANDOM_STARTER_VARIABLES.each_with_index do |var, i|
-      pokemon = Pokemon.new(starters[i], 5)
+      pokemon = Pokemon.new(starters[i] || starters.first || :PIKACHU, 5)
       pokemon.randomized = true
       pbSet(var, pokemon)
     end
@@ -660,7 +663,7 @@ def generate_random_starters(type = nil)
       }
       RandomizedChallenge.pause_random_species
       RandomizedChallenge::RANDOM_STARTER_VARIABLES.each_with_index do |var, i|
-        species = species_list.sample
+        species = species_list.sample || :PIKACHU
         # Remove the selected species and its evolution chain from the list
         species_data = GameData::Species.get(species)
         evolution_chain = species_data.get_family_species

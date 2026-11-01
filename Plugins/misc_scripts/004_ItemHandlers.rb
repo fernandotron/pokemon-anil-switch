@@ -27,6 +27,7 @@ ItemHandlers::UseInField.add(:DIPLOMA, proc { |item|
       Graphics.update
     end
     
+    s.bitmap.dispose if s.bitmap && !s.bitmap.disposed?
     s.dispose
   }
   

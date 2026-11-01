@@ -476,33 +476,6 @@ module Graphics
       update_KGC_SpecialTransition
       @@transition.update if @@transition && !@@transition.disposed?
       @@transition = nil if @@transition&.disposed?
-
-      $buttonframes = 150 if !$buttonframes
-      if $buttonframes < 150 # Frames en pantalla
-          if !@boton_turbo || @boton_turbo.disposed?
-              @boton_turbo = Sprite.new
-              if $GameSpeed == 0
-                  @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo0")
-              elsif $GameSpeed == 1
-                  @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo1")
-              else
-                  @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo2")
-              end
-              @boton_turbo.z = 999999
-          elsif @boton_turbo
-              if $GameSpeed == 0
-                  @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo0")
-              elsif $GameSpeed == 1
-                  @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo1")
-              else
-                  @boton_turbo.bitmap = Bitmap.new("Graphics/Pictures/Turbo2")
-              end
-          end
-          $buttonframes += 1
-          if $buttonframes == 150
-              @boton_turbo.dispose
-          end
-      end
       TrainerSensor.update if $scene && $scene.is_a?(Scene_Map)
   end
 

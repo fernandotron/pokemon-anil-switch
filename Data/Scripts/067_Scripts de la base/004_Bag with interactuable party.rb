@@ -457,7 +457,6 @@ class PokemonBagPartyPanel < Sprite
   end
 
   def pokemon=(value)
-    return if @pokemon == value
     @pokemon = value
     @pkmnsprite.pokemon = value if @pkmnsprite && !@pkmnsprite.disposed?
     @helditemsprite.pokemon = value if @helditemsprite && !@helditemsprite.disposed?

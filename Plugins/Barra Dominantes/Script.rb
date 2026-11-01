@@ -150,6 +150,8 @@ class Battle::Scene::PokemonDataBox < Sprite
   end
   
   def setup_boss_hp_bar(viewport)
+    @hpBarBitmap.dispose if @hpBarBitmap && !@hpBarBitmap.disposed?
+    @hpBar.dispose if @hpBar && !@hpBar.disposed?
     @hpBarBitmap = AnimatedBitmap.new("#{GRAPHICS_PATH}overlay_hp_special")
     @hpBar = Sprite.new(viewport)
     @hpBar.bitmap = @hpBarBitmap.bitmap
@@ -285,6 +287,9 @@ if PluginManager.installed?("Type Icons in Battle")
     private
     
     def initialize_basic_bitmaps
+      @numbersBitmap.dispose if @numbersBitmap && !@numbersBitmap.disposed?
+      @hpBarBitmap.dispose if @hpBarBitmap && !@hpBarBitmap.disposed?
+      @expBarBitmap.dispose if @expBarBitmap && !@expBarBitmap.disposed?
       @numbersBitmap = AnimatedBitmap.new("#{GRAPHICS_PATH}icon_numbers")
       
       @hpBarBitmap = if enemy_boss_battle?
@@ -297,6 +302,10 @@ if PluginManager.installed?("Type Icons in Battle")
     end
     
     def initialize_hp_and_exp_sprites(viewport)
+      @hpNumbers.dispose if @hpNumbers && !@hpNumbers.disposed?
+      @hpPercent.dispose if @hpPercent && !@hpPercent.disposed?
+      @hpBar.dispose if @hpBar && !@hpBar.disposed?
+      @expBar.dispose if @expBar && !@expBar.disposed?
       # HP and percentage number sprites
       @hpNumbers = BitmapSprite.new(124, 16, viewport)
       @sprites["hpNumbers"] = @hpNumbers
@@ -317,6 +326,11 @@ if PluginManager.installed?("Type Icons in Battle")
     end
     
     def initialize_type_icons(viewport)
+      @types_bitmap.dispose if @types_bitmap && !@types_bitmap.disposed?
+      if @types_sprite && !@types_sprite.disposed?
+        @types_sprite.bitmap.dispose if @types_sprite.bitmap && !@types_sprite.bitmap.disposed?
+        @types_sprite.dispose
+      end
       @types_x = @battler.opposes?(0) ? TYPE_ICON_ENEMY_X : TYPE_ICON_PLAYER_X
       @types_bitmap = AnimatedBitmap.new("Graphics/UI/Battle/types_ico")
       @types_sprite = Sprite.new(viewport)
@@ -331,6 +345,7 @@ if PluginManager.installed?("Type Icons in Battle")
       begin
         @types_sprite.bitmap = Bitmap.new(@databoxBitmap.width - @types_x, total_height)
       rescue
+        @types_sprite.dispose if @types_sprite && !@types_sprite.disposed?
         @types_sprite = nil  # Disable type display if bitmap creation fails
       end
 
@@ -342,10 +357,12 @@ if PluginManager.installed?("Type Icons in Battle")
     end
     
     def setup_type_sprite_dimensions
+      return unless @types_sprite && !@types_sprite.disposed?
       height_per_icon = @types_bitmap.height / GameData::Type.count
       total_height = calculate_total_type_height(height_per_icon)
       @types_y = -total_height + 68
       
+      @types_sprite.bitmap.dispose if @types_sprite.bitmap && !@types_sprite.bitmap.disposed?
       @types_sprite.bitmap = Bitmap.new(@databoxBitmap.width - @types_x, total_height)
       @types_sprite.x = @types_x
       @types_sprite.y = @types_y
@@ -357,6 +374,7 @@ if PluginManager.installed?("Type Icons in Battle")
     end
     
     def initialize_main_sprite
+      @contents.dispose if @contents && !@contents.disposed?
       @contents = Bitmap.new(@databoxBitmap.width, @databoxBitmap.height)
       self.bitmap = @contents
       self.visible = false

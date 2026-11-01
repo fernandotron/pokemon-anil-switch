@@ -29,6 +29,8 @@ def reiniciar_legendario?(simbolo)
   $player.combats_to_reset ||= []
   if $player.combats_to_reset.include?(simbolo)
     $player.combats_to_reset.delete(simbolo)
+    # Fix Map 181 Ev#12 resetting Sw[223:Hooh 2] instead of Sw[224:Lugia 2]
+    $game_switches[224] = false if simbolo == :LUGIA && $game_switches
     return true
   end
   return false
@@ -145,7 +147,7 @@ def combate_importante_legendario(pokemon, level)
   when :HOOH # Cima Cataratas Tohjo
     musica  = "Legendario"
     moves   = [:SACREDFIRE, :ROOST, :EXTRASENSORY, :BRAVEBIRD]
-    terreno = :StrongWinds
+    clima   = :StrongWinds
   when :CELEBI # Claro Secreto (Bosque Verde)
     musica  = "Legendario"
     moves   = [:PSYCHIC, :MAGICALLEAF, :RECOVER, :HEALBELL]
@@ -383,7 +385,7 @@ def combate_importante_legendario(pokemon, level)
     terreno = :Misty
   when :MELMETAL # -
     musica = "Legendario menor"
-    moves  = [:DOUBLEIRONBASH, :EARTHQUAKE, :THUNDERPUNCH, :ICEPUNGH]
+    moves  = [:DOUBLEIRONBASH, :EARTHQUAKE, :THUNDERPUNCH, :ICEPUNCH]
   # GALAR
   when :ZACIAN # Ruta 3
     musica = "Legendario mayor"
@@ -493,7 +495,7 @@ def combate_importante_legendario(pokemon, level)
 
   rules = {
     :immunities => [:ALLSTATUS, :FLINCH, :STATDROPS, :PPLOSS, :OHKO,
-                    :ESCAPE, :INDIRECT, :SELFKO, :TRANSFORM],
+                    :ESCAPE, :INDIRECT, :SELFKO, :PERISHSONG, :TRANSFORM],
     :hp_level => 4
   }
   rules[:moves] = moves if moves.any? && !RandomizedChallenge.enabled?
@@ -532,7 +534,7 @@ module PBEffects
 end
 
 class Battle::Battler
-  alias batallas_legends_postgame_pbInitEffects pbInitEffects
+  alias batallas_legends_postgame_pbInitEffects pbInitEffects unless method_defined?(:batallas_legends_postgame_pbInitEffects)
   def pbInitEffects(batonPass)
     batallas_legends_postgame_pbInitEffects(batonPass)
     @effects[PBEffects::Endure_boss]  = false

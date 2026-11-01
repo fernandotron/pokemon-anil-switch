@@ -34,6 +34,9 @@ class Battle::Scene::PokemonDataBox
   alias __types__dispose dispose unless method_defined?(:__types__dispose)  
   def dispose(*args)
     @types_bitmap.dispose if @types_bitmap && !@types_bitmap.disposed?
+    if @types_sprite && !@types_sprite.disposed?
+      @types_sprite.bitmap.dispose if @types_sprite.bitmap && !@types_sprite.bitmap.disposed?
+    end
     __types__dispose(*args)
   end
 

@@ -137,6 +137,9 @@ class MostrarPokemonAnimado
   end
 
   def dispose
+    if @sprites["bg"] && !@sprites["bg"].disposed? && @sprites["bg"].bitmap && !@sprites["bg"].bitmap.disposed?
+      @sprites["bg"].bitmap.dispose
+    end
     @sprites.each_value(&:dispose)
     @viewport.dispose
     @estado = :disposed

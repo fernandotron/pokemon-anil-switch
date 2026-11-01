@@ -122,7 +122,13 @@ def pbStartOver(gameover = false)
     if homedata
       pbCancelVehicles
       Followers.clear
-      $game_switches[Settings::STARTING_OVER_SWITCH] = true
+      is_home_fallback = (!$PokemonGlobal.pokecenterMapId || $PokemonGlobal.pokecenterMapId < 0)
+      if is_home_fallback
+        $player.heal_party
+        $game_switches[Settings::STARTING_OVER_SWITCH] = false
+      else
+        $game_switches[Settings::STARTING_OVER_SWITCH] = true
+      end
       $game_temp.player_new_map_id    = homedata[0]
       $game_temp.player_new_x         = homedata[1]
       $game_temp.player_new_y         = homedata[2]

@@ -1,6 +1,19 @@
 
 # Returns false if an error occurred.
-def pbCableClub
+def pbCableClub(*args)
+  if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
+    if $game_map && pbGet(76) == 0
+      pbSet(76, $game_map.map_id)
+      pbSet(78, $game_player.x)
+      pbSet(79, $game_player.y)
+    end
+    begin
+      pbMessage(_INTL("La funcionalidad online del Club del Cable no está disponible en Nintendo Switch."))
+    rescue Exception => e
+      log_compat("pbCableClub offline msg error: #{e.class}: #{e.message}") if defined?(log_compat)
+    end
+    return false
+  end
   return false if !$player.connecting_online
   scene = CableClub_Scene.new
   screen = CableClubScreen.new(scene)

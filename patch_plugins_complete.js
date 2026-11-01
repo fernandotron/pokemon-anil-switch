@@ -206,7 +206,9 @@ root.elements.forEach(pluginNode => {
 
         let orig = code;
         code = code.replace(/\r\n/g, '\n');
-        code = code.replace(/class\s+(GameStats|Game_Temp|PokemonSystem|PokemonBoxArrow|Rect|Color|Tone|Sprite|Bitmap|Viewport|Window|ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/g, 'class $1');
+        code = code.replace(/class\s+(Rect|Color|Tone|Sprite|Bitmap|Viewport|Window)\s*<\s*Object\b/g, 'class $1');
+        code = code.replace(/class\s+(GameStats|Game_Temp|PokemonSystem)\s*<\s*\1\b/g, 'class $1');
+        code = code.replace(/class\s+(PokemonBoxArrow|ScrollingSprite|RainbowSprite|TrailingSprite)\s*<\s*[\w:]+/g, 'class $1');
         code = code.replace(/Kernel\.exit!\s*true/g, 'puts "[Plugin exit intercepted]"');
         
         if (fileName.includes('Scene Intro') || code.includes('class Scene_Intro')) {

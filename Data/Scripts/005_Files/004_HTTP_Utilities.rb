@@ -2,6 +2,7 @@
 # Funciones de utilidad HTTP
 #===============================================================================
 def pbPostData(url, postdata, filename = nil, depth = 0)
+  return "" if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
   if url[/^http:\/\/([^\/]+)(.*)$/]
     host = $1
 #    path = $2
@@ -36,6 +37,7 @@ def pbPostData(url, postdata, filename = nil, depth = 0)
 end
 
 def pbDownloadData(url, filename = nil, authorization = nil, depth = 0, &block)
+  return "" if defined?(MKXPZ) || (defined?($is_switch) && $is_switch)
   headers = {
     "Proxy-Connection" => "Close",
     "Pragma"           => "no-cache",

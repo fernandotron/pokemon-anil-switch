@@ -32,7 +32,7 @@ end
 
 class PokemonGlobalMetadata
   attr_accessor :eggs
-  alias old_initialize initialize
+  alias old_initialize initialize unless method_defined?(:old_initialize)
   def initialize
     old_initialize
     @eggs ||= [nil,nil,nil,nil,nil,nil]
@@ -41,6 +41,20 @@ end
 
 #Box sprite of the hatcher
 class EggSprite < Sprite
+  def self.selection_bitmap
+    if !defined?(@@selection_bmp) || !@@selection_bmp || @@selection_bmp.disposed?
+      @@selection_bmp = Bitmap.new("Graphics/Pictures/Egg Hatcher/selection")
+    end
+    @@selection_bmp
+  end
+
+  def self.dispose_selection_bitmap
+    if defined?(@@selection_bmp) && @@selection_bmp && !@@selection_bmp.disposed?
+      @@selection_bmp.dispose
+    end
+    @@selection_bmp = nil
+  end
+
   def initialize(viewport,selected,pokemon, x, y)
     super(viewport)
     @sprites = {}
@@ -55,6 +69,11 @@ class EggSprite < Sprite
   end
   
   def refresh
+    self.bitmap.clear if self.bitmap && !self.bitmap.disposed?
+    if @sprites["egg"] && !@sprites["egg"].disposed?
+      @sprites["egg"].dispose
+      @sprites.delete("egg")
+    end
     if @pokemon != nil
       @frameskip = 20
       steps = @pokemon.steps_to_hatch
@@ -74,13 +93,14 @@ class EggSprite < Sprite
     end
 
     if @selected
-      self.bitmap.blt(0,0,Bitmap.new("Graphics/Pictures/Egg Hatcher/selection"),Rect.new(0,0,68,100))
+      self.bitmap.blt(0,0,self.class.selection_bitmap,Rect.new(0,0,68,100))
     end
   end
 
   def dispose
-    super
+    self.bitmap.dispose if self.bitmap && !self.bitmap.disposed?
     pbDisposeSpriteHash(@sprites)
+    super
   end
   
   def update
@@ -149,6 +169,12 @@ class Hatcher
   
   def dispose
     disposeEggs
+    EggSprite.dispose_selection_bitmap
+    ["bg", "text"].each do |k|
+      if @sprites[k] && !@sprites[k].disposed? && @sprites[k].bitmap && !@sprites[k].bitmap.disposed?
+        @sprites[k].bitmap.dispose
+      end
+    end
     pbDisposeSpriteHash(@sprites)
     @viewport.dispose
   end
@@ -161,22 +187,22 @@ class Hatcher
       #Egg selector
       if Input.trigger?(Input::RIGHT) && (@index+1)%3 != 0
         @index += 1
-        pbSEPlay("Choose")
+        pbPlayCursorSE
         refresh
       end
       if Input.trigger?(Input::LEFT) && (@index != 0 && @index != 3)
         @index -= 1
-        pbSEPlay("Choose")
+        pbPlayCursorSE
         refresh
       end
       if Input.trigger?(Input::UP) && @index >= 3
         @index -= 3
-        pbSEPlay("Choose")
+        pbPlayCursorSE
         refresh
       end
       if Input.trigger?(Input::DOWN) && @index <= 2 
         @index += 3
-        pbSEPlay("Choose")
+        pbPlayCursorSE
         refresh
       end
       #Manipulate an egg

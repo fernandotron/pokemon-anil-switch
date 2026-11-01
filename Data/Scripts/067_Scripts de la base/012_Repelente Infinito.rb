@@ -12,13 +12,21 @@ def pbToggleInfiniteRepel()
   $PokemonGlobal.infRepel = false if $PokemonGlobal.infRepel.nil?
   if !$PokemonGlobal.infRepel
     pbMessage("Se activó el Repelente Infinito.")
-    $bag.replace_item(:INFREPELOFF, :INFREPEL)
-    $bag.replace_registered(:INFREPELOFF, :INFREPEL)
-    delete_all_wild_pkmn_spawned
+    if $bag.has?(:INFREPELOFF)
+      $bag.replace_item(:INFREPELOFF, :INFREPEL)
+      $bag.replace_registered(:INFREPELOFF, :INFREPEL)
+    elsif !$bag.has?(:INFREPEL)
+      $bag.add(:INFREPEL)
+    end
+    delete_all_wild_pkmn_spawned if defined?(delete_all_wild_pkmn_spawned)
   else
     pbMessage("Se desactivó el Repelente Infinito.")
-    $bag.replace_item(:INFREPEL, :INFREPELOFF)
-    $bag.replace_registered(:INFREPEL, :INFREPELOFF)
+    if $bag.has?(:INFREPEL)
+      $bag.replace_item(:INFREPEL, :INFREPELOFF)
+      $bag.replace_registered(:INFREPEL, :INFREPELOFF)
+    elsif !$bag.has?(:INFREPELOFF)
+      $bag.add(:INFREPELOFF)
+    end
   end
   $PokemonGlobal.infRepel = !$PokemonGlobal.infRepel
   return 0

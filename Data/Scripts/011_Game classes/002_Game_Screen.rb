@@ -36,8 +36,12 @@ class Game_Screen
 
   # duration is time in 1/20ths of a second.
   def start_tone_change(tone, duration)
-    if duration == 0
-      @tone = tone.clone
+    if duration.nil? || duration <= 0
+      @tone.set(tone.red, tone.green, tone.blue, tone.gray)
+      @tone_initial     = nil
+      @tone_target      = tone.clone
+      @tone_duration    = 0
+      @tone_timer_start = nil
       return
     end
     @tone_initial     = @tone.clone
@@ -76,7 +80,8 @@ class Game_Screen
       @tone.green = lerp(@tone_initial.green, @tone_target.green, @tone_duration, @tone_timer_start, now)
       @tone.blue = lerp(@tone_initial.blue, @tone_target.blue, @tone_duration, @tone_timer_start, now)
       @tone.gray = lerp(@tone_initial.gray, @tone_target.gray, @tone_duration, @tone_timer_start, now)
-      if now - @tone_timer_start >= @tone_duration
+      if now - @tone_timer_start >= @tone_duration || (now - @tone_timer_start > 2.0)
+        @tone.set(@tone_target.red, @tone_target.green, @tone_target.blue, @tone_target.gray)
         @tone_initial = nil
         @tone_timer_start = nil
       end

@@ -1,7 +1,7 @@
 class PokemonMartScreen
-    alias pbBuyScreen_original pbBuyScreen
+    alias pbBuyScreen_original pbBuyScreen unless method_defined?(:pbBuyScreen_original)
 		def pbBuyScreen
-			return pbBuyScreen_original unless ChallengeModes.on?(:HEALING_ITEMS_PURCHASE)
+			return pbBuyScreen_original unless ChallengeModes.on?(:HEALING_ITEMS_PURCHASE) || ChallengeModes.on?(:BATTLE_ITEMS_PURCHASE) || ChallengeModes.on?(:VITAMINS_PURCHASE)
 			@scene.pbStartBuyScene(@stock, @adapter)
 			item = nil
 			loop do

@@ -57,7 +57,7 @@ module Game
     SaveData.load_new_game_values
     SaveData.load_options rescue nil
     SaveData.load_controls rescue nil
-    $game_temp.last_uptime_refreshed_play_time = System.real_uptime
+    $game_temp.last_uptime_refreshed_play_time = (System.real_uptime rescue System.uptime rescue 0)
     $stats.play_sessions += 1
     $map_factory = PokemonMapFactory.new($data_system.start_map_id)
     $game_player.moveto($data_system.start_x, $data_system.start_y)
@@ -77,7 +77,7 @@ module Game
     SaveData.load_all_values(save_data)
     SaveData.load_options rescue nil
     SaveData.load_controls rescue nil
-    $game_temp.last_uptime_refreshed_play_time = System.real_uptime rescue nil
+    $game_temp.last_uptime_refreshed_play_time = (System.real_uptime rescue System.uptime rescue 0)
     $stats.play_sessions += 1 rescue nil
     self.load_map
     (pbAutoplayOnSave rescue nil)

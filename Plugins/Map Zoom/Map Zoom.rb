@@ -21,14 +21,15 @@ class ZoomMap
  
   def update
     if @sprites
-      @sprites["map"].bitmap.clear
+      old_bmp = @sprites["map"]&.bitmap
       messagewindow = $game_temp.message_window
       cmdwindow = $game_temp.cmd_window
       pausemenu = $game_temp.pause_menu_scene
       messagewindow.visible = false if messagewindow
       cmdwindow.visible = false if cmdwindow
       pausemenu.pbHideMenu if pausemenu
-      @sprites["map"].bitmap =  Graphics.snap_to_bitmap
+      @sprites["map"].bitmap = Graphics.snap_to_bitmap
+      old_bmp&.dispose
       @sprites["map"].center_origins
       @sprites["map"].x = Graphics.width/2
       @sprites["map"].y = Graphics.height/2
@@ -54,7 +55,10 @@ class ZoomMap
  
  
   def dispose
-    pbDisposeSpriteHash(@sprites)
+    if @sprites
+      @sprites["map"]&.bitmap&.dispose
+      pbDisposeSpriteHash(@sprites)
+    end
     @viewport.dispose
   end
  

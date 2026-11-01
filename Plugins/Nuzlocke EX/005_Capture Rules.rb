@@ -18,7 +18,7 @@ class Battle::Scene
     return false if !battler || !battler.pokemon
     return false if @battle.trainerBattle? || @battle.disablePokeBalls
     return false if !ChallengeModes.on?(:FIRST_CAPTURE) || ChallengeModes.had_first_encounter?
-    return false if defined?(MonotypeChallenge) && MonotypeChallenge.enabled? && !MonotypeChallenge.valid_monotype?(battler)
+    return false if defined?(MonotypeChallenge) && MonotypeChallenge.enabled? && !MonotypeChallenge.valid_monotype?(battler.pokemon)
     return false if legendary_flags.any? { |flag| battler.pokemon.species_data.has_flag?(flag) } && ChallengeModes.on?(:LEGENDARY_CLAUSE)
     return true
   end
@@ -138,14 +138,13 @@ ItemHandlers::CanUseInBattle.addIf(:poke_balls,
 )
 
 class Battle::Battler
-  alias pbFaintLives pbFaint
+  alias pbFaintLives pbFaint unless method_defined?(:pbFaintLives)
     def pbFaint(showMessage = true)
-      return pbFaintLives(showMessage) if !ChallengeModes.on?(:PERMAFAINT) || !@battle.pbOwnedByPlayer?(@index) || !$PokemonGlobal.challenge_lives || $PokemonGlobal.challenge_lives < 0
+      return pbFaintLives(showMessage) if !ChallengeModes.on?(:PERMAFAINT) || ChallengeModes.on?(:PERMALOCKE) || !@battle.pbOwnedByPlayer?(@index) || !$PokemonGlobal.challenge_lives || $PokemonGlobal.challenge_lives < 0
       fainted = @fainted
       done=pbFaintLives(showMessage)
       if !fainted && @fainted && @battle.pbOwnedByPlayer?(@index) && $PokemonGlobal.challenge_lives && $PokemonGlobal.challenge_lives >= 0
         $PokemonGlobal.challenge_lives -= 1
-        permalocke_set_shields($PokemonGlobal.challenge_lives)
       end
       return done 
     end

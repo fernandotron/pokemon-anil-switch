@@ -66,14 +66,15 @@ class SelectMoveMenuButton < Sprite
     @command = command   # Item/move ID, name, mode (T move/F item), pkmnIndex
     @selected = selected
     @pp_check = pp_check # Flag to determine if PP display is needed
-    @button = AnimatedBitmap.new("Graphics/UI/Ready Menu/icon_movesbutton")
+    btn_graphic = pbResolveBitmap("Graphics/UI/Ready Menu/icon_movebutton") ? "Graphics/UI/Ready Menu/icon_movebutton" : "Graphics/UI/Ready Menu/icon_movesbutton"
+    @button = AnimatedBitmap.new(btn_graphic)
     @contents = Bitmap.new(@button.width, @button.height / 2)
     self.bitmap = @contents
     pbSetSystemFont(self.bitmap)
     @icon = PokemonIconSprite.new($player.party[@command[2]], viewport)
     @icon.setOffset(PictureOrigin::CENTER)
     @icon.z = self.z + 1
-    puts ("Quick Menu pp_check ? #{@pp_check}") if $DEBUG
+    log_compat("Quick Menu pp_check ? #{@pp_check}") if $DEBUG
     refresh
   end
 
@@ -250,7 +251,7 @@ class PokemonSystem < PokemonSystem
   attr_accessor :camouflaged
   attr_accessor :surf_option
 
-  alias aifm_initialize initialize
+  alias aifm_initialize initialize unless method_defined?(:aifm_initialize)
   def initialize
     aifm_initialize
     @animation_item       = 0

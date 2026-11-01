@@ -99,11 +99,12 @@ def format_stat_line(label, values)
     :SPECIAL_DEFENSE => 'SpD',
     :SPEED => 'Spe'
   }
-  return '' if label == 'IVs' && values.all? { |_, value| value == 0 }
+  return '' if values.all? { |_, value| value.to_i == 0 }
   parts = values.each_pair.map do |key, value|
-    next if value == 0 && label == 'IVs'
-    "#{value.to_i == 0 ? 1 : value} #{stats_map[key]}"
+    next if value.to_i == 0
+    "#{value.to_i} #{stats_map[key]}"
   end.compact
+  return '' if parts.empty?
   "#{label}: #{parts.join(' / ')}"
 end
 
@@ -160,6 +161,11 @@ def pbShowdown
     ].reject(&:empty?).join("\n") + "\n"
   end.join("\n")
 
-  File.write('showdown.txt', ret)
-  pbMessage("Se ha creado el archivo showdown.txt en la carpeta del juego.\nPuede usar este archivo para crear su equipo en Pokémon Showdown.")
+  begin
+    File.write('showdown.txt', ret)
+    pbMessage("Se ha creado el archivo showdown.txt en la carpeta del juego.\nPuede usar este archivo para crear su equipo en Pokémon Showdown.")
+  rescue Exception => e
+    log_compat("[Showdown] Error al escribir showdown.txt: #{e.message}") if defined?(log_compat)
+    pbMessage("No se pudo guardar el archivo showdown.txt en el sistema de archivos.")
+  end
 end

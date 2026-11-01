@@ -72,6 +72,7 @@ class TilemapRenderer
 
     def add(filename)
       return if nil_or_empty?(filename)
+      log_compat("[Scene_Map] [TilesetBitmaps.add] Adding tileset #{filename} (already_loaded: #{@bitmaps.key?(filename)})") rescue nil
       if @bitmaps[filename]
         @load_counts[filename] += 1
         return
@@ -79,27 +80,30 @@ class TilemapRenderer
       bitmap = pbGetTileset(filename)
       @bitmap_wraps[filename] = false
       if bitmap && bitmap.mega?
-        log_compat("[TilesetBitmaps.add] Wrapping mega tileset: #{filename} (#{bitmap.width}x#{bitmap.height})...") rescue nil
+        log_compat("[Scene_Map] [TilesetBitmaps.add] Wrapping mega tileset: #{filename} (#{bitmap.width}x#{bitmap.height})...") rescue nil
         self[filename] = TilemapRenderer::TilesetWrapper.wrapTileset(bitmap)
         @bitmap_wraps[filename] = true
-        bitmap.dispose
-        log_compat("[TilesetBitmaps.add] Wrapped #{filename} OK: #{self[filename]&.width}x#{self[filename]&.height}") rescue nil
+        bitmap.dispose rescue nil
+        log_compat("[Scene_Map] [TilesetBitmaps.add] Wrapped #{filename} OK: #{self[filename]&.width}x#{self[filename]&.height}") rescue nil
       else
         self[filename] = bitmap
       end
       @load_counts[filename] = 1
+      log_compat("[Scene_Map] [TilesetBitmaps.add] Tileset #{filename} added successfully") rescue nil
     end
 
     def remove(filename)
       return if nil_or_empty?(filename) || !@bitmaps[filename]
+      log_compat("[Scene_Map] [TilesetBitmaps.remove] Removing tileset #{filename} (count=#{@load_counts[filename]})") rescue nil
       if @load_counts[filename] > 1
         @load_counts[filename] -= 1
         return
       end
-      @bitmaps[filename].dispose
+      @bitmaps[filename].dispose rescue nil
       @bitmaps.delete(filename)
       @bitmap_wraps.delete(filename)
       @load_counts.delete(filename)
+      log_compat("[Scene_Map] [TilesetBitmaps.remove] Tileset #{filename} disposed and removed") rescue nil
     end
 
     def set_src_rect(tile, tile_id)

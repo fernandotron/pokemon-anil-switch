@@ -406,8 +406,10 @@ class Battle::Battler
       # Process each hit in turn
       realNumHits = 0
       numHits.times do |i|
+        break if @battle.decision > 0
         break if magicCoater >= 0 || magicBouncer >= 0
         success = pbProcessMoveHit(move, user, targets, i, skipAccuracyCheck)
+        break if @battle.decision > 0
         if !success
           if i == 0 && targets.length > 0
             hasFailed = false
@@ -497,11 +499,13 @@ class Battle::Battler
           user.pbFaint if user.fainted?
         end
       end
+      return if @battle.decision > 0
       # Move-specific effects after all hits
-      targets.each { |b| move.pbEffectAfterAllHits(user, b) }
+      targets.each { |b| move.pbEffectAfterAllHits(user, b) if b && !b.fainted? && b.pokemon }
       # Faint if 0 HP
       targets.each { |b| b.pbFaint if b&.fainted? }
       user.pbFaint if user.fainted?
+      return if @battle.decision > 0
       # External/general effects after all hits. Eject Button, Shell Bell, etc.
       pbEffectsAfterMove(user, targets, move, realNumHits)
       @battle.allBattlers.each do |b|
@@ -703,6 +707,7 @@ class Battle::Battler
       @battle.pbPriority(true).each { |b| b.pbFaint if b&.fainted? }
     end
     @battle.pbJudgeCheckpoint(user, move)
+    return true if @battle.decision > 0
     # Main effect (recoil/drain, etc.)
     targets.each do |b|
       next if b.damageState.unaffected
@@ -754,8 +759,9 @@ class Battle::Battler
     # Fainting
     targets.each { |b| b.pbFaint if b&.fainted? }
     user.pbFaint if user.fainted?
+    return true if @battle.decision > 0
     # Dragon Darts' second half of attack
-    if move.pbRepeatHit? && hitNum == 0 &&
+    if move.pbRepeatHit? && hitNum == 0 && @battle.decision == 0 &&
        targets.any? { |b| !b.fainted? && !b.damageState.unaffected }
       pbProcessMoveHit(move, user, all_targets, 1, skipAccuracyCheck)
     end
